@@ -11,17 +11,17 @@
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
 
-  /* Acento dorado para una agencia de talentos: elegante sobre negro/gris */
-  --color-gold-50: #faf6ec;
-  --color-gold-100: #f3ead2;
-  --color-gold-200: #e6d3a4;
-  --color-gold-300: #d6b96e;
-  --color-gold-400: #c7a352;
-  --color-gold-500: #b08d3e;
-  --color-gold-600: #93732f;
-  --color-gold-700: #745a25;
-  --color-gold-800: #5c481e;
-  --color-gold-900: #493a18;
+  /* Acento de marca GlamourModels (#BA1B5D) — elegante sobre negro/gris */
+  --color-gold-50: #fcf4f7;
+  --color-gold-100: #f5dde7;
+  --color-gold-200: #e7afc6;
+  --color-gold-300: #d982a6;
+  --color-gold-400: #c94d81;
+  --color-gold-500: #ba1b5d;
+  --color-gold-600: #9e174f;
+  --color-gold-700: #821341;
+  --color-gold-800: #660f33;
+  --color-gold-900: #4a0b25;
 }
 
 body {

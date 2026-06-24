@@ -4,6 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { Bell, ChevronDown, LogOut, Settings, UserRound } from "lucide-react";
 import { Avatar } from "@/components/ui/Avatar";
+import { logoutAction } from "@/lib/actions";
 import type { UsuarioStaff } from "@/lib/types";
 
 const ROLE_LABEL: Record<string, string> = {
@@ -68,13 +69,14 @@ export function Topbar({
                 <Settings className="h-4 w-4" /> Configuración
               </Link>
               <div className="my-1 h-px bg-zinc-100" />
-              <Link
-                href="/login"
-                className="flex items-center gap-2.5 px-3.5 py-2 text-sm text-rose-600 hover:bg-rose-50"
-                onClick={() => setMenuOpen(false)}
-              >
-                <LogOut className="h-4 w-4" /> Cerrar sesión
-              </Link>
+              <form action={logoutAction}>
+                <button
+                  type="submit"
+                  className="flex w-full items-center gap-2.5 px-3.5 py-2 text-left text-sm text-rose-600 hover:bg-rose-50"
+                >
+                  <LogOut className="h-4 w-4" /> Cerrar sesión
+                </button>
+              </form>
             </div>
           </>
         )}

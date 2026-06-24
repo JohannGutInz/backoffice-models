@@ -4,12 +4,12 @@ import { Cell, Pie, PieChart, ResponsiveContainer, Tooltip } from "recharts";
 import { estadoLabel } from "@/components/ui/Badge";
 
 const ESTATUS_COLOR: Record<string, string> = {
-  pendiente: "#c7a352",
+  pendiente: "#c94d81",
   confirmado: "#3f3f46",
   completado: "#059669",
   cancelado: "#fb7185",
   aprobado: "#059669",
-  enviado: "#c7a352",
+  enviado: "#c94d81",
   borrador: "#a1a1aa",
   rechazado: "#fb7185",
 };

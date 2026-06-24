@@ -2,11 +2,11 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import { AlertTriangle, ArrowLeft, Camera, CheckCircle2, Clock, Link2, RotateCcw, ShieldCheck, XCircle } from "lucide-react";
 import { getSolicitud } from "@/lib/data";
+import { moderarSolicitudAction } from "@/lib/actions";
 import { Avatar } from "@/components/ui/Avatar";
 import { Card, CardHeader } from "@/components/ui/Card";
 import { Field, FieldGrid } from "@/components/ui/Field";
 import { EstadoBadge } from "@/components/ui/Badge";
-import { Button } from "@/components/ui/Button";
 import { CATEGORIA_LABEL } from "@/lib/labels";
 import { addDays, calcularEdad, formatDate, parseDateOnly } from "@/lib/utils";
 
@@ -41,19 +41,6 @@ export default async function SolicitudDetailPage({
             </div>
           </div>
         </div>
-        {solicitud.estado !== "aprobado" && solicitud.estado !== "rechazado" && (
-          <div className="flex items-center gap-2">
-            <Button variant="secondary">
-              <XCircle className="h-4 w-4" /> Rechazar
-            </Button>
-            <Button variant="secondary">
-              <RotateCcw className="h-4 w-4" /> Solicitar cambios
-            </Button>
-            <Button>
-              <CheckCircle2 className="h-4 w-4" /> Aprobar
-            </Button>
-          </div>
-        )}
       </div>
 
       {edad < 18 && (
@@ -93,20 +80,55 @@ export default async function SolicitudDetailPage({
 
           <Card>
             <CardHeader title="Comentarios de revisión" subtitle="Dos canales separados — nunca se mezclan" />
-            <div className="space-y-4 px-5 pb-5">
-              <div className="rounded-lg border border-zinc-200 bg-zinc-50 p-4">
-                <p className="mb-1.5 text-xs font-semibold tracking-wide text-zinc-500 uppercase">
+            <form className="space-y-4 px-5 pb-5">
+              <div>
+                <label className="mb-1.5 block text-xs font-semibold tracking-wide text-zinc-500 uppercase">
                   Nota interna · solo staff
-                </p>
-                <p className="text-sm text-zinc-700">{solicitud.notaInterna || "Sin notas internas."}</p>
+                </label>
+                <textarea
+                  name="notaInterna"
+                  defaultValue={solicitud.notaInterna}
+                  rows={3}
+                  placeholder="Observaciones internas, nunca visibles para el aspirante…"
+                  className="w-full rounded-lg border border-zinc-200 bg-zinc-50 p-3 text-sm text-zinc-700 outline-none focus:border-zinc-400 focus:ring-1 focus:ring-zinc-400"
+                />
               </div>
-              <div className="rounded-lg border border-gold-200 bg-gold-50 p-4">
-                <p className="mb-1.5 text-xs font-semibold tracking-wide text-gold-700 uppercase">
+              <div>
+                <label className="mb-1.5 block text-xs font-semibold tracking-wide text-gold-700 uppercase">
                   Retroalimentación para el modelo · visible vía enlace temporal
-                </p>
-                <p className="text-sm text-gold-900">{solicitud.retroParaModelo || "Sin retroalimentación enviada."}</p>
+                </label>
+                <textarea
+                  name="retroParaModelo"
+                  defaultValue={solicitud.retroParaModelo}
+                  rows={3}
+                  placeholder="Lo que el aspirante verá y podrá usar para corregir y reenviar…"
+                  className="w-full rounded-lg border border-gold-200 bg-gold-50 p-3 text-sm text-gold-900 outline-none focus:border-gold-400 focus:ring-1 focus:ring-gold-400"
+                />
               </div>
-            </div>
+
+              {solicitud.estado !== "aprobado" && solicitud.estado !== "rechazado" && (
+                <div className="flex flex-wrap items-center gap-2 pt-1">
+                  <button
+                    formAction={moderarSolicitudAction.bind(null, solicitud.id, "rechazado")}
+                    className="inline-flex items-center justify-center gap-2 rounded-lg bg-white px-4 py-2.5 text-sm font-medium text-zinc-700 ring-1 ring-inset ring-zinc-200 transition-colors hover:bg-rose-50 hover:text-rose-700 hover:ring-rose-200"
+                  >
+                    <XCircle className="h-4 w-4" /> Rechazar
+                  </button>
+                  <button
+                    formAction={moderarSolicitudAction.bind(null, solicitud.id, "requiere_cambios")}
+                    className="inline-flex items-center justify-center gap-2 rounded-lg bg-white px-4 py-2.5 text-sm font-medium text-zinc-700 ring-1 ring-inset ring-zinc-200 transition-colors hover:bg-amber-50 hover:text-amber-700 hover:ring-amber-200"
+                  >
+                    <RotateCcw className="h-4 w-4" /> Solicitar cambios
+                  </button>
+                  <button
+                    formAction={moderarSolicitudAction.bind(null, solicitud.id, "aprobado")}
+                    className="inline-flex items-center justify-center gap-2 rounded-lg bg-zinc-950 px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-gold-600"
+                  >
+                    <CheckCircle2 className="h-4 w-4" /> Aprobar
+                  </button>
+                </div>
+              )}
+            </form>
           </Card>
         </div>
 

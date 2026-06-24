@@ -56,6 +56,14 @@ export async function getSolicitud(id: string): Promise<SolicitudRegistro | unde
   return byId(solicitudesRegistro, id);
 }
 
+// Acceso "mágico" por token para el enlace temporal de retro (CLAUDE-proyecto-real.md).
+// El token es el único mecanismo de autenticación — quien lo tiene, puede ver y
+// reenviar SU solicitud. La página que consume esto nunca debe mostrar `notaInterna`,
+// solo `retroParaModelo` (los dos canales de comentarios no se mezclan).
+export async function getSolicitudPorToken(token: string): Promise<SolicitudRegistro | undefined> {
+  return solicitudesRegistro.find((s) => s.tokenRevision === token);
+}
+
 // ---------- Clientes ----------
 
 export async function listClientes(): Promise<Cliente[]> {

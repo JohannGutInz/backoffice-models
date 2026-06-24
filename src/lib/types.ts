@@ -42,6 +42,9 @@ export interface Modelo {
   bookUrls: string[];
   estado: EstadoModelo;
   destacado: boolean;
+  // Curaduría explícita: un modelo puede estar "activo" para operar bookings
+  // sin todavía estar listo/aprobado para mostrarse en la vitrina pública.
+  publicoEnLanding: boolean;
   disponibilidad: "disponible" | "ocupado" | "no disponible";
   tarifaBase: number;
   notasInternas?: string;
@@ -67,6 +70,9 @@ export interface SolicitudRegistro {
   correo: string;
   telefono: string;
   fechaNacimiento: string;
+  genero: Modelo["genero"];
+  nacionalidad: string;
+  ubicacion: string;
   categoria: CategoriaModelo;
   fotoUrl: string;
   estado: EstadoSolicitud;

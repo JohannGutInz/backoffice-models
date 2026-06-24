@@ -1,52 +1,67 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useTransition } from "react";
+import { useFormStatus } from "react-dom";
 import { Check, Copy, ImagePlus, RefreshCw } from "lucide-react";
 import { Card, CardHeader } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
+import { guardarConfiguracionSitioAction, regenerarLinkRegistroAction, toggleRegistroPublicoAction } from "@/lib/actions";
 import type { ConfiguracionSitio } from "@/lib/types";
 
-function randomSlug() {
-  return `registro-musa-${Math.random().toString(36).slice(2, 8)}`;
+function GuardarButton() {
+  const { pending } = useFormStatus();
+  return (
+    <button
+      type="submit"
+      disabled={pending}
+      className="inline-flex items-center justify-center gap-2 rounded-lg bg-zinc-950 px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-gold-600 disabled:opacity-60"
+    >
+      {pending ? "Guardando…" : "Guardar cambios"}
+    </button>
+  );
 }
 
 export function ConfiguracionForm({ config }: { config: ConfiguracionSitio }) {
-  const [nombreAgencia, setNombreAgencia] = useState(config.nombreAgencia);
   const [colorPrimario, setColorPrimario] = useState(config.colorPrimario);
-  const [heroTitulo, setHeroTitulo] = useState(config.heroTitulo);
-  const [heroSubtitulo, setHeroSubtitulo] = useState(config.heroSubtitulo);
   const [registroActivo, setRegistroActivo] = useState(config.registroPublicoActivo);
   const [slug, setSlug] = useState(config.registroLinkSlug);
   const [copiado, setCopiado] = useState(false);
-  const [guardado, setGuardado] = useState(false);
+  const [, startTransition] = useTransition();
 
   const registroUrl = `agencia.com/registro/${slug}`;
 
+  function handleToggleRegistro() {
+    const next = !registroActivo;
+    setRegistroActivo(next);
+    startTransition(() => {
+      toggleRegistroPublicoAction(next);
+    });
+  }
+
   function handleRegenerar() {
-    setSlug(randomSlug());
-    setCopiado(false);
+    startTransition(async () => {
+      const nuevoSlug = await regenerarLinkRegistroAction();
+      setSlug(nuevoSlug);
+      setCopiado(false);
+    });
   }
 
   function handleCopiar() {
+    navigator.clipboard?.writeText(registroUrl).catch(() => {});
     setCopiado(true);
     setTimeout(() => setCopiado(false), 1500);
   }
 
-  function handleGuardar() {
-    setGuardado(true);
-    setTimeout(() => setGuardado(false), 2500);
-  }
-
   return (
-    <div className="space-y-6">
+    <form action={guardarConfiguracionSitioAction} className="space-y-6">
       <Card>
         <CardHeader title="Identidad del sitio" subtitle="Se refleja en la landing pública." />
         <div className="grid grid-cols-1 gap-5 px-5 pb-5 sm:grid-cols-2">
           <div>
             <label className="mb-1.5 block text-sm font-medium text-zinc-700">Nombre de la agencia</label>
             <input
-              value={nombreAgencia}
-              onChange={(e) => setNombreAgencia(e.target.value)}
+              name="nombreAgencia"
+              defaultValue={config.nombreAgencia}
               className="w-full rounded-lg border border-zinc-300 bg-white py-2.5 px-3 text-sm outline-none focus:border-gold-500 focus:ring-1 focus:ring-gold-500"
             />
           </div>
@@ -60,6 +75,7 @@ export function ConfiguracionForm({ config }: { config: ConfiguracionSitio }) {
                 className="h-10 w-12 cursor-pointer rounded-lg border border-zinc-300"
               />
               <input
+                name="colorPrimario"
                 value={colorPrimario}
                 onChange={(e) => setColorPrimario(e.target.value)}
                 className="w-full rounded-lg border border-zinc-300 bg-white py-2.5 px-3 text-sm uppercase outline-none focus:border-gold-500 focus:ring-1 focus:ring-gold-500"
@@ -85,16 +101,16 @@ export function ConfiguracionForm({ config }: { config: ConfiguracionSitio }) {
           <div>
             <label className="mb-1.5 block text-sm font-medium text-zinc-700">Título</label>
             <input
-              value={heroTitulo}
-              onChange={(e) => setHeroTitulo(e.target.value)}
+              name="heroTitulo"
+              defaultValue={config.heroTitulo}
               className="w-full rounded-lg border border-zinc-300 bg-white py-2.5 px-3 text-sm outline-none focus:border-gold-500 focus:ring-1 focus:ring-gold-500"
             />
           </div>
           <div>
             <label className="mb-1.5 block text-sm font-medium text-zinc-700">Subtítulo</label>
             <textarea
-              value={heroSubtitulo}
-              onChange={(e) => setHeroSubtitulo(e.target.value)}
+              name="heroSubtitulo"
+              defaultValue={config.heroSubtitulo}
               rows={3}
               className="w-full rounded-lg border border-zinc-300 bg-white py-2.5 px-3 text-sm outline-none focus:border-gold-500 focus:ring-1 focus:ring-gold-500"
             />
@@ -118,7 +134,7 @@ export function ConfiguracionForm({ config }: { config: ConfiguracionSitio }) {
               type="button"
               role="switch"
               aria-checked={registroActivo}
-              onClick={() => setRegistroActivo((v) => !v)}
+              onClick={handleToggleRegistro}
               className={`relative h-6 w-11 shrink-0 rounded-full transition-colors ${
                 registroActivo ? "bg-zinc-950" : "bg-zinc-300"
               }`}
@@ -143,16 +159,13 @@ export function ConfiguracionForm({ config }: { config: ConfiguracionSitio }) {
             </button>
           </div>
 
-          <Button variant="secondary" onClick={handleRegenerar}>
+          <Button type="button" variant="secondary" onClick={handleRegenerar}>
             <RefreshCw className="h-4 w-4" /> Regenerar link (invalida el anterior)
           </Button>
         </div>
       </Card>
 
-      <div className="flex items-center gap-3">
-        <Button onClick={handleGuardar}>Guardar cambios</Button>
-        {guardado && <span className="text-sm text-emerald-600">✓ Cambios guardados</span>}
-      </div>
-    </div>
+      <GuardarButton />
+    </form>
   );
 }

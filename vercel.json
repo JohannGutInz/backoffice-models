@@ -1,0 +1,8 @@
+{
+  "crons": [
+    {
+      "path": "/api/cron/purge-rechazados",
+      "schedule": "0 3 * * *"
+    }
+  ]
+}

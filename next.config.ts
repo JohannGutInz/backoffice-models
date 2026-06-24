@@ -1,7 +1,11 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  /* config options here */
+  // El indicador de Next.js (bottom-left por default) tapaba el pie del sidebar
+  // del backoffice, que vive en esa misma esquina.
+  devIndicators: {
+    position: "bottom-right",
+  },
 };
 
 export default nextConfig;

@@ -1,15 +1,38 @@
 "use client";
 
-import { useRouter } from "next/navigation";
+import { Suspense, useActionState } from "react";
+import { useFormStatus } from "react-dom";
+import { useSearchParams } from "next/navigation";
 import { Lock, Mail } from "lucide-react";
+import { loginAction, type ActionState } from "@/lib/actions";
+
+const initialState: ActionState = { status: "idle", message: "" };
+
+function SubmitButton() {
+  const { pending } = useFormStatus();
+  return (
+    <button
+      type="submit"
+      disabled={pending}
+      className="mt-2 w-full rounded-lg bg-zinc-950 py-2.5 text-sm font-medium text-white transition-colors hover:bg-gold-600 disabled:cursor-not-allowed disabled:opacity-60"
+    >
+      {pending ? "Entrando…" : "Entrar"}
+    </button>
+  );
+}
 
 export default function LoginPage() {
-  const router = useRouter();
+  return (
+    <Suspense fallback={null}>
+      <LoginForm />
+    </Suspense>
+  );
+}
 
-  function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    router.push("/dashboard");
-  }
+function LoginForm() {
+  const searchParams = useSearchParams();
+  const next = searchParams.get("next") ?? "/dashboard";
+  const [state, formAction] = useActionState(loginAction, initialState);
 
   return (
     <div className="flex min-h-screen">
@@ -23,7 +46,7 @@ export default function LoginPage() {
           }}
         />
         <div className="relative text-2xl font-semibold tracking-tight">
-          musa<span className="text-gold-400">ERP</span>
+          Glamour<span className="text-gold-400">Models</span>
         </div>
         <div className="relative max-w-md">
           <p className="text-3xl leading-tight font-light text-zinc-100">
@@ -34,29 +57,32 @@ export default function LoginPage() {
             Backoffice interno — acceso restringido al staff de la agencia.
           </p>
         </div>
-        <p className="relative text-xs text-zinc-600">© {new Date().getFullYear()} musaERP. Todos los derechos reservados.</p>
+        <p className="relative text-xs text-zinc-600">© {new Date().getFullYear()} GlamourModels. Todos los derechos reservados.</p>
       </div>
 
       <div className="flex flex-1 items-center justify-center bg-zinc-50 px-6 py-12">
         <div className="w-full max-w-sm">
           <div className="mb-10 lg:hidden">
             <span className="text-2xl font-semibold tracking-tight text-zinc-950">
-              musa<span className="text-gold-500">ERP</span>
+              Glamour<span className="text-gold-500">Models</span>
             </span>
           </div>
 
           <h1 className="text-xl font-semibold text-zinc-900">Inicia sesión</h1>
           <p className="mt-1.5 text-sm text-zinc-500">Ingresa tus credenciales de staff para continuar.</p>
 
-          <form onSubmit={handleSubmit} className="mt-8 space-y-4">
+          <form action={formAction} className="mt-8 space-y-4">
+            <input type="hidden" name="next" value={next} />
+
             <div>
-              <label htmlFor="email" className="mb-1.5 block text-sm font-medium text-zinc-700">
+              <label htmlFor="correo" className="mb-1.5 block text-sm font-medium text-zinc-700">
                 Correo
               </label>
               <div className="relative">
                 <Mail className="pointer-events-none absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-zinc-400" />
                 <input
-                  id="email"
+                  id="correo"
+                  name="correo"
                   type="email"
                   required
                   defaultValue="ing.johanngut@gmail.com"
@@ -74,14 +100,18 @@ export default function LoginPage() {
                 <Lock className="pointer-events-none absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-zinc-400" />
                 <input
                   id="password"
+                  name="password"
                   type="password"
                   required
-                  defaultValue="••••••••"
                   className="w-full rounded-lg border border-zinc-300 bg-white py-2.5 pl-10 pr-3 text-sm text-zinc-900 outline-none focus:border-gold-500 focus:ring-1 focus:ring-gold-500"
                   placeholder="••••••••"
                 />
               </div>
             </div>
+
+            {state.status === "error" && (
+              <p className="text-sm text-rose-600">{state.message}</p>
+            )}
 
             <div className="flex items-center justify-between pt-1 text-sm">
               <label className="flex items-center gap-2 text-zinc-600">
@@ -93,12 +123,7 @@ export default function LoginPage() {
               </a>
             </div>
 
-            <button
-              type="submit"
-              className="mt-2 w-full rounded-lg bg-zinc-950 py-2.5 text-sm font-medium text-white transition-colors hover:bg-gold-600"
-            >
-              Entrar
-            </button>
+            <SubmitButton />
           </form>
 
           <p className="mt-8 text-center text-xs text-zinc-400">

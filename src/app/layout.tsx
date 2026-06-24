@@ -13,7 +13,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "musaERP | Backoffice",
+  title: "GlamourModels | Backoffice",
   description: "Backoffice de gestión para agencia de talentos y modelos",
 };
 

@@ -34,7 +34,7 @@ export function Sidebar({
         </button>
         {!collapsed && (
           <Link href="/dashboard" className="truncate text-lg leading-none font-semibold text-white">
-            musa<span className="text-gold-400">ERP</span>
+            Glamour<span className="text-gold-400">Models</span>
           </Link>
         )}
       </div>
@@ -88,7 +88,7 @@ export function Sidebar({
 
       {!collapsed && (
         <div className="border-t border-white/5 p-4 text-[11px] text-zinc-500">
-          <p>musaERP · v1</p>
+          <p>GlamourModels · v1</p>
           <p className="mt-0.5">Backoffice interno — no indexado</p>
         </div>
       )}

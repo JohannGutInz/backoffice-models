@@ -7,6 +7,7 @@ import { Card, CardHeader } from "@/components/ui/Card";
 import { Field, FieldGrid } from "@/components/ui/Field";
 import { EstadoBadge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
+import { VisibilidadLandingToggle } from "@/components/modelos/VisibilidadLandingToggle";
 import { CATEGORIA_LABEL } from "@/lib/labels";
 import { calcularEdad, formatCurrency, formatDate } from "@/lib/utils";
 
@@ -151,6 +152,13 @@ export default async function ModeloDetailPage({
                 <Field label="Destacado" value={modelo.destacado ? "Sí" : "No"} />
                 <Field label="Tarifa base" value={formatCurrency(modelo.tarifaBase)} />
               </FieldGrid>
+              <div className="mt-4">
+                <VisibilidadLandingToggle
+                  modeloId={modelo.id}
+                  visibleInicial={modelo.publicoEnLanding}
+                  puedeSerPublico={modelo.estado === "activo"}
+                />
+              </div>
               {modelo.notasInternas && (
                 <div className="mt-4 rounded-lg bg-amber-50 p-3 text-xs text-amber-800">
                   <p className="mb-1 font-medium">Notas internas</p>
