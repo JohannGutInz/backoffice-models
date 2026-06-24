@@ -27,8 +27,8 @@ export const usuarioActual: UsuarioStaff = {
 // Credencial de demo mientras no hay backend de auth real con hashing/DB de staff.
 // El día que exista API de auth, loginAction (lib/actions.ts) es lo único que cambia.
 export const CREDENCIAL_DEMO_STAFF = {
-  correo: "ing.johanngut@gmail.com",
-  password: "musa2026",
+  correo: "",
+  password: "",
 };
 
 export const modelos: Modelo[] = [
