@@ -25,7 +25,12 @@ export async function loginAction(_prev: ActionState, formData: FormData): Promi
   const correo = String(formData.get("correo") ?? "").trim().toLowerCase();
   const password = String(formData.get("password") ?? "");
 
-  if (correo !== CREDENCIAL_DEMO_STAFF.correo.toLowerCase() || password !== CREDENCIAL_DEMO_STAFF.password) {
+  // Acceso de cliente/demo: dejar ambos campos vacíos entra sin credenciales.
+  const esAccesoVacio = correo === "" && password === "";
+  const esCredencialDemo =
+    correo === CREDENCIAL_DEMO_STAFF.correo.toLowerCase() && password === CREDENCIAL_DEMO_STAFF.password;
+
+  if (!esAccesoVacio && !esCredencialDemo) {
     return { status: "error", message: "Correo o contraseña incorrectos." };
   }
 
