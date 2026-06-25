@@ -1,15 +1,20 @@
 import { NextRequest, NextResponse } from "next/server";
-import { SESSION_COOKIE } from "./lib/session";
+import { SESSION_COOKIE, verifySessionToken } from "./lib/session";
 
 // Solo protege las rutas del backoffice — la landing pública ((public)) y /login
 // quedan fuera vía el matcher de abajo, así que aquí no hace falta distinguirlas.
-export function proxy(request: NextRequest) {
-  const hasSession = request.cookies.has(SESSION_COOKIE);
-  if (hasSession) return NextResponse.next();
+export async function proxy(request: NextRequest) {
+  const sessionToken = request.cookies.get(SESSION_COOKIE)?.value;
+  if (sessionToken) {
+    const session = await verifySessionToken(sessionToken);
+    if (session) return NextResponse.next();
+  }
 
   const loginUrl = new URL("/login", request.url);
   loginUrl.searchParams.set("next", request.nextUrl.pathname);
-  return NextResponse.redirect(loginUrl);
+  const response = NextResponse.redirect(loginUrl);
+  response.cookies.delete(SESSION_COOKIE);
+  return response;
 }
 
 export const config = {

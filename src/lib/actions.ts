@@ -6,7 +6,7 @@ import { revalidatePath } from "next/cache";
 import * as bcrypt from "bcrypt";
 import { prisma } from "@/db";
 import { AGENCY_ID, configuracionSitio, modelos, solicitudesRegistro } from "./mock-data";
-import { SESSION_COOKIE } from "./session";
+import { SESSION_COOKIE, createSessionToken } from "./session";
 import type { CategoriaModelo, EstadoSolicitud, Modelo } from "./types";
 import { calcularEdad, toDateKey } from "./utils";
 import { emailContactoCliente, emailDecisionSolicitud, emailNuevaSolicitudStaff, emailSolicitudRecibida } from "./email";
@@ -74,8 +74,14 @@ export async function loginAction(_prev: ActionState, formData: FormData): Promi
     return { status: "error", message: "Correo o contraseña incorrectos." };
   }
 
+  const sessionToken = await createSessionToken({
+    sub: usuario.id,
+    email: usuario.email,
+    username: usuario.username,
+  });
+
   const cookieStore = await cookies();
-  cookieStore.set(SESSION_COOKIE, usuario.id, {
+  cookieStore.set(SESSION_COOKIE, sessionToken, {
     httpOnly: true,
     sameSite: "lax",
     secure: process.env.NODE_ENV === "production",
