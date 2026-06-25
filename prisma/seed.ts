@@ -1,14 +1,18 @@
 import "dotenv/config";
-import * as bcrypt from "bcrypt";
-import { prisma } from "@/db";
+import { Pool } from "pg";
+import { PrismaPg } from "@prisma/adapter-pg";
+import { PrismaClient } from "@/generated/prisma/client";
+import { hashPassword } from "@/lib/actions";
 
 const DEFAULT_ADMIN_EMAIL = process.env.DEFAULT_ADMIN_EMAIL ?? "admin@glamourmodels.local";
 const DEFAULT_ADMIN_USERNAME = process.env.DEFAULT_ADMIN_USERNAME ?? "admin";
 const DEFAULT_ADMIN_PASSWORD = process.env.DEFAULT_ADMIN_PASSWORD ?? "Admin123!";
 
-async function hashPassword(password: string) {
-  return bcrypt.hash(password, 10);
-}
+
+const connectionString = `${process.env.DATABASE_URL}`;
+const pool = new Pool({ connectionString });
+const adapter = new PrismaPg(pool);
+const prisma = new PrismaClient({ adapter });
 
 async function main() {
   try {
@@ -33,7 +37,14 @@ async function main() {
   }
 }
 
-main().catch((error) => {
-  console.error("Failed to initialize database:", error);
-  process.exitCode = 1;
-});
+main()
+  .then(async () => {
+    await prisma.$disconnect();
+    await pool.end();
+  })
+  .catch(async (e) => {
+    console.error(e);
+    await prisma.$disconnect();
+    await pool.end();
+    process.exit(1);
+  });

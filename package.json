@@ -6,9 +6,7 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint",
-    "seed:admin": "tsx prisma/seed-default-admin.ts",
-    "db:seed": "prisma generate && npm run seed:admin"
+    "lint": "eslint"
   },
   "prisma": {
     "seed": "npm run db:seed"
