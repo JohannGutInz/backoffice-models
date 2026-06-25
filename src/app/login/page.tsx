@@ -70,7 +70,7 @@ function LoginForm() {
 
           <h1 className="text-xl font-semibold text-zinc-900">Inicia sesión</h1>
           <p className="mt-1.5 text-sm text-zinc-500">
-            Ingresa tus credenciales de staff, o deja ambos campos en blanco para entrar como invitado.
+            Ingresa el correo y la contraseña de un usuario registrado.
           </p>
 
           <form action={formAction} className="mt-8 space-y-4">
@@ -86,6 +86,7 @@ function LoginForm() {
                   id="correo"
                   name="correo"
                   type="email"
+                  required
                   className="w-full rounded-lg border border-zinc-300 bg-white py-2.5 pl-10 pr-3 text-sm text-zinc-900 outline-none focus:border-gold-500 focus:ring-1 focus:ring-gold-500"
                   placeholder="tu@agencia.com"
                 />
@@ -102,6 +103,7 @@ function LoginForm() {
                   id="password"
                   name="password"
                   type="password"
+                  required
                   className="w-full rounded-lg border border-zinc-300 bg-white py-2.5 pl-10 pr-3 text-sm text-zinc-900 outline-none focus:border-gold-500 focus:ring-1 focus:ring-gold-500"
                   placeholder="••••••••"
                 />
