@@ -3,7 +3,9 @@
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
-import { AGENCY_ID, CREDENCIAL_DEMO_STAFF, configuracionSitio, modelos, solicitudesRegistro } from "./mock-data";
+import * as bcrypt from "bcrypt";
+import { prisma } from "@/db";
+import { AGENCY_ID, configuracionSitio, modelos, solicitudesRegistro } from "./mock-data";
 import { SESSION_COOKIE } from "./session";
 import type { CategoriaModelo, EstadoSolicitud, Modelo } from "./types";
 import { calcularEdad, toDateKey } from "./utils";
@@ -19,23 +21,61 @@ export interface ActionState {
   message: string;
 }
 
+export async function hashPassword(password: string) {
+  return bcrypt.hash(password, 10);
+}
+
+export async function createUserAction(email: string, password: string): Promise<ActionState> {
+  const cleanedEmail = email.trim().toLowerCase();
+  const cleanedPassword = password.trim();
+
+  if (!cleanedEmail || !cleanedPassword) {
+    return { status: "error", message: "Email and password are required." };
+  }
+
+  try {
+    const hashedPassword = await hashPassword(cleanedPassword);
+
+    await prisma.user.create({
+      data: {
+        email: cleanedEmail,
+        username: "dummy-user",
+        hashedPassword: hashedPassword,
+      },
+    });
+
+    return { status: "success", message: `Created user: ${cleanedEmail}` };
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Failed to create user.";
+    return { status: "error", message };
+  }
+}
+
 // ---------- Sesión de staff (backoffice) ----------
 
 export async function loginAction(_prev: ActionState, formData: FormData): Promise<ActionState> {
   const correo = String(formData.get("correo") ?? "").trim().toLowerCase();
   const password = String(formData.get("password") ?? "");
 
-  // Acceso de cliente/demo: dejar ambos campos vacíos entra sin credenciales.
-  const esAccesoVacio = correo === "" && password === "";
-  const esCredencialDemo =
-    correo === CREDENCIAL_DEMO_STAFF.correo.toLowerCase() && password === CREDENCIAL_DEMO_STAFF.password;
+  if (!correo || !password) {
+    return { status: "error", message: "Correo y contraseña son obligatorios." };
+  }
 
-  if (!esAccesoVacio && !esCredencialDemo) {
+  const usuario = await prisma.user.findUnique({
+    where: { email: correo },
+  });
+
+  if (!usuario) {
+    return { status: "error", message: "Correo o contraseña incorrectos." };
+  }
+
+  const passwordMatches = await bcrypt.compare(password, usuario.hashedPassword);
+  if (!passwordMatches) {
     return { status: "error", message: "Correo o contraseña incorrectos." };
   }
 
   const cookieStore = await cookies();
-  cookieStore.set(SESSION_COOKIE, "staff_01", {
+  cookieStore.set(SESSION_COOKIE, usuario.id, {
     httpOnly: true,
     sameSite: "lax",
     secure: process.env.NODE_ENV === "production",
