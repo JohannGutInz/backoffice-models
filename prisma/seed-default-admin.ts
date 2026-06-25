@@ -19,11 +19,11 @@ async function main() {
       create: {
         email: DEFAULT_ADMIN_EMAIL,
         username: DEFAULT_ADMIN_USERNAME,
-        hashed_password: hashedPassword,
+        hashedPassword: hashedPassword,
       },
       update: {
         username: DEFAULT_ADMIN_USERNAME,
-        hashed_password: hashedPassword,
+        hashedPassword: hashedPassword,
       },
     });
 

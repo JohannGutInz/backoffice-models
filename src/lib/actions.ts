@@ -40,7 +40,7 @@ export async function createUserAction(email: string, password: string): Promise
       data: {
         email: cleanedEmail,
         username: "dummy-user",
-        hashed_password: hashedPassword,
+        hashedPassword: hashedPassword,
       },
     });
 
@@ -69,7 +69,7 @@ export async function loginAction(_prev: ActionState, formData: FormData): Promi
     return { status: "error", message: "Correo o contraseña incorrectos." };
   }
 
-  const passwordMatches = await bcrypt.compare(password, usuario.hashed_password);
+  const passwordMatches = await bcrypt.compare(password, usuario.hashedPassword);
   if (!passwordMatches) {
     return { status: "error", message: "Correo o contraseña incorrectos." };
   }
