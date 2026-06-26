@@ -5,20 +5,19 @@ import Link from "next/link";
 import { Bell, ChevronDown, LogOut, Settings, UserRound } from "lucide-react";
 import { Avatar } from "@/components/ui/Avatar";
 import { logoutAction } from "@/lib/actions";
-import type { UsuarioStaff } from "@/lib/types";
+import type { UserRole } from "@/generated/prisma/browser";
+import type { UserW } from "@/lib/types";
 
-const ROLE_LABEL: Record<string, string> = {
-  admin: "admin",
-  booker: "booker",
-  moderador: "moderador",
-  finanzas: "finanzas",
+const ROLE_LABEL: Record<UserRole, string> = {
+  ADMIN: "admin",
+  USER: "usuario",
 };
 
 export function Topbar({
   usuario,
   notificationCount,
 }: {
-  usuario: UsuarioStaff;
+  usuario: UserW;
   notificationCount: number;
 }) {
   const [menuOpen, setMenuOpen] = useState(false);
@@ -42,10 +41,10 @@ export function Topbar({
           onClick={() => setMenuOpen((open) => !open)}
           className="flex items-center gap-2.5 rounded-lg py-1.5 pl-1.5 pr-2 hover:bg-zinc-100"
         >
-          <Avatar name={usuario.nombre} size="md" />
+          <Avatar name={usuario.username} size="md" />
           <span className="hidden text-left sm:block">
-            <span className="block text-sm font-medium text-zinc-900">{usuario.nombre}</span>
-            <span className="block text-xs text-zinc-500">{ROLE_LABEL[usuario.rol] ?? usuario.rol}</span>
+            <span className="block text-sm font-medium text-zinc-900">{usuario.username}</span>
+            <span className="block text-xs text-zinc-500">{ROLE_LABEL[usuario.role]}</span>
           </span>
           <ChevronDown className="h-4 w-4 text-zinc-400" />
         </button>

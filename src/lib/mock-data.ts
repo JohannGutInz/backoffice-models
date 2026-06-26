@@ -15,15 +15,6 @@ import type {
 
 export const AGENCY_ID = "ag_default";
 
-export const usuarioActual: UsuarioStaff = {
-  id: "staff_01",
-  agencyId: AGENCY_ID,
-  nombre: "Usuario Prueba",
-  correo: "ing.johanngut@gmail.com",
-  rol: "admin",
-  avatarIniciales: "UP",
-};
-
 // Credencial de demo mientras no hay backend de auth real con hashing/DB de staff.
 // El día que exista API de auth, loginAction (lib/actions.ts) es lo único que cambia.
 export const CREDENCIAL_DEMO_STAFF = {

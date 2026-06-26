@@ -2,6 +2,8 @@
 // Toda entidad lleva agencyId para soportar multi-tenancy lógico desde el día uno,
 // aunque hoy solo exista una agencia (ver CLAUDE-proyecto-real.md).
 
+import { User } from "@/generated/prisma/browser";
+
 export type EstadoModelo = "activo" | "borrador" | "inactivo";
 
 export type CategoriaModelo =
@@ -169,3 +171,6 @@ export interface ConfiguracionSitio {
   registroPublicoActivo: boolean;
   registroLinkSlug: string;
 }
+
+// UserWithoutPassword
+export type UserW = Omit<User, "hashedPassword">

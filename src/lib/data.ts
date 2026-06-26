@@ -1,3 +1,4 @@
+import { cookies } from "next/headers";
 import {
   AGENCY_ID,
   bookings,
@@ -9,7 +10,6 @@ import {
   modelos,
   paquetes,
   solicitudesRegistro,
-  usuarioActual,
 } from "./mock-data";
 import type {
   Booking,
@@ -18,7 +18,10 @@ import type {
   Modelo,
   Paquete,
   SolicitudRegistro,
+  UserW,
 } from "./types";
+import { SESSION_COOKIE, verifySessionToken } from "./session";
+import { prisma } from "@/db";
 
 // Capa de acceso a datos. Hoy lee de los fixtures en memoria (mock-data.ts).
 // Cuando exista la API central, estas funciones son el único lugar que cambia:
@@ -29,7 +32,28 @@ function byId<T extends { id: string }>(items: T[], id: string): T | undefined {
 }
 
 export async function getUsuarioActual() {
-  return usuarioActual;
+  const token = (await cookies()).get(SESSION_COOKIE)?.value ?? "";
+  const parsedToken = await verifySessionToken(token);
+
+  if (!parsedToken) {
+    throw new Error("Invalid token");
+  }
+
+  const user = await prisma.user.findUnique({
+    where: {
+      id: parsedToken.sub
+    },
+    omit: {
+      hashedPassword: true,
+    },
+  });
+
+
+  if (!user) {
+    throw new Error("User not found");
+  }
+
+  return user satisfies UserW;
 }
 
 // ---------- Modelos ----------

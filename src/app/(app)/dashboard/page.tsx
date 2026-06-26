@@ -30,14 +30,13 @@ export default async function DashboardPage() {
   ]);
 
   const now = new Date();
-  const primerNombre = usuario.nombre.split(" ")[0];
 
   return (
     <div>
       <div className="mb-6 flex flex-wrap items-start justify-between gap-4">
         <div>
           <h1 className="text-2xl font-semibold tracking-tight text-zinc-900">
-            {greetingForHour(now)}, {primerNombre}
+            {greetingForHour(now)}, {usuario.username}
           </h1>
           <p className="mt-1 text-sm text-zinc-500">{formatLongDate(now)}</p>
         </div>

@@ -3,15 +3,15 @@
 import { useState } from "react";
 import { Sidebar } from "./Sidebar";
 import { Topbar } from "./Topbar";
-import type { UsuarioStaff } from "@/lib/types";
 import { cn } from "@/lib/utils";
+import { UserW } from "@/lib/types";
 
 export function AppShell({
   usuario,
   pendingCount,
   children,
 }: {
-  usuario: UsuarioStaff;
+  usuario: UserW;
   pendingCount: number;
   children: React.ReactNode;
 }) {

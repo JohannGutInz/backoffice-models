@@ -25,32 +25,6 @@ export async function hashPassword(password: string) {
   return bcrypt.hash(password, 10);
 }
 
-export async function createUserAction(email: string, password: string): Promise<ActionState> {
-  const cleanedEmail = email.trim().toLowerCase();
-  const cleanedPassword = password.trim();
-
-  if (!cleanedEmail || !cleanedPassword) {
-    return { status: "error", message: "Email and password are required." };
-  }
-
-  try {
-    const hashedPassword = await hashPassword(cleanedPassword);
-
-    await prisma.user.create({
-      data: {
-        email: cleanedEmail,
-        username: "dummy-user",
-        hashedPassword: hashedPassword,
-      },
-    });
-
-    return { status: "success", message: `Created user: ${cleanedEmail}` };
-  } catch (error) {
-    const message = error instanceof Error ? error.message : "Failed to create user.";
-    return { status: "error", message };
-  }
-}
-
 // ---------- Sesión de staff (backoffice) ----------
 
 export async function loginAction(_prev: ActionState, formData: FormData): Promise<ActionState> {
