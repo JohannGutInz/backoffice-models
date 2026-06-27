@@ -52,14 +52,14 @@ export default function LoginForm() {
 
           <form action={formAction} className="mt-8 space-y-4">
             <div>
-              <label htmlFor="correo" className="mb-1.5 block text-sm font-medium text-zinc-700">
+              <label htmlFor="email" className="mb-1.5 block text-sm font-medium text-zinc-700">
                 Correo
               </label>
               <div className="relative">
                 <Mail className="pointer-events-none absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-zinc-400" />
                 <input
-                  id="correo"
-                  name="correo"
+                  id="email"
+                  name="email"
                   type="email"
                   required
                   className="w-full rounded-lg border border-zinc-300 bg-white py-2.5 pl-10 pr-3 text-sm text-zinc-900 outline-none focus:border-gold-500 focus:ring-1 focus:ring-gold-500"

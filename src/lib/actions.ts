@@ -11,6 +11,7 @@ import type { CategoriaModelo, EstadoSolicitud, Modelo } from "./types";
 import { calcularEdad, toDateKey } from "./utils";
 import { emailContactoCliente, emailDecisionSolicitud, emailNuevaSolicitudStaff, emailSolicitudRecibida } from "./email";
 import { APP_ROUTE } from "./routes";
+import z from "zod";
 
 // Mutaciones sobre los fixtures en memoria (mock-data.ts). Hacen las veces de la
 // API central mientras no existe un backend real — por eso viven detrás de
@@ -27,32 +28,35 @@ export async function hashPassword(password: string) {
 }
 
 // ---------- Sesión de staff (backoffice) ----------
+const loginFormSchema = z.object({
+  email: z.email(),
+  password: z.string(),
+})
 
 export async function loginAction(_prev: ActionState, formData: FormData): Promise<ActionState> {
-  const correo = String(formData.get("correo") ?? "").trim().toLowerCase();
-  const password = String(formData.get("password") ?? "");
+  const { success, data } = loginFormSchema.safeParse(formData.entries());
 
-  if (!correo || !password) {
+  if (!success) {
     return { status: "error", message: "Correo y contraseña son obligatorios." };
   }
 
-  const usuario = await prisma.user.findUnique({
-    where: { email: correo },
+  const user = await prisma.user.findUnique({
+    where: { email: data.email },
   });
 
-  if (!usuario) {
+  if (!user) {
     return { status: "error", message: "Correo o contraseña incorrectos." };
   }
 
-  const passwordMatches = await bcrypt.compare(password, usuario.hashedPassword);
+  const passwordMatches = await bcrypt.compare(data.password, user.hashedPassword);
   if (!passwordMatches) {
     return { status: "error", message: "Correo o contraseña incorrectos." };
   }
 
   const sessionToken = await createSessionToken({
-    sub: usuario.id,
-    email: usuario.email,
-    username: usuario.username,
+    sub: user.id,
+    email: user.email,
+    username: user.username,
   });
 
   const cookieStore = await cookies();
@@ -70,7 +74,7 @@ export async function loginAction(_prev: ActionState, formData: FormData): Promi
 export async function logoutAction() {
   const cookieStore = await cookies();
   cookieStore.delete(SESSION_COOKIE);
-  redirect("/login");
+  redirect(APP_ROUTE.app.login.index);
 }
 
 function randomToken(prefix: string) {
