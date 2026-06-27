@@ -34,7 +34,7 @@ const loginFormSchema = z.object({
 })
 
 export async function loginAction(_prev: ActionState, formData: FormData): Promise<ActionState> {
-  const { success, data } = loginFormSchema.safeParse(formData.entries());
+  const { success, data } = loginFormSchema.safeParse(Object.fromEntries(formData));
 
   if (!success) {
     return { status: "error", message: "Correo y contraseña son obligatorios." };
