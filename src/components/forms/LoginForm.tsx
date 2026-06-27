@@ -1,3 +1,5 @@
+"use client";
+
 import { ActionState, loginAction } from "@/lib/actions";
 import { Lock, Mail } from "lucide-react";
 import { useActionState } from "react";
