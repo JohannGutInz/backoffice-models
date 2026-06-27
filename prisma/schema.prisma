@@ -44,7 +44,7 @@ model Agency {
 model Country {
   id      String @id @default(uuid())
   name    String
-  label   String // MX, USA, etc
+  label   String  @unique// MX, USA, etc
   demonym String // Mexicano, American, etc
 
   models Model[]
@@ -54,23 +54,29 @@ model Country {
 }
 
 model State {
-  id   String @id @default(uuid())
-  name String
+  id    String @id @default(uuid())
+  name  String
+  label String @unique // CDMX, SIN, etc
 
-  cities City[]
+  cities Municipality[]
 
   countryId String  @map("country_id")
   country   Country @relation(fields: [countryId], references: [id])
+
+  @@map("states")
 }
 
-model City {
+model Municipality {
   id   String @id @default(uuid())
   name String
+  label String @unique // CLN, 
 
   stateId String @map("state_id")
   state   State  @relation(fields: [stateId], references: [id])
 
   models Model[]
+
+  @@map("municipalities")
 }
 
 model Category {
@@ -100,8 +106,8 @@ model Model {
   countryId String  @map("country_id")
   country   Country @relation(fields: [countryId], references: [id])
 
-  cityId String @map("city_id")
-  city   City   @relation(fields: [cityId], references: [id])
+  cityId String       @map("city_id")
+  city   Municipality @relation(fields: [cityId], references: [id])
 
   @@map("models")
 }
