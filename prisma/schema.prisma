@@ -9,7 +9,7 @@ generator client {
 }
 
 datasource db {
-  provider  = "postgresql"
+  provider = "postgresql"
 }
 
 enum UserRole {
@@ -25,8 +25,8 @@ model User {
   role           UserRole @default(USER)
   createdAt      DateTime @default(now()) @map("created_at")
 
-  agencyId       String   @map("agency_id")
-  agency         Agency   @relation(fields: [agencyId], references: [id])
+  agencyId String @map("agency_id")
+  agency   Agency @relation(fields: [agencyId], references: [id])
 
   @@map("users")
 }
@@ -35,8 +35,73 @@ model Agency {
   id        String   @id @default(uuid())
   name      String
   createdAt DateTime @default(now()) @map("created_at")
-  
-  users     User[]
+
+  users User[]
 
   @@map("agencies")
+}
+
+model Country {
+  id      String @id @default(uuid())
+  name    String
+  label   String // MX, USA, etc
+  demonym String // Mexicano, American, etc
+
+  models Model[]
+  states State[]
+
+  @@map("countries")
+}
+
+model State {
+  id   String @id @default(uuid())
+  name String
+
+  cities City[]
+
+  countryId String  @map("country_id")
+  country   Country @relation(fields: [countryId], references: [id])
+}
+
+model City {
+  id   String @id @default(uuid())
+  name String
+
+  stateId String @map("state_id")
+  state   State  @relation(fields: [stateId], references: [id])
+
+  models Model[]
+}
+
+model Category {
+  id   String @id @default(uuid())
+  name String
+
+  models Model[]
+
+  @@map("categories")
+}
+
+enum ModelGenre {
+  MALE
+  FEMALE
+}
+
+model Model {
+  id        String     @id @default(uuid())
+  fullName  String     @map("full_name")
+  email     String     @unique
+  phone     String
+  birthDate DateTime   @map("birth_date") @db.Date
+  genre     ModelGenre
+
+  categories Category[]
+
+  countryId String  @map("country_id")
+  country   Country @relation(fields: [countryId], references: [id])
+
+  cityId String @map("city_id")
+  city   City   @relation(fields: [cityId], references: [id])
+
+  @@map("models")
 }
