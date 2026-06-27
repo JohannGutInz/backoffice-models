@@ -10,6 +10,7 @@ import { SESSION_COOKIE, createSessionToken } from "./session";
 import type { CategoriaModelo, EstadoSolicitud, Modelo } from "./types";
 import { calcularEdad, toDateKey } from "./utils";
 import { emailContactoCliente, emailDecisionSolicitud, emailNuevaSolicitudStaff, emailSolicitudRecibida } from "./email";
+import { APP_ROUTE } from "./routes";
 
 // Mutaciones sobre los fixtures en memoria (mock-data.ts). Hacen las veces de la
 // API central mientras no existe un backend real — por eso viven detrás de
@@ -63,10 +64,7 @@ export async function loginAction(_prev: ActionState, formData: FormData): Promi
     maxAge: 60 * 60 * 8,
   });
 
-  // Solo se acepta una ruta interna como destino post-login, nunca una URL externa
-  // (evita que un ?next= manipulado redirija fuera del sitio).
-  const next = String(formData.get("next") ?? "/dashboard");
-  redirect(next.startsWith("/") && !next.startsWith("//") ? next : "/dashboard");
+  redirect(APP_ROUTE.app.dashboard.index);
 }
 
 export async function logoutAction() {

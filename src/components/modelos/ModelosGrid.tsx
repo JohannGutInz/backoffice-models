@@ -7,6 +7,7 @@ import type { Modelo } from "@/lib/types";
 import { CATEGORIA_LABEL } from "@/lib/labels";
 import { EstadoBadge } from "@/components/ui/Badge";
 import { Avatar } from "@/components/ui/Avatar";
+import { APP_ROUTE } from "@/lib/routes";
 import { formatCurrency } from "@/lib/utils";
 
 export function ModelosGrid({ modelos }: { modelos: Modelo[] }) {
@@ -69,7 +70,7 @@ export function ModelosGrid({ modelos }: { modelos: Modelo[] }) {
         {filtrados.map((modelo) => (
           <Link
             key={modelo.id}
-            href={`/modelos/${modelo.id}`}
+            href={`${APP_ROUTE.app.modelos.index}/${modelo.id}`}
             className="group overflow-hidden rounded-xl border border-zinc-200 bg-white transition-shadow hover:shadow-md"
           >
             <div className="relative flex h-40 items-center justify-center bg-gradient-to-br from-zinc-900 via-zinc-950 to-black">

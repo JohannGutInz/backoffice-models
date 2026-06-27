@@ -6,6 +6,7 @@ import { Table, THead, Th, Tr, Td } from "@/components/ui/Table";
 import { EstadoBadge } from "@/components/ui/Badge";
 import { Avatar } from "@/components/ui/Avatar";
 import { listPaquetes, nombreCliente, nombreModelo } from "@/lib/data";
+import { APP_ROUTE } from "@/lib/routes";
 import { formatCurrency, formatDate } from "@/lib/utils";
 
 export default async function PaquetesPage() {
@@ -18,7 +19,7 @@ export default async function PaquetesPage() {
         title="Paquetes"
         subtitle="Agrupa modelos en una propuesta para enviar al cliente."
         actions={
-          <LinkButton href="/paquetes">
+          <LinkButton href={APP_ROUTE.app.paquetes.index}>
             <Plus className="h-4 w-4" /> Nuevo paquete
           </LinkButton>
         }

@@ -11,6 +11,7 @@ import {
   UsersRound,
   type LucideIcon,
 } from "lucide-react";
+import { APP_ROUTE } from "@/lib/routes";
 
 export interface NavItem {
   label: string;
@@ -25,31 +26,31 @@ export interface NavGroup {
 
 export const NAV_GROUPS: NavGroup[] = [
   {
-    items: [{ label: "Inicio", href: "/dashboard", icon: LayoutGrid }],
+    items: [{ label: "Inicio", href: APP_ROUTE.app.dashboard.index, icon: LayoutGrid }],
   },
   {
     label: "Gestión de talento",
     items: [
-      { label: "Modelos", href: "/modelos", icon: UsersRound },
-      { label: "Moderación", href: "/moderacion", icon: ShieldCheck },
-      { label: "Calendario", href: "/calendario", icon: CalendarDays },
+      { label: "Modelos", href: APP_ROUTE.app.modelos.index, icon: UsersRound },
+      { label: "Moderación", href: APP_ROUTE.app.moderacion.index, icon: ShieldCheck },
+      { label: "Calendario", href: APP_ROUTE.app.calendario.index, icon: CalendarDays },
     ],
   },
   {
     label: "Comercial",
     items: [
-      { label: "Clientes", href: "/clientes", icon: Building2 },
-      { label: "Eventos", href: "/eventos", icon: Sparkles },
-      { label: "Bookings", href: "/bookings", icon: ClipboardList },
-      { label: "Paquetes", href: "/paquetes", icon: PackageOpen },
+      { label: "Clientes", href: APP_ROUTE.app.clientes.index, icon: Building2 },
+      { label: "Eventos", href: APP_ROUTE.app.eventos.index, icon: Sparkles },
+      { label: "Bookings", href: APP_ROUTE.app.bookings.index, icon: ClipboardList },
+      { label: "Paquetes", href: APP_ROUTE.app.paquetes.index, icon: PackageOpen },
     ],
   },
   {
     label: "Finanzas",
-    items: [{ label: "Ingresos", href: "/ingresos", icon: CircleDollarSign }],
+    items: [{ label: "Ingresos", href: APP_ROUTE.app.ingresos.index, icon: CircleDollarSign }],
   },
   {
     label: "Configuración",
-    items: [{ label: "Sitio público", href: "/configuracion", icon: Globe }],
+    items: [{ label: "Sitio público", href: APP_ROUTE.app.configuracion.index, icon: Globe }],
   },
 ];

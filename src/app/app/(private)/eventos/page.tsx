@@ -6,6 +6,7 @@ import { SearchForm } from "@/components/ui/SearchForm";
 import { Table, THead, Th, Tr, Td } from "@/components/ui/Table";
 import { EstadoBadge } from "@/components/ui/Badge";
 import { listEventos, nombreCliente } from "@/lib/data";
+import { APP_ROUTE } from "@/lib/routes";
 import { formatDate } from "@/lib/utils";
 
 export default async function EventosPage({
@@ -34,7 +35,7 @@ export default async function EventosPage({
         title="Eventos"
         subtitle="Servicios y trabajos contratados por los clientes."
         actions={
-          <LinkButton href="/eventos">
+          <LinkButton href={APP_ROUTE.app.eventos.index}>
             <Plus className="h-4 w-4" /> Nuevo evento
           </LinkButton>
         }

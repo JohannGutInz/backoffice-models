@@ -7,6 +7,7 @@ import { Avatar } from "@/components/ui/Avatar";
 import { StatusTabs } from "@/components/ui/StatusTabs";
 import { CATEGORIA_LABEL } from "@/lib/labels";
 import { listSolicitudes } from "@/lib/data";
+import { APP_ROUTE } from "@/lib/routes";
 import { formatDate } from "@/lib/utils";
 
 export default async function ModeracionPage({
@@ -39,7 +40,7 @@ export default async function ModeracionPage({
       />
 
       <StatusTabs
-        basePath="/moderacion"
+        basePath={APP_ROUTE.app.moderacion.index}
         activo={activo}
         counts={counts}
         tabs={[
@@ -55,7 +56,7 @@ export default async function ModeracionPage({
         <ul className="divide-y divide-zinc-100">
           {ordenadas.map((sol) => (
             <li key={sol.id}>
-              <Link href={`/moderacion/${sol.id}`} className="flex items-center gap-4 px-5 py-4 hover:bg-zinc-50">
+              <Link href={`${APP_ROUTE.app.moderacion.index}/${sol.id}`} className="flex items-center gap-4 px-5 py-4 hover:bg-zinc-50">
                 <Avatar name={sol.nombreCompleto} />
                 <div className="min-w-0 flex-1">
                   <p className="truncate text-sm font-medium text-zinc-900">{sol.nombreCompleto}</p>

@@ -6,6 +6,7 @@ import { Table, THead, Th, Tr, Td } from "@/components/ui/Table";
 import { EstadoBadge } from "@/components/ui/Badge";
 import { StatusTabs } from "@/components/ui/StatusTabs";
 import { listBookings, listEventos, nombreCliente, nombreEvento, nombreModelo } from "@/lib/data";
+import { APP_ROUTE } from "@/lib/routes";
 import { formatCurrency, formatDate } from "@/lib/utils";
 
 export default async function BookingsPage({
@@ -35,14 +36,14 @@ export default async function BookingsPage({
         title="Bookings"
         subtitle="Contratación de un modelo para un evento — tarifa y estado propios."
         actions={
-          <LinkButton href="/bookings">
+          <LinkButton href={APP_ROUTE.app.bookings.index}>
             <Plus className="h-4 w-4" /> Nuevo booking
           </LinkButton>
         }
       />
 
       <StatusTabs
-        basePath="/bookings"
+        basePath={APP_ROUTE.app.bookings.index}
         activo={activo}
         counts={counts}
         tabs={[

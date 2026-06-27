@@ -5,6 +5,7 @@ import { Card, CardHeader } from "@/components/ui/Card";
 import { EstadoBadge } from "@/components/ui/Badge";
 import { MonthGrid } from "@/components/calendario/MonthGrid";
 import { listBookings, nombreEvento, nombreModelo } from "@/lib/data";
+import { APP_ROUTE } from "@/lib/routes";
 import { formatDate, formatMonthYear, toDateKey } from "@/lib/utils";
 import type { Booking } from "@/lib/types";
 
@@ -58,19 +59,19 @@ export default async function CalendarioPage({
             <h3 className="text-sm font-semibold text-zinc-900">{formatMonthYear(new Date(year, month, 1))}</h3>
             <div className="flex items-center gap-1.5">
               <Link
-                href={`/calendario?month=${currentParam}`}
+                href={`${APP_ROUTE.app.calendario.index}?month=${currentParam}`}
                 className="rounded-lg px-2.5 py-1.5 text-xs font-medium text-zinc-500 hover:bg-zinc-100"
               >
                 Hoy
               </Link>
               <Link
-                href={`/calendario?month=${prevParam}`}
+                href={`${APP_ROUTE.app.calendario.index}?month=${prevParam}`}
                 className="flex h-8 w-8 items-center justify-center rounded-lg text-zinc-500 hover:bg-zinc-100"
               >
                 <ChevronLeft className="h-4 w-4" />
               </Link>
               <Link
-                href={`/calendario?month=${nextParam}`}
+                href={`${APP_ROUTE.app.calendario.index}?month=${nextParam}`}
                 className="flex h-8 w-8 items-center justify-center rounded-lg text-zinc-500 hover:bg-zinc-100"
               >
                 <ChevronRight className="h-4 w-4" />

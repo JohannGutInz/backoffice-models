@@ -9,6 +9,7 @@ import { Field, FieldGrid } from "@/components/ui/Field";
 import { EstadoBadge } from "@/components/ui/Badge";
 import { CATEGORIA_LABEL } from "@/lib/labels";
 import { addDays, calcularEdad, formatDate, parseDateOnly } from "@/lib/utils";
+import { APP_ROUTE } from "@/lib/routes";
 
 export default async function SolicitudDetailPage({
   params,
@@ -25,7 +26,7 @@ export default async function SolicitudDetailPage({
 
   return (
     <div>
-      <Link href="/moderacion" className="mb-5 inline-flex items-center gap-1.5 text-sm text-zinc-500 hover:text-zinc-800">
+      <Link href={APP_ROUTE.app.moderacion.index} className="mb-5 inline-flex items-center gap-1.5 text-sm text-zinc-500 hover:text-zinc-800">
         <ArrowLeft className="h-4 w-4" /> Volver a Moderación
       </Link>
 

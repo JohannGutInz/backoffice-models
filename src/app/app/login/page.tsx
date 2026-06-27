@@ -30,8 +30,6 @@ export default function LoginPage() {
 }
 
 function LoginForm() {
-  const searchParams = useSearchParams();
-  const next = searchParams.get("next") ?? "/dashboard";
   const [state, formAction] = useActionState(loginAction, initialState);
 
   return (
@@ -74,8 +72,6 @@ function LoginForm() {
           </p>
 
           <form action={formAction} className="mt-8 space-y-4">
-            <input type="hidden" name="next" value={next} />
-
             <div>
               <label htmlFor="correo" className="mb-1.5 block text-sm font-medium text-zinc-700">
                 Correo

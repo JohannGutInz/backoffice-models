@@ -9,6 +9,7 @@ import { EstadoBadge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { VisibilidadLandingToggle } from "@/components/modelos/VisibilidadLandingToggle";
 import { CATEGORIA_LABEL } from "@/lib/labels";
+import { APP_ROUTE } from "@/lib/routes";
 import { calcularEdad, formatCurrency, formatDate } from "@/lib/utils";
 
 export default async function ModeloDetailPage({
@@ -23,7 +24,7 @@ export default async function ModeloDetailPage({
 
   return (
     <div>
-      <Link href="/modelos" className="mb-5 inline-flex items-center gap-1.5 text-sm text-zinc-500 hover:text-zinc-800">
+      <Link href={APP_ROUTE.app.modelos.index} className="mb-5 inline-flex items-center gap-1.5 text-sm text-zinc-500 hover:text-zinc-800">
         <ArrowLeft className="h-4 w-4" /> Volver a Modelos
       </Link>
 

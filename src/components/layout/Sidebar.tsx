@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { PanelLeftClose, PanelLeftOpen } from "lucide-react";
+import { APP_ROUTE } from "@/lib/routes";
 import { NAV_GROUPS } from "@/lib/nav-config";
 import { cn } from "@/lib/utils";
 
@@ -33,7 +34,7 @@ export function Sidebar({
           {collapsed ? <PanelLeftOpen className="h-[18px] w-[18px]" /> : <PanelLeftClose className="h-[18px] w-[18px]" />}
         </button>
         {!collapsed && (
-          <Link href="/dashboard" className="truncate text-lg leading-none font-semibold text-white">
+          <Link href={APP_ROUTE.app.dashboard.index} className="truncate text-lg leading-none font-semibold text-white">
             Glamour<span className="text-gold-400">Models</span>
           </Link>
         )}
@@ -50,7 +51,7 @@ export function Sidebar({
             <ul className="space-y-0.5">
               {group.items.map((item) => {
                 const active = pathname === item.href || pathname?.startsWith(item.href + "/");
-                const showBadge = item.href === "/moderacion" && pendingCount > 0;
+                const showBadge = item.href === APP_ROUTE.app.moderacion.index && pendingCount > 0;
                 return (
                   <li key={item.href}>
                     <Link

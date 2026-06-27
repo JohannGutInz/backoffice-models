@@ -6,6 +6,7 @@ import { SearchForm } from "@/components/ui/SearchForm";
 import { Table, THead, Th, Tr, Td } from "@/components/ui/Table";
 import { Avatar } from "@/components/ui/Avatar";
 import { listClientes } from "@/lib/data";
+import { APP_ROUTE } from "@/lib/routes";
 import { formatCurrency, formatDate } from "@/lib/utils";
 
 export default async function ClientesPage({
@@ -30,7 +31,7 @@ export default async function ClientesPage({
         title="Clientes"
         subtitle="CRM de empresas y contactos que solicitan talento."
         actions={
-          <LinkButton href="/clientes">
+          <LinkButton href={APP_ROUTE.app.clientes.index}>
             <Plus className="h-4 w-4" /> Nuevo cliente
           </LinkButton>
         }

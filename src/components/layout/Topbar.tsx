@@ -7,6 +7,7 @@ import { Avatar } from "@/components/ui/Avatar";
 import { logoutAction } from "@/lib/actions";
 import type { UserRole } from "@/generated/prisma/browser";
 import type { UserW } from "@/lib/types";
+import { APP_ROUTE } from "@/lib/routes";
 
 const ROLE_LABEL: Record<UserRole, string> = {
   ADMIN: "admin",
@@ -54,14 +55,14 @@ export function Topbar({
             <div className="fixed inset-0 z-10" onClick={() => setMenuOpen(false)} />
             <div className="absolute right-0 z-20 mt-2 w-52 overflow-hidden rounded-xl border border-zinc-200 bg-white py-1.5 shadow-lg">
               <Link
-                href="/configuracion"
+                href={APP_ROUTE.app.configuracion.index}
                 className="flex items-center gap-2.5 px-3.5 py-2 text-sm text-zinc-600 hover:bg-zinc-50"
                 onClick={() => setMenuOpen(false)}
               >
                 <UserRound className="h-4 w-4" /> Mi perfil
               </Link>
               <Link
-                href="/configuracion"
+                href={APP_ROUTE.app.configuracion.index}
                 className="flex items-center gap-2.5 px-3.5 py-2 text-sm text-zinc-600 hover:bg-zinc-50"
                 onClick={() => setMenuOpen(false)}
               >

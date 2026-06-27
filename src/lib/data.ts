@@ -22,6 +22,8 @@ import type {
 } from "./types";
 import { SESSION_COOKIE, verifySessionToken } from "./session";
 import { prisma } from "@/db";
+import { redirect } from "next/navigation";
+import { APP_ROUTE } from "./routes";
 
 // Capa de acceso a datos. Hoy lee de los fixtures en memoria (mock-data.ts).
 // Cuando exista la API central, estas funciones son el único lugar que cambia:
@@ -32,11 +34,18 @@ function byId<T extends { id: string }>(items: T[], id: string): T | undefined {
 }
 
 export async function getUsuarioActual() {
-  const token = (await cookies()).get(SESSION_COOKIE)?.value ?? "";
-  const parsedToken = await verifySessionToken(token);
+  const cookieStore = await cookies();
+  const token = cookieStore.get(SESSION_COOKIE);
+
+  if (!token) {
+    redirect(APP_ROUTE.app.login.index);
+  }
+
+  const parsedToken = await verifySessionToken(token.value);
 
   if (!parsedToken) {
-    throw new Error("Invalid token");
+    cookieStore.delete(SESSION_COOKIE);
+    redirect(APP_ROUTE.app.login.index);
   }
 
   const user = await prisma.user.findUnique({

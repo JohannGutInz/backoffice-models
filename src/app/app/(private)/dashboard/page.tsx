@@ -20,6 +20,7 @@ import { StatusDonutChart } from "@/components/charts/StatusDonutChart";
 import { AlertList } from "@/components/dashboard/AlertList";
 import { QuickActions } from "@/components/dashboard/QuickActions";
 import { getDashboardStats, getIngresosPorMes, getUsuarioActual, nombreEvento, nombreModelo } from "@/lib/data";
+import { APP_ROUTE } from "@/lib/routes";
 import { formatCurrency, formatDate, formatLongDate, greetingForHour } from "@/lib/utils";
 
 export default async function DashboardPage() {
@@ -40,7 +41,7 @@ export default async function DashboardPage() {
           </h1>
           <p className="mt-1 text-sm text-zinc-500">{formatLongDate(now)}</p>
         </div>
-        <LinkButton href="/bookings">
+        <LinkButton href={APP_ROUTE.app.bookings.index}>
           <Plus className="h-4 w-4" /> Nuevo booking
         </LinkButton>
       </div>
@@ -112,7 +113,7 @@ export default async function DashboardPage() {
           <CardHeader
             title="Últimos bookings"
             action={
-              <a href="/bookings" className="text-xs font-medium text-gold-700 hover:text-gold-600">
+              <a href={APP_ROUTE.app.bookings.index} className="text-xs font-medium text-gold-700 hover:text-gold-600">
                 Ver todos →
               </a>
             }
@@ -156,31 +157,31 @@ export default async function DashboardPage() {
                 tone: "rose",
                 title: `${stats.solicitudesPendientes} solicitudes pendientes`,
                 subtitle: "Esperando moderación",
-                href: "/moderacion",
+                href: APP_ROUTE.app.moderacion.index,
               },
               {
                 icon: CalendarClock,
                 tone: "amber",
                 title: `${stats.bookingsPendientes} bookings sin confirmar`,
                 subtitle: "Pendientes de confirmación del modelo",
-                href: "/bookings",
+                href: APP_ROUTE.app.bookings.index,
               },
               {
                 icon: PackageOpen,
                 tone: "sky",
                 title: `${stats.paquetesBorrador} paquetes sin enviar`,
                 subtitle: "En borrador, listos para el cliente",
-                href: "/paquetes",
+                href: APP_ROUTE.app.paquetes.index,
               },
             ]}
           />
 
           <QuickActions
             items={[
-              { icon: UserRoundPlus, label: "Nuevo modelo", href: "/modelos" },
-              { icon: Sparkles, label: "Nuevo evento", href: "/eventos" },
-              { icon: ClipboardList, label: "Nuevo booking", href: "/bookings" },
-              { icon: ShieldCheck, label: "Revisar solicitudes", href: "/moderacion" },
+              { icon: UserRoundPlus, label: "Nuevo modelo", href: APP_ROUTE.app.modelos.index },
+              { icon: Sparkles, label: "Nuevo evento", href: APP_ROUTE.app.eventos.index },
+              { icon: ClipboardList, label: "Nuevo booking", href: APP_ROUTE.app.bookings.index },
+              { icon: ShieldCheck, label: "Revisar solicitudes", href: APP_ROUTE.app.moderacion.index },
             ]}
           />
         </div>
