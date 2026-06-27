@@ -59,7 +59,8 @@ export async function getUsuarioActual() {
 
 
   if (!user) {
-    throw new Error("User not found");
+    cookieStore.delete(SESSION_COOKIE);
+    redirect(APP_ROUTE.app.login.index);
   }
 
   return user satisfies UserW;
