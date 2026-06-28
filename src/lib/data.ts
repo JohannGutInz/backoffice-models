@@ -68,12 +68,26 @@ export async function getUsuarioActual() {
 
 // ---------- Modelos ----------
 
-export async function listModelos(): Promise<Modelo[]> {
-  return modelos.filter((m) => m.agencyId === AGENCY_ID);
+const modelInclude = {
+  categories: true,
+  country: true,
+  city: { include: { state: true } },
+} as const;
+
+export type ModelWithRelations = Awaited<ReturnType<typeof listModelos>>[number];
+
+export async function listModelos() {
+  return prisma.model.findMany({
+    include: modelInclude,
+    orderBy: { fullName: "asc" },
+  });
 }
 
-export async function getModelo(id: string): Promise<Modelo | undefined> {
-  return byId(modelos, id);
+export async function getModelo(id: string) {
+  return prisma.model.findUnique({
+    where: { id },
+    include: modelInclude,
+  });
 }
 
 export function nombreModelo(id: string): string {
@@ -183,7 +197,7 @@ export async function getDashboardStats() {
 
   const paquetesPendientes = pkgs.filter((p) => p.estado === "borrador" || p.estado === "enviado");
   const solicitudesPendientes = sols.filter((s) => s.estado === "pendiente" || s.estado === "requiere_cambios");
-  const modelosActivos = mdls.filter((m) => m.estado === "activo");
+  const modelosActivos = mdls;
 
   const bookingsPorEstatus = [
     { estatus: "pendiente", total: bks.filter((b) => b.estado === "pendiente").length },
