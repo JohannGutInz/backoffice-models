@@ -9,7 +9,7 @@ import { AGENCY_ID, configuracionSitio, modelos, solicitudesRegistro } from "./m
 import { SESSION_COOKIE, createSessionToken } from "./session";
 import type { CategoriaModelo, EstadoSolicitud, Modelo } from "./types";
 import { calcularEdad, toDateKey } from "./utils";
-import { emailContactoCliente, emailDecisionSolicitud, emailNuevaSolicitudStaff, emailSolicitudRecibida } from "./email";
+import { emailContactoCliente, emailDecisionSolicitud } from "./email";
 import { APP_ROUTE } from "./routes";
 import z from "zod";
 
@@ -87,60 +87,69 @@ function siguienteNumeroModelo() {
 
 // ---------- Auto-registro público ----------
 
+const registroSchema = z.object({
+  nombreCompleto: z.string().min(1, "El nombre completo es obligatorio."),
+  correo: z.email("Correo electrónico inválido."),
+  telefono: z.string().min(1, "El teléfono es obligatorio."),
+  fechaNacimiento: z
+    .string()
+    .min(1, "La fecha de nacimiento es obligatoria.")
+    .refine((v) => calcularEdad(v) >= 18, "Solo aceptamos registros de personas mayores de 18 años."),
+  genero: z.enum(["MALE", "FEMALE"], { error: "Género inválido." }),
+  countryId: z.string().uuid("País inválido."),
+  cityId: z.string().uuid("Ciudad inválida."),
+  categoryIds: z.array(z.string().uuid()).min(1, "Selecciona al menos una categoría."),
+  captchaA: z.coerce.number(),
+  captchaB: z.coerce.number(),
+  captchaRespuesta: z.coerce.number(),
+});
+
 export async function submitRegistroAction(_prev: ActionState, formData: FormData): Promise<ActionState> {
-  // Honeypot: los bots suelen rellenar todos los inputs, incluido este, oculto para humanos.
   if (String(formData.get("sitio_web") ?? "").trim() !== "") {
     return { status: "success", message: "¡Gracias! Revisaremos tu información y te contactaremos pronto." };
   }
 
-  const captchaA = Number(formData.get("captchaA"));
-  const captchaB = Number(formData.get("captchaB"));
-  const respuesta = Number(formData.get("captchaRespuesta"));
-  if (respuesta !== captchaA + captchaB) {
+  const result = registroSchema.safeParse({
+    nombreCompleto: formData.get("nombreCompleto"),
+    correo: formData.get("correo"),
+    telefono: formData.get("telefono"),
+    fechaNacimiento: formData.get("fechaNacimiento"),
+    genero: formData.get("genero"),
+    countryId: formData.get("countryId"),
+    cityId: formData.get("cityId"),
+    categoryIds: formData.getAll("categoryIds"),
+    captchaA: formData.get("captchaA"),
+    captchaB: formData.get("captchaB"),
+    captchaRespuesta: formData.get("captchaRespuesta"),
+  });
+
+  if (!result.success) {
+    return { status: "error", message: result.error.issues[0].message };
+  }
+
+  const { nombreCompleto, correo, telefono, fechaNacimiento, genero, countryId, cityId, categoryIds, captchaA, captchaB, captchaRespuesta } = result.data;
+
+  if (captchaRespuesta !== captchaA + captchaB) {
     return { status: "error", message: "La respuesta de verificación no es correcta. Intenta de nuevo." };
   }
 
-  const nombreCompleto = String(formData.get("nombreCompleto") ?? "").trim();
-  const correo = String(formData.get("correo") ?? "").trim();
-  const telefono = String(formData.get("telefono") ?? "").trim();
-  const fechaNacimiento = String(formData.get("fechaNacimiento") ?? "");
-  const genero = String(formData.get("genero") ?? "") as Modelo["genero"];
-  const nacionalidad = String(formData.get("nacionalidad") ?? "").trim();
-  const ubicacion = String(formData.get("ubicacion") ?? "").trim();
-  const categoria = String(formData.get("categoria") ?? "") as CategoriaModelo;
-
-  if (!nombreCompleto || !correo || !telefono || !fechaNacimiento || !genero || !nacionalidad || !ubicacion || !categoria) {
-    return { status: "error", message: "Por favor completa todos los campos requeridos." };
+  const existing = await prisma.model.findUnique({ where: { email: correo } });
+  if (existing) {
+    return { status: "error", message: "Ya existe un registro con ese correo electrónico." };
   }
 
-  if (calcularEdad(fechaNacimiento) < 18) {
-    return { status: "error", message: "Solo aceptamos registros de personas mayores de 18 años." };
-  }
-
-  const hoy = toDateKey(new Date());
-  const solicitud = {
-    id: `sol_${Date.now()}`,
-    agencyId: AGENCY_ID,
-    nombreCompleto,
-    correo,
-    telefono,
-    fechaNacimiento,
-    genero,
-    nacionalidad,
-    ubicacion,
-    categoria,
-    fotoUrl: "",
-    estado: "pendiente" as EstadoSolicitud,
-    enviadoEn: hoy,
-    actualizadoEn: hoy,
-    tokenRevision: randomToken("tok"),
-  };
-
-  solicitudesRegistro.push(solicitud);
-  await Promise.all([emailSolicitudRecibida(solicitud), emailNuevaSolicitudStaff(solicitud)]);
-
-  revalidatePath("/moderacion");
-  revalidatePath("/dashboard");
+  await prisma.model.create({
+    data: {
+      fullName: nombreCompleto,
+      email: correo,
+      phone: telefono,
+      birthDate: new Date(fechaNacimiento),
+      genre: genero,
+      countryId,
+      cityId,
+      categories: { connect: categoryIds.map((id) => ({ id })) },
+    },
+  });
 
   return {
     status: "success",
