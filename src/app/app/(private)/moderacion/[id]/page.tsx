@@ -1,44 +1,74 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import { AlertTriangle, ArrowLeft, Camera, CheckCircle2, Clock, Link2, RotateCcw, ShieldCheck, XCircle } from "lucide-react";
-import { getSolicitud } from "@/lib/data";
-import { moderarSolicitudAction } from "@/lib/actions";
+import {
+  AlertTriangle,
+  ArrowLeft,
+  CheckCircle2,
+  Clock,
+  Mail,
+  MapPin,
+  Phone,
+  RotateCcw,
+  ShieldCheck,
+  XCircle,
+} from "lucide-react";
+import { getModeloKyc } from "@/lib/data";
+import { moderarKycAction } from "@/lib/actions";
 import { Avatar } from "@/components/ui/Avatar";
 import { Card, CardHeader } from "@/components/ui/Card";
 import { Field, FieldGrid } from "@/components/ui/Field";
 import { EstadoBadge } from "@/components/ui/Badge";
-import { CATEGORIA_LABEL } from "@/lib/labels";
-import { addDays, calcularEdad, formatDate, parseDateOnly } from "@/lib/utils";
+import { addDays, formatDate } from "@/lib/utils";
 import { APP_ROUTE } from "@/lib/routes";
 
-export default async function SolicitudDetailPage({
+const GENRE_LABEL: Record<string, string> = {
+  MALE: "Masculino",
+  FEMALE: "Femenino",
+};
+
+function calcularEdad(birthDate: Date): number {
+  const hoy = new Date();
+  let edad = hoy.getFullYear() - birthDate.getFullYear();
+  const aunNoCumple =
+    hoy.getMonth() < birthDate.getMonth() ||
+    (hoy.getMonth() === birthDate.getMonth() && hoy.getDate() < birthDate.getDate());
+  if (aunNoCumple) edad -= 1;
+  return edad;
+}
+
+export default async function ModeracionDetailPage({
   params,
 }: {
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const solicitud = await getSolicitud(id);
+  const modelo = await getModeloKyc(id);
 
-  if (!solicitud) notFound();
+  if (!modelo) notFound();
 
-  const edad = calcularEdad(solicitud.fechaNacimiento);
-  const purgaFecha = solicitud.rechazadoEn ? addDays(parseDateOnly(solicitud.rechazadoEn), 45) : null;
+  const { kyc } = modelo;
+  const edad = calcularEdad(modelo.birthDate);
+  const purgaFecha = kyc.rejectedAt ? addDays(kyc.rejectedAt, 45) : null;
+  const canReview = kyc.status !== "APPROVED" && kyc.status !== "REJECTED";
 
   return (
     <div>
-      <Link href={APP_ROUTE.app.moderacion.index} className="mb-5 inline-flex items-center gap-1.5 text-sm text-zinc-500 hover:text-zinc-800">
+      <Link
+        href={APP_ROUTE.app.moderacion.index}
+        className="mb-5 inline-flex items-center gap-1.5 text-sm text-zinc-500 hover:text-zinc-800"
+      >
         <ArrowLeft className="h-4 w-4" /> Volver a Moderación
       </Link>
 
       <div className="mb-6 flex flex-wrap items-start justify-between gap-4">
         <div className="flex items-center gap-4">
-          <Avatar name={solicitud.nombreCompleto} size="lg" />
+          <Avatar name={modelo.fullName} size="lg" />
           <div>
-            <h1 className="text-2xl font-semibold tracking-tight text-zinc-900">{solicitud.nombreCompleto}</h1>
+            <h1 className="text-2xl font-semibold tracking-tight text-zinc-900">{modelo.fullName}</h1>
             <div className="mt-1 flex items-center gap-2 text-sm text-zinc-500">
-              <EstadoBadge estado={solicitud.estado} />
+              <EstadoBadge estado={kyc.status} />
               <span>·</span>
-              <span>Enviado el {formatDate(solicitud.enviadoEn)}</span>
+              <span>Enviado el {formatDate(kyc.createdAt)}</span>
             </div>
           </div>
         </div>
@@ -53,76 +83,95 @@ export default async function SolicitudDetailPage({
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
         <div className="space-y-6 lg:col-span-2">
           <Card>
-            <CardHeader title="Datos enviados por el aspirante" />
+            <CardHeader title="Datos del registro" />
             <div className="px-5 pb-5">
               <FieldGrid>
-                <Field label="Correo" value={solicitud.correo} />
-                <Field label="Teléfono" value={solicitud.telefono} />
-                <Field label="Fecha de nacimiento" value={`${formatDate(solicitud.fechaNacimiento)} · ${edad} años`} />
-                <Field label="Categoría" value={CATEGORIA_LABEL[solicitud.categoria]} />
+                <Field
+                  label={<span className="inline-flex items-center gap-1"><Mail className="h-3 w-3" /> Correo</span>}
+                  value={modelo.email}
+                />
+                <Field
+                  label={<span className="inline-flex items-center gap-1"><Phone className="h-3 w-3" /> Teléfono</span>}
+                  value={modelo.phone}
+                />
+                <Field
+                  label="Fecha de nacimiento"
+                  value={`${formatDate(modelo.birthDate)} · ${edad} años`}
+                />
+                <Field label="Género" value={GENRE_LABEL[modelo.genre] ?? modelo.genre} />
+                <Field
+                  label={<span className="inline-flex items-center gap-1"><MapPin className="h-3 w-3" /> Ubicación</span>}
+                  value={`${modelo.city.name}, ${modelo.city.state.name}, ${modelo.country.name}`}
+                />
               </FieldGrid>
             </div>
           </Card>
 
-          <Card>
-            <CardHeader title="Material enviado" />
-            <div className="grid grid-cols-3 gap-3 px-5 pb-5 sm:grid-cols-4">
-              {Array.from({ length: 3 }).map((_, i) => (
-                <div
-                  key={i}
-                  className="flex aspect-square flex-col items-center justify-center gap-1.5 rounded-lg border border-dashed border-zinc-200 bg-zinc-50 text-zinc-300"
-                >
-                  <Camera className="h-5 w-5" />
-                  <span className="text-[10px]">Sin material</span>
+          {modelo.categories.length > 0 && (
+            <Card>
+              <CardHeader title="Categorías" />
+              <div className="px-5 pb-5">
+                <div className="flex flex-wrap gap-2">
+                  {modelo.categories.map((cat) => (
+                    <span
+                      key={cat.id}
+                      className="rounded-full bg-zinc-100 px-3 py-1 text-sm font-medium text-zinc-700"
+                    >
+                      {cat.name}
+                    </span>
+                  ))}
                 </div>
-              ))}
-            </div>
-          </Card>
+              </div>
+            </Card>
+          )}
 
           <Card>
-            <CardHeader title="Comentarios de revisión" subtitle="Dos canales separados — nunca se mezclan" />
+            <CardHeader
+              title="Revisión KYC"
+              subtitle="El comentario es visible para el registro. La nota interna es solo para staff."
+            />
             <form className="space-y-4 px-5 pb-5">
               <div>
                 <label className="mb-1.5 block text-xs font-semibold tracking-wide text-zinc-500 uppercase">
                   Nota interna · solo staff
                 </label>
                 <textarea
-                  name="notaInterna"
-                  defaultValue={solicitud.notaInterna}
+                  name="internalNote"
+                  defaultValue={kyc.internalNote ?? ""}
                   rows={3}
-                  placeholder="Observaciones internas, nunca visibles para el aspirante…"
+                  placeholder="Observaciones internas, nunca visibles para el registro…"
                   className="w-full rounded-lg border border-zinc-200 bg-zinc-50 p-3 text-sm text-zinc-700 outline-none focus:border-zinc-400 focus:ring-1 focus:ring-zinc-400"
                 />
               </div>
               <div>
                 <label className="mb-1.5 block text-xs font-semibold tracking-wide text-gold-700 uppercase">
-                  Retroalimentación para el modelo · visible vía enlace temporal
+                  Comentario para el modelo · visible en su notificación
                 </label>
                 <textarea
-                  name="retroParaModelo"
-                  defaultValue={solicitud.retroParaModelo}
+                  name="comment"
+                  defaultValue={kyc.comment ?? ""}
                   rows={3}
-                  placeholder="Lo que el aspirante verá y podrá usar para corregir y reenviar…"
+                  placeholder="Lo que el modelo recibirá como retroalimentación…"
                   className="w-full rounded-lg border border-gold-200 bg-gold-50 p-3 text-sm text-gold-900 outline-none focus:border-gold-400 focus:ring-1 focus:ring-gold-400"
                 />
               </div>
 
-              {solicitud.estado !== "aprobado" && solicitud.estado !== "rechazado" && (
+              {canReview && (
                 <div className="flex flex-wrap items-center gap-2 pt-1">
                   <button
-                    formAction={moderarSolicitudAction.bind(null, solicitud.id, "rechazado")}
+                    formAction={moderarKycAction.bind(null, modelo.id, "REJECTED")}
                     className="inline-flex items-center justify-center gap-2 rounded-lg bg-white px-4 py-2.5 text-sm font-medium text-zinc-700 ring-1 ring-inset ring-zinc-200 transition-colors hover:bg-rose-50 hover:text-rose-700 hover:ring-rose-200"
                   >
                     <XCircle className="h-4 w-4" /> Rechazar
                   </button>
                   <button
-                    formAction={moderarSolicitudAction.bind(null, solicitud.id, "requiere_cambios")}
+                    formAction={moderarKycAction.bind(null, modelo.id, "REQUIRES_CHANGES")}
                     className="inline-flex items-center justify-center gap-2 rounded-lg bg-white px-4 py-2.5 text-sm font-medium text-zinc-700 ring-1 ring-inset ring-zinc-200 transition-colors hover:bg-amber-50 hover:text-amber-700 hover:ring-amber-200"
                   >
                     <RotateCcw className="h-4 w-4" /> Solicitar cambios
                   </button>
                   <button
-                    formAction={moderarSolicitudAction.bind(null, solicitud.id, "aprobado")}
+                    formAction={moderarKycAction.bind(null, modelo.id, "APPROVED")}
                     className="inline-flex items-center justify-center gap-2 rounded-lg bg-zinc-950 px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-gold-600"
                   >
                     <CheckCircle2 className="h-4 w-4" /> Aprobar
@@ -135,39 +184,47 @@ export default async function SolicitudDetailPage({
 
         <div className="space-y-6">
           <Card>
-            <CardHeader title="Enlace de revisión" subtitle="Token temporal, sin cuenta permanente" />
-            <div className="px-5 pb-5">
-              <div className="flex items-center gap-2 rounded-lg border border-zinc-200 bg-zinc-50 px-3 py-2 text-xs text-zinc-600">
-                <Link2 className="h-3.5 w-3.5 shrink-0 text-zinc-400" />
-                <span className="truncate">/retro/{solicitud.tokenRevision}</span>
+            <CardHeader title="Estado del ciclo de vida" />
+            <div className="px-5 pb-5 text-sm text-zinc-600 space-y-3">
+              <div className="flex items-center gap-2">
+                <ShieldCheck className="h-4 w-4 text-zinc-400" />
+                <span>Registrado el {formatDate(kyc.createdAt)}</span>
               </div>
-              <p className="mt-2 text-xs text-zinc-400">
-                El aspirante ve sus comentarios, edita y reenvía desde este enlace — nunca crea una cuenta.
-              </p>
+              {kyc.reviewedAt && (
+                <div className="flex items-center gap-2 text-xs text-zinc-400">
+                  <span>Revisado el {formatDate(kyc.reviewedAt)}</span>
+                </div>
+              )}
+              {kyc.status === "REJECTED" && purgaFecha && (
+                <div className="flex items-start gap-2 rounded-lg bg-rose-50 p-3 text-xs text-rose-700">
+                  <Clock className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+                  <span>
+                    Rechazado el {formatDate(kyc.rejectedAt!)}. Datos se purgarán el{" "}
+                    <strong>{formatDate(purgaFecha)}</strong>.
+                  </span>
+                </div>
+              )}
+              {kyc.status === "APPROVED" && (
+                <div className="rounded-lg bg-emerald-50 p-3 text-xs text-emerald-700">
+                  Modelo aprobado — forma parte del roster.
+                </div>
+              )}
+              {kyc.status === "REQUIRES_CHANGES" && kyc.comment && (
+                <div className="rounded-lg bg-amber-50 p-3 text-xs text-amber-700">
+                  <p className="font-medium mb-1">Comentario enviado:</p>
+                  <p>{kyc.comment}</p>
+                </div>
+              )}
             </div>
           </Card>
 
           <Card>
-            <CardHeader title="Estado del ciclo de vida" />
-            <div className="px-5 pb-5 text-sm text-zinc-600">
-              <div className="flex items-center gap-2">
-                <ShieldCheck className="h-4 w-4 text-zinc-400" />
-                <span>Última actualización: {formatDate(solicitud.actualizadoEn)}</span>
-              </div>
-              {solicitud.estado === "rechazado" && purgaFecha && (
-                <div className="mt-3 flex items-start gap-2 rounded-lg bg-rose-50 p-3 text-xs text-rose-700">
-                  <Clock className="mt-0.5 h-3.5 w-3.5 shrink-0" />
-                  <span>
-                    Rechazado el {formatDate(solicitud.rechazadoEn!)}. Se purgará automáticamente (registro e
-                    imágenes en storage) el <strong>{formatDate(purgaFecha)}</strong>.
-                  </span>
-                </div>
-              )}
-              {solicitud.estado === "aprobado" && (
-                <div className="mt-3 rounded-lg bg-emerald-50 p-3 text-xs text-emerald-700">
-                  Convertido en modelo activo — ya forma parte del roster y de la vitrina pública.
-                </div>
-              )}
+            <CardHeader title="Identificación" />
+            <div className="px-5 pb-5">
+              <FieldGrid>
+                <Field label="ID modelo" value={<span className="font-mono text-xs">{modelo.id}</span>} />
+                <Field label="ID KYC" value={<span className="font-mono text-xs">{kyc.id}</span>} />
+              </FieldGrid>
             </div>
           </Card>
         </div>

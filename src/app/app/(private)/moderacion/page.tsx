@@ -5,10 +5,17 @@ import { Card } from "@/components/ui/Card";
 import { EstadoBadge } from "@/components/ui/Badge";
 import { Avatar } from "@/components/ui/Avatar";
 import { StatusTabs } from "@/components/ui/StatusTabs";
-import { CATEGORIA_LABEL } from "@/lib/labels";
-import { listSolicitudes } from "@/lib/data";
+import { listModelosKyc } from "@/lib/data";
 import { APP_ROUTE } from "@/lib/routes";
 import { formatDate } from "@/lib/utils";
+import type { KycStatus } from "@/generated/prisma/enums";
+
+const PARAM_TO_STATUS: Record<string, KycStatus> = {
+  pendiente: "PENDING",
+  aprobado: "APPROVED",
+  rechazado: "REJECTED",
+  requiere_cambios: "REQUIRES_CHANGES",
+};
 
 export default async function ModeracionPage({
   searchParams,
@@ -17,20 +24,20 @@ export default async function ModeracionPage({
 }) {
   const { estado } = await searchParams;
   const activo = estado ?? "todas";
-  const solicitudes = await listSolicitudes();
+  const modelos = await listModelosKyc();
 
   const counts: Record<string, number> = {
-    todas: solicitudes.length,
-    pendiente: solicitudes.filter((s) => s.estado === "pendiente").length,
-    requiere_cambios: solicitudes.filter((s) => s.estado === "requiere_cambios").length,
-    aprobado: solicitudes.filter((s) => s.estado === "aprobado").length,
-    rechazado: solicitudes.filter((s) => s.estado === "rechazado").length,
+    todas: modelos.length,
+    pendiente: modelos.filter((m) => m.kyc.status === "PENDING").length,
+    requiere_cambios: modelos.filter((m) => m.kyc.status === "REQUIRES_CHANGES").length,
+    aprobado: modelos.filter((m) => m.kyc.status === "APPROVED").length,
+    rechazado: modelos.filter((m) => m.kyc.status === "REJECTED").length,
   };
 
-  const filtradas = activo === "todas" ? solicitudes : solicitudes.filter((s) => s.estado === activo);
-  const ordenadas = [...filtradas].sort(
-    (a, b) => new Date(b.actualizadoEn).getTime() - new Date(a.actualizadoEn).getTime(),
-  );
+  const filtrados =
+    activo === "todas"
+      ? modelos
+      : modelos.filter((m) => m.kyc.status === PARAM_TO_STATUS[activo]);
 
   return (
     <div>
@@ -54,23 +61,29 @@ export default async function ModeracionPage({
 
       <Card>
         <ul className="divide-y divide-zinc-100">
-          {ordenadas.map((sol) => (
-            <li key={sol.id}>
-              <Link href={`${APP_ROUTE.app.moderacion.index}/${sol.id}`} className="flex items-center gap-4 px-5 py-4 hover:bg-zinc-50">
-                <Avatar name={sol.nombreCompleto} />
+          {filtrados.map((modelo) => (
+            <li key={modelo.id}>
+              <Link
+                href={`${APP_ROUTE.app.moderacion.index}/${modelo.id}`}
+                className="flex items-center gap-4 px-5 py-4 hover:bg-zinc-50"
+              >
+                <Avatar name={modelo.fullName} />
                 <div className="min-w-0 flex-1">
-                  <p className="truncate text-sm font-medium text-zinc-900">{sol.nombreCompleto}</p>
+                  <p className="truncate text-sm font-medium text-zinc-900">{modelo.fullName}</p>
                   <p className="truncate text-xs text-zinc-500">
-                    {CATEGORIA_LABEL[sol.categoria]} · Enviado el {formatDate(sol.enviadoEn)}
+                    {modelo.categories.map((c) => c.name).join(", ")} · Enviado el{" "}
+                    {formatDate(modelo.kyc.createdAt)}
                   </p>
                 </div>
-                <EstadoBadge estado={sol.estado} />
+                <EstadoBadge estado={modelo.kyc.status} />
                 <ChevronRight className="h-4 w-4 shrink-0 text-zinc-300" />
               </Link>
             </li>
           ))}
-          {ordenadas.length === 0 && (
-            <li className="px-5 py-16 text-center text-sm text-zinc-400">No hay solicitudes en este estado.</li>
+          {filtrados.length === 0 && (
+            <li className="px-5 py-16 text-center text-sm text-zinc-400">
+              No hay registros en este estado.
+            </li>
           )}
         </ul>
       </Card>

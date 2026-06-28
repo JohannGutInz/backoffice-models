@@ -7,9 +7,9 @@ import * as bcrypt from "bcrypt";
 import { prisma } from "@/db";
 import { AGENCY_ID, configuracionSitio, modelos, solicitudesRegistro } from "./mock-data";
 import { SESSION_COOKIE, createSessionToken } from "./session";
-import type { CategoriaModelo, EstadoSolicitud, Modelo } from "./types";
+import type { CategoriaModelo, EstadoSolicitud } from "./types";
 import { calcularEdad, toDateKey } from "./utils";
-import { emailContactoCliente, emailDecisionSolicitud } from "./email";
+import { emailContactoCliente } from "./email";
 import { APP_ROUTE } from "./routes";
 import z from "zod";
 
@@ -81,10 +81,6 @@ function randomToken(prefix: string) {
   return `${prefix}_${Math.random().toString(36).slice(2, 10)}`;
 }
 
-function siguienteNumeroModelo() {
-  return `MOD-${String(modelos.length + 1).padStart(4, "0")}`;
-}
-
 // ---------- Auto-registro público ----------
 
 const registroSchema = z.object({
@@ -138,17 +134,21 @@ export async function submitRegistroAction(_prev: ActionState, formData: FormDat
     return { status: "error", message: "Ya existe un registro con ese correo electrónico." };
   }
 
-  await prisma.model.create({
-    data: {
-      fullName: nombreCompleto,
-      email: correo,
-      phone: telefono,
-      birthDate: new Date(fechaNacimiento),
-      genre: genero,
-      countryId,
-      cityId,
-      categories: { connect: categoryIds.map((id) => ({ id })) },
-    },
+  await prisma.$transaction(async (tx) => {
+    const kyc = await tx.kyc.create({ data: {} });
+    await tx.model.create({
+      data: {
+        fullName: nombreCompleto,
+        email: correo,
+        phone: telefono,
+        birthDate: new Date(fechaNacimiento),
+        genre: genero,
+        countryId,
+        cityId,
+        kycId: kyc.id,
+        categories: { connect: categoryIds.map((id) => ({ id })) },
+      },
+    });
   });
 
   return {
@@ -182,59 +182,49 @@ export async function reenviarSolicitudAction(_prev: ActionState, formData: Form
   return { status: "success", message: "¡Listo! Reenviamos tu información actualizada para una nueva revisión." };
 }
 
-// ---------- Moderación (backoffice) ----------
+// ---------- KYC (moderación real) ----------
 
-export async function moderarSolicitudAction(
-  id: string,
-  decision: "aprobado" | "rechazado" | "requiere_cambios",
+const moderarKycSchema = z.object({
+  modelId: z.string().uuid(),
+  decision: z.enum(["APPROVED", "REJECTED", "REQUIRES_CHANGES"]),
+  comment: z.string().max(2000).optional(),
+  internalNote: z.string().max(2000).optional(),
+});
+
+export async function moderarKycAction(
+  modelId: string,
+  decision: "APPROVED" | "REJECTED" | "REQUIRES_CHANGES",
   formData: FormData,
 ) {
-  const solicitud = solicitudesRegistro.find((s) => s.id === id);
-  if (!solicitud) return;
+  const result = moderarKycSchema.safeParse({
+    modelId,
+    decision,
+    comment: String(formData.get("comment") ?? "").trim() || undefined,
+    internalNote: String(formData.get("internalNote") ?? "").trim() || undefined,
+  });
 
-  const notaInterna = String(formData.get("notaInterna") ?? "");
-  const retroParaModelo = String(formData.get("retroParaModelo") ?? "");
-  const hoy = toDateKey(new Date());
-  solicitud.estado = decision;
-  solicitud.actualizadoEn = hoy;
-  if (notaInterna.trim()) solicitud.notaInterna = notaInterna.trim();
-  if (retroParaModelo.trim()) solicitud.retroParaModelo = retroParaModelo.trim();
-  if (decision === "rechazado") solicitud.rechazadoEn = hoy;
+  if (!result.success) return;
 
-  if (decision === "aprobado") {
-    const nuevoModelo: Modelo = {
-      id: `mdl_${Date.now()}`,
-      agencyId: solicitud.agencyId,
-      numeroModelo: siguienteNumeroModelo(),
-      nombreArtistico: solicitud.nombreCompleto,
-      nombreLegal: solicitud.nombreCompleto,
-      fechaNacimiento: solicitud.fechaNacimiento,
-      genero: solicitud.genero,
-      nacionalidad: solicitud.nacionalidad,
-      contacto: { correo: solicitud.correo, telefono: solicitud.telefono, ubicacion: solicitud.ubicacion },
-      categoria: solicitud.categoria,
-      etiquetas: [],
-      nivelExperiencia: "nuevo",
-      fotoPrincipalUrl: solicitud.fotoUrl,
-      bookUrls: [],
-      estado: "activo",
-      destacado: false,
-      // Spec: una solicitud aprobada "se convierte en modelo activo y entra a la vitrina".
-      publicoEnLanding: true,
-      disponibilidad: "disponible",
-      tarifaBase: 0,
-      creadoEn: hoy,
-    };
-    modelos.push(nuevoModelo);
-    revalidatePath("/modelos");
-    revalidatePath("/talentos");
-  }
+  const model = await prisma.model.findUnique({
+    where: { id: result.data.modelId },
+    select: { kycId: true },
+  });
+  if (!model) return;
 
-  await emailDecisionSolicitud(solicitud);
+  await prisma.kyc.update({
+    where: { id: model.kycId },
+    data: {
+      status: result.data.decision,
+      comment: result.data.comment,
+      internalNote: result.data.internalNote,
+      reviewedAt: new Date(),
+      ...(result.data.decision === "REJECTED" && { rejectedAt: new Date() }),
+    },
+  });
 
-  revalidatePath("/moderacion");
-  revalidatePath(`/moderacion/${id}`);
-  revalidatePath("/dashboard");
+  revalidatePath("/app/moderacion");
+  revalidatePath(`/app/moderacion/${result.data.modelId}`);
+  revalidatePath("/app/dashboard");
 }
 
 // ---------- Catálogos (categorías) ----------

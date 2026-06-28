@@ -94,20 +94,33 @@ export function nombreModelo(id: string): string {
   return byId(modelos, id)?.nombreArtistico ?? "Modelo eliminado";
 }
 
-// ---------- Moderación / solicitudes de registro ----------
+// ---------- Moderación / KYC ----------
 
-export async function listSolicitudes(): Promise<SolicitudRegistro[]> {
-  return solicitudesRegistro.filter((s) => s.agencyId === AGENCY_ID);
+const kycModelInclude = {
+  kyc: true,
+  categories: true,
+  country: true,
+  city: { include: { state: true } },
+} as const;
+
+export type ModelWithKyc = Awaited<ReturnType<typeof listModelosKyc>>[number];
+
+export async function listModelosKyc() {
+  return prisma.model.findMany({
+    include: kycModelInclude,
+    orderBy: { kyc: { createdAt: "desc" } },
+  });
 }
 
-export async function getSolicitud(id: string): Promise<SolicitudRegistro | undefined> {
-  return byId(solicitudesRegistro, id);
+export async function getModeloKyc(id: string) {
+  return prisma.model.findUnique({
+    where: { id },
+    include: kycModelInclude,
+  });
 }
 
-// Acceso "mágico" por token para el enlace temporal de retro (CLAUDE-proyecto-real.md).
-// El token es el único mecanismo de autenticación — quien lo tiene, puede ver y
-// reenviar SU solicitud. La página que consume esto nunca debe mostrar `notaInterna`,
-// solo `retroParaModelo` (los dos canales de comentarios no se mezclan).
+// ---------- Moderación / retro flow (mock, enlace temporal por token) ----------
+
 export async function getSolicitudPorToken(token: string): Promise<SolicitudRegistro | undefined> {
   return solicitudesRegistro.find((s) => s.tokenRevision === token);
 }
@@ -177,12 +190,12 @@ export async function listCategories() {
 // ---------- Estadísticas del dashboard ----------
 
 export async function getDashboardStats() {
-  const [bks, ings, pkgs, cli, sols, mdls] = await Promise.all([
+  const [bks, ings, pkgs, cli, kycPendientes, mdls] = await Promise.all([
     listBookings(),
     listIngresos(),
     listPaquetes(),
     listClientes(),
-    listSolicitudes(),
+    prisma.kyc.count({ where: { status: { in: ["PENDING", "REQUIRES_CHANGES"] } } }),
     listModelos(),
   ]);
 
@@ -196,7 +209,7 @@ export async function getDashboardStats() {
     .reduce((sum, i) => sum + i.monto, 0);
 
   const paquetesPendientes = pkgs.filter((p) => p.estado === "borrador" || p.estado === "enviado");
-  const solicitudesPendientes = sols.filter((s) => s.estado === "pendiente" || s.estado === "requiere_cambios");
+  const solicitudesPendientes = kycPendientes;
   const modelosActivos = mdls;
 
   const bookingsPorEstatus = [
@@ -217,7 +230,7 @@ export async function getDashboardStats() {
     ingresosMesActual,
     paquetesPendientes: paquetesPendientes.length,
     clientesTotal: cli.length,
-    solicitudesPendientes: solicitudesPendientes.length,
+    solicitudesPendientes: solicitudesPendientes,
     modelosActivos: modelosActivos.length,
     bookingsPorEstatus,
     bookingsTotal: bks.length,

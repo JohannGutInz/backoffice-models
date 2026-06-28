@@ -69,7 +69,7 @@ model State {
 model Municipality {
   id   String @id @default(uuid())
   name String
-  label String @unique // CLN, 
+  label String @unique // CLN,
 
   stateId String @map("state_id")
   state   State  @relation(fields: [stateId], references: [id])
@@ -94,6 +94,28 @@ enum ModelGenre {
   FEMALE
 }
 
+enum KycStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  REQUIRES_CHANGES
+}
+
+model Kyc {
+  id           String    @id @default(uuid())
+  status       KycStatus @default(PENDING)
+  comment      String?
+  internalNote String?   @map("internal_note")
+  rejectedAt   DateTime? @map("rejected_at")
+  reviewedAt   DateTime? @map("reviewed_at")
+  createdAt    DateTime  @default(now()) @map("created_at")
+  updatedAt    DateTime  @updatedAt @map("updated_at")
+
+  model Model?
+
+  @@map("kycs")
+}
+
 model Model {
   id        String     @id @default(uuid())
   fullName  String     @map("full_name")
@@ -101,6 +123,9 @@ model Model {
   phone     String
   birthDate DateTime   @map("birth_date") @db.Date
   genre     ModelGenre
+
+  kycId String @unique @map("kyc_id")
+  kyc   Kyc    @relation(fields: [kycId], references: [id])
 
   categories Category[]
 

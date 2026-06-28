@@ -18,16 +18,20 @@ const ESTADO_TONE: Record<string, BadgeTone> = {
   completado: "success",
   finalizado: "success",
   disponible: "success",
+  APPROVED: "success",
   pendiente: "warning",
+  requiere_cambios: "warning",
+  ocupado: "warning",
+  PENDING: "warning",
+  REQUIRES_CHANGES: "warning",
   enviado: "gold",
   planeado: "info",
   borrador: "neutral",
-  requiere_cambios: "warning",
-  ocupado: "warning",
   inactivo: "neutral",
   no_disponible: "neutral",
   rechazado: "danger",
   cancelado: "danger",
+  REJECTED: "danger",
 };
 
 export function estadoTone(estado: string): BadgeTone {
@@ -37,6 +41,10 @@ export function estadoTone(estado: string): BadgeTone {
 const ESTADO_LABEL: Record<string, string> = {
   requiere_cambios: "Requiere cambios",
   no_disponible: "No disponible",
+  PENDING: "Pendiente",
+  APPROVED: "Aprobado",
+  REJECTED: "Rechazado",
+  REQUIRES_CHANGES: "Requiere cambios",
 };
 
 export function estadoLabel(estado: string): string {
