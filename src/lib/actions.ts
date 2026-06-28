@@ -5,18 +5,20 @@ import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import * as bcrypt from "bcrypt";
 import { prisma } from "@/db";
-import { AGENCY_ID, configuracionSitio, modelos, solicitudesRegistro } from "./mock-data";
+import { configuracionSitio, modelos, solicitudesRegistro } from "./mock-data";
 import { SESSION_COOKIE, createSessionToken } from "./session";
-import type { CategoriaModelo, EstadoSolicitud } from "./types";
-import { calcularEdad, toDateKey } from "./utils";
+import { toDateKey } from "./utils";
 import { emailContactoCliente } from "./email";
 import { APP_ROUTE } from "./routes";
 import z from "zod";
-
-// Mutaciones sobre los fixtures en memoria (mock-data.ts). Hacen las veces de la
-// API central mientras no existe un backend real — por eso viven detrás de
-// "use server" y nunca se llaman directo desde el cliente. El día que haya API,
-// estas funciones son las únicas que cambian de cuerpo (siguen con la misma forma).
+import type {
+  LoginData,
+  ContactoData,
+  CategoryData,
+  ConfiguracionData,
+  ReenviarData,
+  RegistroActionData,
+} from "./schemas";
 
 export interface ActionState {
   status: "idle" | "success" | "error";
@@ -28,21 +30,9 @@ export async function hashPassword(password: string) {
 }
 
 // ---------- Sesión de staff (backoffice) ----------
-const loginFormSchema = z.object({
-  email: z.email(),
-  password: z.string(),
-})
 
-export async function loginAction(_prev: ActionState, formData: FormData): Promise<ActionState> {
-  const { success, data } = loginFormSchema.safeParse(Object.fromEntries(formData));
-
-  if (!success) {
-    return { status: "error", message: "Correo y contraseña son obligatorios." };
-  }
-
-  const user = await prisma.user.findUnique({
-    where: { email: data.email },
-  });
+export async function loginAction(data: LoginData): Promise<ActionState> {
+  const user = await prisma.user.findUnique({ where: { email: data.email } });
 
   if (!user) {
     return { status: "error", message: "Correo o contraseña incorrectos." };
@@ -83,53 +73,8 @@ function randomToken(prefix: string) {
 
 // ---------- Auto-registro público ----------
 
-const registroSchema = z.object({
-  nombreCompleto: z.string().min(1, "El nombre completo es obligatorio."),
-  correo: z.email("Correo electrónico inválido."),
-  telefono: z.string().min(1, "El teléfono es obligatorio."),
-  fechaNacimiento: z
-    .string()
-    .min(1, "La fecha de nacimiento es obligatoria.")
-    .refine((v) => calcularEdad(v) >= 18, "Solo aceptamos registros de personas mayores de 18 años."),
-  genero: z.enum(["MALE", "FEMALE"], { error: "Género inválido." }),
-  countryId: z.string().uuid("País inválido."),
-  cityId: z.string().uuid("Ciudad inválida."),
-  categoryIds: z.array(z.string().uuid()).min(1, "Selecciona al menos una categoría."),
-  captchaA: z.coerce.number(),
-  captchaB: z.coerce.number(),
-  captchaRespuesta: z.coerce.number(),
-});
-
-export async function submitRegistroAction(_prev: ActionState, formData: FormData): Promise<ActionState> {
-  if (String(formData.get("sitio_web") ?? "").trim() !== "") {
-    return { status: "success", message: "¡Gracias! Revisaremos tu información y te contactaremos pronto." };
-  }
-
-  const result = registroSchema.safeParse({
-    nombreCompleto: formData.get("nombreCompleto"),
-    correo: formData.get("correo"),
-    telefono: formData.get("telefono"),
-    fechaNacimiento: formData.get("fechaNacimiento"),
-    genero: formData.get("genero"),
-    countryId: formData.get("countryId"),
-    cityId: formData.get("cityId"),
-    categoryIds: formData.getAll("categoryIds"),
-    captchaA: formData.get("captchaA"),
-    captchaB: formData.get("captchaB"),
-    captchaRespuesta: formData.get("captchaRespuesta"),
-  });
-
-  if (!result.success) {
-    return { status: "error", message: result.error.issues[0].message };
-  }
-
-  const { nombreCompleto, correo, telefono, fechaNacimiento, genero, countryId, cityId, categoryIds, captchaA, captchaB, captchaRespuesta } = result.data;
-
-  if (captchaRespuesta !== captchaA + captchaB) {
-    return { status: "error", message: "La respuesta de verificación no es correcta. Intenta de nuevo." };
-  }
-
-  const existing = await prisma.model.findUnique({ where: { email: correo } });
+export async function submitRegistroAction(data: RegistroActionData): Promise<ActionState> {
+  const existing = await prisma.model.findUnique({ where: { email: data.correo } });
   if (existing) {
     return { status: "error", message: "Ya existe un registro con ese correo electrónico." };
   }
@@ -138,15 +83,15 @@ export async function submitRegistroAction(_prev: ActionState, formData: FormDat
     const kyc = await tx.kyc.create({ data: {} });
     await tx.model.create({
       data: {
-        fullName: nombreCompleto,
-        email: correo,
-        phone: telefono,
-        birthDate: new Date(fechaNacimiento),
-        genre: genero,
-        countryId,
-        cityId,
+        fullName: data.nombreCompleto,
+        email: data.correo,
+        phone: data.telefono,
+        birthDate: new Date(data.fechaNacimiento),
+        genre: data.genero,
+        countryId: data.countryId,
+        cityId: data.cityId,
         kycId: kyc.id,
-        categories: { connect: categoryIds.map((id) => ({ id })) },
+        categories: { connect: data.categoryIds.map((id) => ({ id })) },
       },
     });
   });
@@ -158,21 +103,13 @@ export async function submitRegistroAction(_prev: ActionState, formData: FormDat
 }
 
 // Edición + reenvío desde el enlace temporal por token (vuelve a "pendiente").
-export async function reenviarSolicitudAction(_prev: ActionState, formData: FormData): Promise<ActionState> {
-  const token = String(formData.get("token") ?? "");
+export async function reenviarSolicitudAction(token: string, data: ReenviarData): Promise<ActionState> {
   const solicitud = solicitudesRegistro.find((s) => s.tokenRevision === token);
   if (!solicitud) return { status: "error", message: "Enlace inválido." };
 
-  const nombreCompleto = String(formData.get("nombreCompleto") ?? "").trim();
-  const correo = String(formData.get("correo") ?? "").trim();
-  const telefono = String(formData.get("telefono") ?? "").trim();
-  if (!nombreCompleto || !correo || !telefono) {
-    return { status: "error", message: "Por favor completa todos los campos requeridos." };
-  }
-
-  solicitud.nombreCompleto = nombreCompleto;
-  solicitud.correo = correo;
-  solicitud.telefono = telefono;
+  solicitud.nombreCompleto = data.nombreCompleto;
+  solicitud.correo = data.correo;
+  solicitud.telefono = data.telefono;
   solicitud.estado = "pendiente";
   solicitud.actualizadoEn = toDateKey(new Date());
 
@@ -229,23 +166,15 @@ export async function moderarKycAction(
 
 // ---------- Catálogos (categorías) ----------
 
-const categorySchema = z.object({
-  name: z.string().min(1, "El nombre es obligatorio."),
-});
-
-export async function createCategoryAction(_prev: ActionState, formData: FormData): Promise<ActionState> {
-  const result = categorySchema.safeParse({ name: String(formData.get("name") ?? "").trim() });
-
-  if (!result.success) {
-    return { status: "error", message: result.error.issues[0].message };
-  }
-
-  const existing = await prisma.category.findFirst({ where: { name: { equals: result.data.name, mode: "insensitive" } } });
+export async function createCategoryAction(data: CategoryData): Promise<ActionState> {
+  const existing = await prisma.category.findFirst({
+    where: { name: { equals: data.name, mode: "insensitive" } },
+  });
   if (existing) {
     return { status: "error", message: "Ya existe un catálogo con ese nombre." };
   }
 
-  await prisma.category.create({ data: { name: result.data.name } });
+  await prisma.category.create({ data: { name: data.name } });
   revalidatePath("/app/catalogs");
 
   return { status: "success", message: "Catálogo creado." };
@@ -258,11 +187,11 @@ export async function toggleCategoryEnabledAction(id: string, enabled: boolean):
 
 // ---------- Configuración del sitio (backoffice) ----------
 
-export async function guardarConfiguracionSitioAction(formData: FormData) {
-  configuracionSitio.nombreAgencia = String(formData.get("nombreAgencia") ?? configuracionSitio.nombreAgencia);
-  configuracionSitio.colorPrimario = String(formData.get("colorPrimario") ?? configuracionSitio.colorPrimario);
-  configuracionSitio.heroTitulo = String(formData.get("heroTitulo") ?? configuracionSitio.heroTitulo);
-  configuracionSitio.heroSubtitulo = String(formData.get("heroSubtitulo") ?? configuracionSitio.heroSubtitulo);
+export async function guardarConfiguracionSitioAction(data: ConfiguracionData): Promise<void> {
+  configuracionSitio.nombreAgencia = data.nombreAgencia;
+  configuracionSitio.colorPrimario = data.colorPrimario;
+  configuracionSitio.heroTitulo = data.heroTitulo;
+  configuracionSitio.heroSubtitulo = data.heroSubtitulo;
 
   revalidatePath("/configuracion");
   revalidatePath("/");
@@ -294,21 +223,13 @@ export async function toggleVisibilidadLandingAction(modeloId: string, visible: 
 
 // ---------- Contacto de clientes (landing pública) ----------
 
-export async function submitContactoAction(_prev: ActionState, formData: FormData): Promise<ActionState> {
-  if (String(formData.get("sitio_web") ?? "").trim() !== "") {
-    return { status: "success", message: "¡Gracias por tu mensaje! Te responderemos a la brevedad." };
-  }
-
-  const nombre = String(formData.get("nombre") ?? "").trim();
-  const empresa = String(formData.get("empresa") ?? "").trim();
-  const correo = String(formData.get("correo") ?? "").trim();
-  const mensaje = String(formData.get("mensaje") ?? "").trim();
-
-  if (!nombre || !correo || !mensaje) {
-    return { status: "error", message: "Por favor completa nombre, correo y mensaje." };
-  }
-
-  await emailContactoCliente({ nombre, empresa, correo, mensaje });
+export async function submitContactoAction(data: ContactoData): Promise<ActionState> {
+  await emailContactoCliente({
+    nombre: data.nombre,
+    empresa: data.empresa ?? "",
+    correo: data.correo,
+    mensaje: data.mensaje,
+  });
 
   return { status: "success", message: "¡Gracias por tu mensaje! Te responderemos a la brevedad." };
 }

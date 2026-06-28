@@ -1,15 +1,26 @@
 "use client";
 
-import { ActionState, loginAction } from "@/lib/actions";
+import { loginAction } from "@/lib/actions";
+import { loginSchema, type LoginData } from "@/lib/schemas";
 import { Lock, Mail } from "lucide-react";
-import { useActionState } from "react";
-import { useFormStatus } from "react-dom";
-
-const initialState: ActionState = { status: "idle", message: "" };
+import { useState } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
 
 export default function LoginForm() {
-  const [state, formAction] = useActionState(loginAction, initialState);
-  const { pending } = useFormStatus();
+  const [serverError, setServerError] = useState<string | null>(null);
+
+  const {
+    register,
+    handleSubmit,
+    formState: { errors, isSubmitting },
+  } = useForm<LoginData>({ resolver: zodResolver(loginSchema) });
+
+  async function onSubmit(data: LoginData) {
+    setServerError(null);
+    const result = await loginAction(data);
+    if (result.status === "error") setServerError(result.message);
+  }
 
   return (
     <div className="flex min-h-screen">
@@ -50,7 +61,7 @@ export default function LoginForm() {
             Ingresa el correo y la contraseña de un usuario registrado.
           </p>
 
-          <form action={formAction} className="mt-8 space-y-4">
+          <form onSubmit={handleSubmit(onSubmit)} className="mt-8 space-y-4">
             <div>
               <label htmlFor="email" className="mb-1.5 block text-sm font-medium text-zinc-700">
                 Correo
@@ -59,13 +70,13 @@ export default function LoginForm() {
                 <Mail className="pointer-events-none absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-zinc-400" />
                 <input
                   id="email"
-                  name="email"
+                  {...register("email")}
                   type="email"
-                  required
                   className="w-full rounded-lg border border-zinc-300 bg-white py-2.5 pl-10 pr-3 text-sm text-zinc-900 outline-none focus:border-gold-500 focus:ring-1 focus:ring-gold-500"
                   placeholder="tu@agencia.com"
                 />
               </div>
+              {errors.email && <p className="mt-1 text-xs text-rose-600">{errors.email.message}</p>}
             </div>
 
             <div>
@@ -76,18 +87,16 @@ export default function LoginForm() {
                 <Lock className="pointer-events-none absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-zinc-400" />
                 <input
                   id="password"
-                  name="password"
+                  {...register("password")}
                   type="password"
-                  required
                   className="w-full rounded-lg border border-zinc-300 bg-white py-2.5 pl-10 pr-3 text-sm text-zinc-900 outline-none focus:border-gold-500 focus:ring-1 focus:ring-gold-500"
                   placeholder="••••••••"
                 />
               </div>
+              {errors.password && <p className="mt-1 text-xs text-rose-600">{errors.password.message}</p>}
             </div>
 
-            {state.status === "error" && (
-              <p className="text-sm text-rose-600">{state.message}</p>
-            )}
+            {serverError && <p className="text-sm text-rose-600">{serverError}</p>}
 
             <div className="flex items-center justify-between pt-1 text-sm">
               <label className="flex items-center gap-2 text-zinc-600">
@@ -101,10 +110,10 @@ export default function LoginForm() {
 
             <button
               type="submit"
-              disabled={pending}
+              disabled={isSubmitting}
               className="mt-2 w-full rounded-lg bg-zinc-950 py-2.5 text-sm font-medium text-white transition-colors hover:bg-gold-600 disabled:cursor-not-allowed disabled:opacity-60"
             >
-              {pending ? "Entrando…" : "Entrar"}
+              {isSubmitting ? "Entrando…" : "Entrar"}
             </button>
           </form>
 
