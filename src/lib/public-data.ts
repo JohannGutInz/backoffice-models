@@ -1,59 +1,63 @@
-import { AGENCY_ID, clientes, eventos, modelos } from "./mock-data";
-import type { CategoriaModelo, Modelo } from "./types";
+import { clientes, eventos, AGENCY_ID } from "./mock-data";
+import { prisma } from "@/db";
 
-// Frontera pública. La landing SOLO puede importar de este archivo, nunca de
-// mock-data.ts ni data.ts directamente — esto es lo que en una API real sería
-// la capa de permisos: ningún campo privado (contacto, nombre legal, notas
-// internas, tarifa, estado operativo) existe siquiera en los tipos de abajo.
+// Frontera pública. Solo devuelve modelos con KYC aprobado. Sin datos privados.
+
+const publicModelInclude = {
+  kyc: true,
+  categories: { select: { name: true } },
+  country: { select: { name: true } },
+  city: { select: { name: true } },
+} as const;
+
+type RawPublicModel = NonNullable<Awaited<ReturnType<typeof prisma.model.findFirst<{ include: typeof publicModelInclude }>>>>;
 
 export interface ModeloPublico {
   id: string;
-  nombreArtistico: string;
-  categoria: CategoriaModelo;
-  etiquetas: string[];
-  nivelExperiencia: Modelo["nivelExperiencia"];
-  genero: Modelo["genero"];
-  fisico?: Modelo["fisico"];
-  fotoPrincipalUrl: string;
-  bookUrls: string[];
+  fullName: string;
+  categories: string[];
+  genre: string;
+  location: string;
   destacado: boolean;
 }
 
-function esVisiblePublicamente(m: Modelo): boolean {
-  return m.agencyId === AGENCY_ID && m.estado === "activo" && m.publicoEnLanding;
-}
-
-function toPublico(m: Modelo): ModeloPublico {
+function toPublico(m: RawPublicModel): ModeloPublico {
   return {
     id: m.id,
-    nombreArtistico: m.nombreArtistico,
-    categoria: m.categoria,
-    etiquetas: m.etiquetas,
-    nivelExperiencia: m.nivelExperiencia,
-    genero: m.genero,
-    fisico: m.fisico,
-    fotoPrincipalUrl: m.fotoPrincipalUrl,
-    bookUrls: m.bookUrls,
-    destacado: m.destacado,
+    fullName: m.fullName,
+    categories: m.categories.map((c) => c.name),
+    genre: m.genre,
+    location: `${m.city.name}, ${m.country.name}`,
+    destacado: false,
   };
 }
 
 export async function listVitrinaModelos(): Promise<ModeloPublico[]> {
-  return modelos
-    .filter(esVisiblePublicamente)
-    .sort((a, b) => Number(b.destacado) - Number(a.destacado))
-    .map(toPublico);
+  const modelos = await prisma.model.findMany({
+    where: { kyc: { status: "APPROVED" } },
+    include: publicModelInclude,
+    orderBy: { fullName: "asc" },
+  });
+  return modelos.map(toPublico);
 }
 
 export async function getVitrinaModelo(id: string): Promise<ModeloPublico | undefined> {
-  const modelo = modelos.find((m) => m.id === id);
-  if (!modelo || !esVisiblePublicamente(modelo)) return undefined;
+  const modelo = await prisma.model.findFirst({
+    where: { id, kyc: { status: "APPROVED" } },
+    include: publicModelInclude,
+  });
+  if (!modelo) return undefined;
   return toPublico(modelo);
 }
 
 export async function listDestacados(limit = 4): Promise<ModeloPublico[]> {
-  const vitrina = await listVitrinaModelos();
-  return vitrina.slice(0, limit);
+  const modelos = await prisma.model.findMany({
+    where: { kyc: { status: "APPROVED" } },
+    include: publicModelInclude,
+    orderBy: { fullName: "asc" },
+    take: limit,
+  });
+  return modelos.map(toPublico);
 }
 
 export interface EventoPortafolio {
