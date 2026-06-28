@@ -31,7 +31,7 @@ export function PublicHeader({
         </nav>
         {registroPublicoActivo ? (
           <Link
-            href={APP_ROUTE.registros.index}
+            href={APP_ROUTE.registro.index}
             className="inline-flex items-center gap-1.5 rounded-full bg-zinc-950 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-gold-600"
           >
             Quiero ser parte <ArrowRight className="h-3.5 w-3.5" />

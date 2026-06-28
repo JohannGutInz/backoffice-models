@@ -37,8 +37,8 @@ export const APP_ROUTE = {
       index: "/app/catalogs"
     }
   },
-  registros: {
-    index: "/registros"
+  registro: {
+    index: "/registro"
   },
   contacto: {
     index: "/contacto"
