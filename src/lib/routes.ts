@@ -37,4 +37,10 @@ export const APP_ROUTE = {
       index: "/app/catalogs"
     }
   },
+  registros: {
+    index: "/registros"
+  },
+  contacto: {
+    index: "/contacto"
+  }
 };

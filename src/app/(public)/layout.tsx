@@ -15,7 +15,6 @@ export default async function PublicLayout({ children }: { children: React.React
       <PublicHeader
         nombreAgencia={config.nombreAgencia}
         registroPublicoActivo={config.registroPublicoActivo}
-        registroLinkSlug={config.registroLinkSlug}
       />
       <main className="flex-1">{children}</main>
       <PublicFooter nombreAgencia={config.nombreAgencia} />

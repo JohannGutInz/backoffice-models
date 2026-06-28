@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
+import { APP_ROUTE } from "@/lib/routes";
 
 const NAV_LINKS = [
   { href: "/", label: "Inicio" },
@@ -11,11 +12,9 @@ const NAV_LINKS = [
 export function PublicHeader({
   nombreAgencia,
   registroPublicoActivo,
-  registroLinkSlug,
 }: {
   nombreAgencia: string;
   registroPublicoActivo: boolean;
-  registroLinkSlug: string;
 }) {
   return (
     <header className="sticky top-0 z-40 border-b border-zinc-200/80 bg-white/90 backdrop-blur">
@@ -32,13 +31,13 @@ export function PublicHeader({
         </nav>
         {registroPublicoActivo ? (
           <Link
-            href={`/registro/${registroLinkSlug}`}
+            href={APP_ROUTE.registros.index}
             className="inline-flex items-center gap-1.5 rounded-full bg-zinc-950 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-gold-600"
           >
             Quiero ser parte <ArrowRight className="h-3.5 w-3.5" />
           </Link>
         ) : (
-          <Link href="/contacto" className="text-sm font-medium text-zinc-600 hover:text-zinc-950">
+          <Link href={APP_ROUTE.contacto.index} className="text-sm font-medium text-zinc-600 hover:text-zinc-950">
             Contacto
           </Link>
         )}
