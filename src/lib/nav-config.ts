@@ -5,6 +5,7 @@ import {
   ClipboardList,
   Globe,
   LayoutGrid,
+  List,
   PackageOpen,
   ShieldCheck,
   Sparkles,
@@ -51,6 +52,9 @@ export const NAV_GROUPS: NavGroup[] = [
   },
   {
     label: "Configuración",
-    items: [{ label: "Sitio público", href: APP_ROUTE.app.configuracion.index, icon: Globe }],
+    items: [
+      { label: "Sitio público", href: APP_ROUTE.app.configuracion.index, icon: Globe },
+      { label: "Catálogos", href: APP_ROUTE.app.catalogs.index, icon: List },
+    ],
   },
 ];

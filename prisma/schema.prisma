@@ -80,8 +80,9 @@ model Municipality {
 }
 
 model Category {
-  id   String @id @default(uuid())
-  name String
+  id      String  @id @default(uuid())
+  name    String
+  enabled Boolean @default(true)
 
   models Model[]
 

@@ -32,6 +32,9 @@ export const APP_ROUTE = {
     },
     ingresos: {
       index: "/app/ingresos"
+    },
+    catalogs: {
+      index: "/app/catalogs"
     }
   },
 };

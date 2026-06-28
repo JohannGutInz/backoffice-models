@@ -228,6 +228,35 @@ export async function moderarSolicitudAction(
   revalidatePath("/dashboard");
 }
 
+// ---------- Catálogos (categorías) ----------
+
+const categorySchema = z.object({
+  name: z.string().min(1, "El nombre es obligatorio."),
+});
+
+export async function createCategoryAction(_prev: ActionState, formData: FormData): Promise<ActionState> {
+  const result = categorySchema.safeParse({ name: String(formData.get("name") ?? "").trim() });
+
+  if (!result.success) {
+    return { status: "error", message: result.error.issues[0].message };
+  }
+
+  const existing = await prisma.category.findFirst({ where: { name: { equals: result.data.name, mode: "insensitive" } } });
+  if (existing) {
+    return { status: "error", message: "Ya existe un catálogo con ese nombre." };
+  }
+
+  await prisma.category.create({ data: { name: result.data.name } });
+  revalidatePath("/app/catalogs");
+
+  return { status: "success", message: "Catálogo creado." };
+}
+
+export async function toggleCategoryEnabledAction(id: string, enabled: boolean): Promise<void> {
+  await prisma.category.update({ where: { id }, data: { enabled } });
+  revalidatePath("/app/catalogs");
+}
+
 // ---------- Configuración del sitio (backoffice) ----------
 
 export async function guardarConfiguracionSitioAction(formData: FormData) {

@@ -154,6 +154,12 @@ export async function getConfiguracionSitio() {
   return configuracionSitio;
 }
 
+// ---------- Catálogos (categorías) ----------
+
+export async function listCategories() {
+  return prisma.category.findMany({ orderBy: { name: "asc" } });
+}
+
 // ---------- Estadísticas del dashboard ----------
 
 export async function getDashboardStats() {
