@@ -40,7 +40,7 @@ export interface Modelo {
   categoria: CategoriaModelo;
   etiquetas: string[];
   nivelExperiencia: "nuevo" | "intermedio" | "experimentado";
-  fotoPrincipalUrl: string;
+  mainPhotoUrl: string;
   bookUrls: string[];
   estado: EstadoModelo;
   destacado: boolean;

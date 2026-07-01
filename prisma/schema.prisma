@@ -44,7 +44,7 @@ model Agency {
 model Country {
   id      String @id @default(uuid())
   name    String
-  label   String  @unique// MX, USA, etc
+  label   String @unique // MX, USA, etc
   demonym String // Mexicano, American, etc
 
   models Model[]
@@ -67,8 +67,8 @@ model State {
 }
 
 model Municipality {
-  id   String @id @default(uuid())
-  name String
+  id    String @id @default(uuid())
+  name  String
   label String @unique // CLN,
 
   stateId String @map("state_id")
@@ -123,6 +123,10 @@ model Model {
   phone     String
   birthDate DateTime   @map("birth_date") @db.Date
   genre     ModelGenre
+
+  mainPhotoUrl String?  @map("main_photo_url")
+  bookUrls     String[] @map("book_urls")
+  videoUrls    String[] @map("video_urls")
 
   kycId String @unique @map("kyc_id")
   kyc   Kyc    @relation(fields: [kycId], references: [id])
