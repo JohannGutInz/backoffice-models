@@ -54,6 +54,7 @@ export function RegistroForm({ maxFecha, countries, states, municipalities, cate
       stateId: "",
       cityId: "",
       categoryIds: [],
+      password: "",
     },
   });
 
@@ -81,6 +82,7 @@ export function RegistroForm({ maxFecha, countries, states, municipalities, cate
       countryId: data.countryId,
       cityId: data.cityId,
       categoryIds: data.categoryIds,
+      password: data.password,
     });
     if (result.status === "error") setServerError(result.message);
     else setSuccess(result.message);
@@ -117,6 +119,14 @@ export function RegistroForm({ maxFecha, countries, states, municipalities, cate
           <label className="mb-1.5 block text-sm font-medium text-zinc-700">Teléfono</label>
           <input {...register("telefono")} className={INPUT_CLASS} />
           {errors.telefono && <p className="mt-1 text-xs text-rose-600">{errors.telefono.message}</p>}
+        </div>
+
+        {/* Contraseña */}
+        <div>
+          <label className="mb-1.5 block text-sm font-medium text-zinc-700">Contraseña</label>
+          <input type="password" {...register("password")} className={INPUT_CLASS} />
+          <p className="mt-1 text-xs text-zinc-400">Úsala para acceder a tu perfil más adelante.</p>
+          {errors.password && <p className="mt-1 text-xs text-rose-600">{errors.password.message}</p>}
         </div>
 
         {/* Fecha de nacimiento */}

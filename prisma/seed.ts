@@ -63,6 +63,8 @@ const COUNTRIES = [
   }
 ]
 
+const CATEGORIES = ["Casual", "Pasarela"]
+
 const connectionString = `${process.env.DATABASE_URL}`;
 const pool = new Pool({ connectionString });
 const adapter = new PrismaPg(pool);
@@ -129,6 +131,13 @@ async function main() {
         hashedPassword: hashedPassword,
       },
     });
+
+    await prisma.category.createMany({
+      data: CATEGORIES.map((category) => ({
+        name: category
+      })),
+      skipDuplicates: true,
+    })
 
     console.log(`Initialized admin user: ${DEFAULT_ADMIN_EMAIL}`);
     console.log("Seeded countries, states, and municipalities in bulk");

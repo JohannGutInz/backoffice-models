@@ -35,6 +35,9 @@ export const APP_ROUTE = {
     },
     catalogs: {
       index: "/app/catalogs"
+    },
+    modelo: {
+      perfil: "/app/modelo/perfil"
     }
   },
   registro: {

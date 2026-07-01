@@ -6,10 +6,11 @@ import { revalidatePath } from "next/cache";
 import * as bcrypt from "bcrypt";
 import { prisma } from "@/db";
 import { configuracionSitio, modelos, solicitudesRegistro } from "./mock-data";
-import { SESSION_COOKIE, createSessionToken } from "./session";
+import { SESSION_COOKIE, createSessionToken, verifySessionToken } from "./session";
 import { toDateKey } from "./utils";
 import { emailContactoCliente } from "./email";
 import { APP_ROUTE } from "./routes";
+import { perfilModeloSchema } from "./schemas";
 import z from "zod";
 import type {
   LoginData,
@@ -18,7 +19,9 @@ import type {
   ConfiguracionData,
   ReenviarData,
   RegistroActionData,
+  PerfilModeloData,
 } from "./schemas";
+import { UserRole } from "@/generated/prisma/enums";
 
 export interface ActionState {
   status: "idle" | "success" | "error";
@@ -47,6 +50,7 @@ export async function loginAction(data: LoginData): Promise<ActionState> {
     sub: user.id,
     email: user.email,
     username: user.username,
+    role: user.role,
   });
 
   const cookieStore = await cookies();
@@ -58,7 +62,7 @@ export async function loginAction(data: LoginData): Promise<ActionState> {
     maxAge: 60 * 60 * 8,
   });
 
-  redirect(APP_ROUTE.app.dashboard.index);
+  redirect(user.role === "MODEL" ? APP_ROUTE.app.modelo.perfil : APP_ROUTE.app.dashboard.index);
 }
 
 export async function logoutAction() {
@@ -74,12 +78,22 @@ function randomToken(prefix: string) {
 // ---------- Auto-registro público ----------
 
 export async function submitRegistroAction(data: RegistroActionData): Promise<ActionState> {
-  const existing = await prisma.model.findUnique({ where: { email: data.correo } });
+  const existing = await prisma.user.findUnique({ where: { email: data.correo } });
   if (existing) {
     return { status: "error", message: "Ya existe un registro con ese correo electrónico." };
   }
 
+  const hashedPassword = await hashPassword(data.password);
+
   await prisma.$transaction(async (tx) => {
+    const user = await tx.user.create({
+      data: {
+        email: data.correo,
+        username: data.nombreCompleto,
+        hashedPassword,
+        role: UserRole.MODEL,
+      },
+    });
     const kyc = await tx.kyc.create({ data: {} });
     await tx.model.create({
       data: {
@@ -91,6 +105,7 @@ export async function submitRegistroAction(data: RegistroActionData): Promise<Ac
         countryId: data.countryId,
         cityId: data.cityId,
         kycId: kyc.id,
+        userId: user.id,
         categories: { connect: data.categoryIds.map((id) => ({ id })) },
       },
     });
@@ -232,4 +247,30 @@ export async function submitContactoAction(data: ContactoData): Promise<ActionSt
   });
 
   return { status: "success", message: "¡Gracias por tu mensaje! Te responderemos a la brevedad." };
+}
+
+// ---------- Portal de modelo (self-service) ----------
+
+export async function actualizarPerfilModeloAction(data: PerfilModeloData): Promise<ActionState> {
+  const result = perfilModeloSchema.safeParse(data);
+  if (!result.success) {
+    return { status: "error", message: "Datos inválidos." };
+  }
+
+  const cookieStore = await cookies();
+  const token = cookieStore.get(SESSION_COOKIE);
+  const session = token ? await verifySessionToken(token.value) : null;
+
+  if (!session || session.role !== "MODEL") {
+    redirect(APP_ROUTE.app.login.index);
+  }
+
+  await prisma.model.update({
+    where: { userId: session.sub },
+    data: { phone: result.data.telefono },
+  });
+
+  revalidatePath(APP_ROUTE.app.modelo.perfil);
+
+  return { status: "success", message: "Perfil actualizado." };
 }

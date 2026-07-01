@@ -43,12 +43,17 @@ export const registroFormSchema = z.object({
   stateId: z.string().min(1, "Selecciona un estado."),
   cityId: z.string().min(1, "Selecciona una ciudad."),
   categoryIds: z.array(z.string()).min(1, "Selecciona al menos una categoría."),
+  password: z.string().min(8, "La contraseña debe tener al menos 8 caracteres."),
   captchaRespuesta: z.number({ error: "Ingresa la respuesta de verificación." }),
 });
 
 export const registroActionSchema = registroFormSchema.omit({
   stateId: true,
   captchaRespuesta: true,
+});
+
+export const perfilModeloSchema = z.object({
+  telefono: z.string().min(1, "El teléfono es obligatorio."),
 });
 
 export type LoginData = z.infer<typeof loginSchema>;
@@ -58,3 +63,4 @@ export type ConfiguracionData = z.infer<typeof configuracionSchema>;
 export type ReenviarData = z.infer<typeof reenviarSchema>;
 export type RegistroFormData = z.infer<typeof registroFormSchema>;
 export type RegistroActionData = z.infer<typeof registroActionSchema>;
+export type PerfilModeloData = z.infer<typeof perfilModeloSchema>;

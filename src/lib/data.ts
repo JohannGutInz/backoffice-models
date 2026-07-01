@@ -90,6 +90,13 @@ export async function getModelo(id: string) {
   });
 }
 
+export async function getModeloPropio(userId: string) {
+  return prisma.model.findUnique({
+    where: { userId },
+    include: modelInclude,
+  });
+}
+
 export function nombreModelo(id: string): string {
   return byId(modelos, id)?.nombreArtistico ?? "Modelo eliminado";
 }

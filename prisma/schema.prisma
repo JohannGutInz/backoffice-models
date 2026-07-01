@@ -15,6 +15,7 @@ datasource db {
 enum UserRole {
   ADMIN
   USER
+  MODEL
 }
 
 model User {
@@ -24,6 +25,8 @@ model User {
   hashedPassword String   @map("hashed_password")
   role           UserRole @default(USER)
   createdAt      DateTime @default(now()) @map("created_at")
+
+  model Model?
 
   @@map("users")
 }
@@ -117,6 +120,9 @@ model Model {
 
   kycId String @unique @map("kyc_id")
   kyc   Kyc    @relation(fields: [kycId], references: [id])
+
+  userId String @unique @map("user_id")
+  user   User   @relation(fields: [userId], references: [id])
 
   categories Category[]
 

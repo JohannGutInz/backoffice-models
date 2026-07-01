@@ -14,7 +14,7 @@ export default async function AppGroupLayout({
 }) {
   const [usuario, stats] = await Promise.all([getUsuarioActual(), getDashboardStats()]);
 
-  if (!usuario) {
+  if (!usuario || usuario.role !== "ADMIN") {
     redirect(APP_ROUTE.app.login.index);
   }
 
