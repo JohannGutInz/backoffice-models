@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { toggleLandingVisibilityAction } from "@/lib/actions";
+import { Switch } from "@/components/ui/Switch";
 
 export function LandingVisibilityToggle({
   modelId,
@@ -31,22 +32,7 @@ export function LandingVisibilityToggle({
           {canBePublic ? "Aparece en la vitrina pública de talentos." : "Debe estar activo para publicarse."}
         </p>
       </div>
-      <button
-        type="button"
-        role="switch"
-        aria-checked={visible}
-        disabled={!canBePublic || pending}
-        onClick={handleToggle}
-        className={`relative h-6 w-11 shrink-0 rounded-full transition-colors disabled:opacity-40 ${
-          visible ? "bg-zinc-950" : "bg-zinc-300"
-        }`}
-      >
-        <span
-          className={`absolute top-0.5 left-0.5 h-5 w-5 rounded-full bg-white transition-transform ${
-            visible ? "translate-x-5" : "translate-x-0"
-          }`}
-        />
-      </button>
+      <Switch checked={visible} onChange={handleToggle} disabled={!canBePublic || pending} />
     </div>
   );
 }

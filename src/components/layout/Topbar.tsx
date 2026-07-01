@@ -4,6 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { Bell, ChevronDown, LogOut, Settings, UserRound } from "lucide-react";
 import { Avatar } from "@/components/ui/Avatar";
+import { Button } from "@/components/ui/Button";
 import { logoutAction } from "@/lib/actions";
 import type { UserRole } from "@/generated/prisma/browser";
 import type { UserW } from "@/lib/types";
@@ -26,22 +27,20 @@ export function Topbar({
 
   return (
     <header className="flex h-16 items-center justify-end gap-4 border-b border-zinc-200 bg-white px-6 lg:px-8">
-      <button
-        className="relative flex h-9 w-9 items-center justify-center rounded-lg text-zinc-500 hover:bg-zinc-100 hover:text-zinc-700"
-        aria-label="Notificaciones"
-      >
+      <Button variant="ghost" className="relative h-9 w-9 p-0 text-zinc-500 hover:text-zinc-700" aria-label="Notificaciones">
         <Bell className="h-[18px] w-[18px]" strokeWidth={1.75} />
         {notificationCount > 0 && (
           <span className="absolute top-1.5 right-1.5 h-2 w-2 rounded-full bg-gold-500 ring-2 ring-white" />
         )}
-      </button>
+      </Button>
 
       <div className="h-6 w-px bg-zinc-200" />
 
       <div className="relative">
-        <button
+        <Button
+          variant="ghost"
           onClick={() => setMenuOpen((open) => !open)}
-          className="flex items-center gap-2.5 rounded-lg py-1.5 pl-1.5 pr-2 hover:bg-zinc-100"
+          className="py-1.5 pl-1.5 pr-2"
         >
           <Avatar name={user.username} size="md" />
           <span className="hidden text-left sm:block">
@@ -49,7 +48,7 @@ export function Topbar({
             <span className="block text-xs text-zinc-500">{ROLE_LABEL[user.role]}</span>
           </span>
           <ChevronDown className="h-4 w-4 text-zinc-400" />
-        </button>
+        </Button>
 
         {menuOpen && (
           <>
@@ -71,12 +70,13 @@ export function Topbar({
               </Link>
               <div className="my-1 h-px bg-zinc-100" />
               <form action={logoutAction}>
-                <button
+                <Button
                   type="submit"
-                  className="flex w-full items-center gap-2.5 px-3.5 py-2 text-left text-sm text-rose-600 hover:bg-rose-50"
+                  variant="ghost"
+                  className="w-full justify-start rounded-none px-3.5 py-2 text-rose-600 hover:bg-rose-50"
                 >
                   <LogOut className="h-4 w-4" /> Cerrar sesión
-                </button>
+                </Button>
               </form>
             </div>
           </>

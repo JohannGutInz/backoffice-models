@@ -5,6 +5,8 @@ import Link from "next/link";
 import { MapPin, Search } from "lucide-react";
 import type { ModelWithRelations } from "@/lib/data";
 import { Avatar } from "@/components/ui/Avatar";
+import { Input } from "@/components/ui/Input";
+import { Select } from "@/components/ui/Select";
 import { APP_ROUTE } from "@/lib/routes";
 import { formatDate } from "@/lib/utils";
 
@@ -42,36 +44,27 @@ export function ModelsGrid({ models }: { models: ModelWithRelations[] }) {
   return (
     <div>
       <div className="mb-5 flex flex-wrap items-center gap-3">
-        <div className="relative flex-1 sm:max-w-xs">
-          <Search className="pointer-events-none absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-zinc-400" />
-          <input
+        <div className="flex-1 sm:max-w-xs">
+          <Input
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Buscar por nombre o correo…"
-            className="w-full rounded-lg border border-zinc-200 bg-white py-2.5 pl-9 pr-3 text-sm outline-none focus:border-gold-500 focus:ring-1 focus:ring-gold-500"
+            icon={<Search />}
           />
         </div>
-        <select
-          value={gender}
-          onChange={(e) => setGender(e.target.value)}
-          className="rounded-lg border border-zinc-200 bg-white py-2.5 px-3 text-sm text-zinc-600 outline-none focus:border-gold-500"
-        >
+        <Select value={gender} onChange={(e) => setGender(e.target.value)} className="text-zinc-600">
           <option value="todos">Todos los géneros</option>
           <option value="MALE">Masculino</option>
           <option value="FEMALE">Femenino</option>
-        </select>
-        <select
-          value={categoryId}
-          onChange={(e) => setCategoryId(e.target.value)}
-          className="rounded-lg border border-zinc-200 bg-white py-2.5 px-3 text-sm text-zinc-600 outline-none focus:border-gold-500"
-        >
+        </Select>
+        <Select value={categoryId} onChange={(e) => setCategoryId(e.target.value)} className="text-zinc-600">
           <option value="todas">Todas las categorías</option>
           {allCategories.map(([id, name]) => (
             <option key={id} value={id}>
               {name}
             </option>
           ))}
-        </select>
+        </Select>
         <span className="ml-auto text-xs text-zinc-400">
           {filtered.length} de {models.length} modelos
         </span>

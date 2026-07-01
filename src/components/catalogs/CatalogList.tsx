@@ -3,6 +3,7 @@
 import { useTransition } from "react";
 import { toggleCategoryEnabledAction } from "@/lib/actions";
 import { Card } from "@/components/ui/Card";
+import { Switch } from "@/components/ui/Switch";
 
 type Category = { id: string; name: string; enabled: boolean };
 
@@ -50,22 +51,12 @@ function CatalogRow({ category }: { category: Category }) {
       <span className={`flex-1 text-sm ${category.enabled ? "text-zinc-800" : "text-zinc-400 line-through"}`}>
         {category.name}
       </span>
-      <button
-        type="button"
-        role="switch"
-        aria-checked={category.enabled}
+      <Switch
+        checked={category.enabled}
+        onChange={handleToggle}
+        size="sm"
         aria-label={category.enabled ? "Deshabilitar" : "Habilitar"}
-        onClick={handleToggle}
-        className={`relative h-5 w-9 shrink-0 rounded-full transition-colors ${
-          category.enabled ? "bg-zinc-950" : "bg-zinc-300"
-        }`}
-      >
-        <span
-          className={`absolute top-0.5 left-0.5 h-4 w-4 rounded-full bg-white transition-transform ${
-            category.enabled ? "translate-x-4" : "translate-x-0"
-          }`}
-        />
-      </button>
+      />
     </li>
   );
 }

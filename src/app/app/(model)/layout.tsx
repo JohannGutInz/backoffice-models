@@ -1,6 +1,7 @@
 import { getCurrentUser } from "@/lib/data";
 import { APP_ROUTE } from "@/lib/routes";
 import { logoutAction } from "@/lib/actions";
+import { Button } from "@/components/ui/Button";
 import { redirect } from "next/navigation";
 
 export const dynamic = "force-dynamic";
@@ -23,9 +24,9 @@ export default async function ModelGroupLayout({
           Glamour<span className="text-gold-500">Models</span>
         </span>
         <form action={logoutAction}>
-          <button type="submit" className="text-sm font-medium text-zinc-500 hover:text-gold-600">
+          <Button type="submit" variant="ghost" className="text-zinc-500 hover:bg-transparent hover:text-gold-600">
             Cerrar sesión
-          </button>
+          </Button>
         </form>
       </header>
       <main className="p-6 lg:p-8">{children}</main>

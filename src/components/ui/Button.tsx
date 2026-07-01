@@ -12,21 +12,13 @@ const variantClasses: Record<Variant, string> = {
 const base =
   "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-lg px-4 py-2.5 text-sm font-medium transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 disabled:opacity-50 disabled:pointer-events-none";
 
-export function Button({
-  children,
-  variant = "primary",
-  className,
-  type = "button",
-  onClick,
-}: {
-  children: React.ReactNode;
+type ButtonProps = React.ButtonHTMLAttributes<HTMLButtonElement> & {
   variant?: Variant;
-  className?: string;
-  type?: "button" | "submit";
-  onClick?: () => void;
-}) {
+};
+
+export function Button({ children, variant = "primary", className, type = "button", ...props }: ButtonProps) {
   return (
-    <button type={type} onClick={onClick} className={cn(base, variantClasses[variant], className)}>
+    <button type={type} className={cn(base, variantClasses[variant], className)} {...props}>
       {children}
     </button>
   );

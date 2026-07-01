@@ -3,6 +3,8 @@
 import { useMemo, useState } from "react";
 import { Search } from "lucide-react";
 import { TalentCard } from "./TalentCard";
+import { Input } from "@/components/ui/Input";
+import { Select } from "@/components/ui/Select";
 import type { PublicModel } from "@/lib/public-data";
 
 export function TalentsGrid({ models }: { models: PublicModel[] }) {
@@ -26,20 +28,20 @@ export function TalentsGrid({ models }: { models: PublicModel[] }) {
   return (
     <div>
       <div className="mb-8 flex flex-wrap items-center gap-3">
-        <div className="relative flex-1 sm:max-w-xs">
-          <Search className="pointer-events-none absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-zinc-400" />
-          <input
+        <div className="flex-1 sm:max-w-xs">
+          <Input
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Buscar por nombre…"
-            className="w-full rounded-full border border-zinc-200 bg-white py-2.5 pl-9 pr-3 text-sm outline-none focus:border-gold-500 focus:ring-1 focus:ring-gold-500"
+            icon={<Search />}
+            className="rounded-full"
           />
         </div>
         {categories.length > 0 && (
-          <select
+          <Select
             value={category}
             onChange={(e) => setCategory(e.target.value)}
-            className="rounded-full border border-zinc-200 bg-white py-2.5 px-4 text-sm text-zinc-600 outline-none focus:border-gold-500"
+            className="rounded-full py-2.5 px-4 text-zinc-600"
           >
             <option value="todas">Todas las categorías</option>
             {categories.map((c) => (
@@ -47,7 +49,7 @@ export function TalentsGrid({ models }: { models: PublicModel[] }) {
                 {c}
               </option>
             ))}
-          </select>
+          </Select>
         )}
         <span className="ml-auto text-xs text-zinc-400">{filtered.length} talentos</span>
       </div>

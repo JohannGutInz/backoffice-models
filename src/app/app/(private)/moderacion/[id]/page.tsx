@@ -15,8 +15,10 @@ import {
 import { getModelKyc } from "@/lib/data";
 import { moderateKycAction } from "@/lib/actions";
 import { Avatar } from "@/components/ui/Avatar";
+import { Button } from "@/components/ui/Button";
 import { Card, CardHeader } from "@/components/ui/Card";
 import { Field, FieldGrid } from "@/components/ui/Field";
+import { Textarea } from "@/components/ui/Textarea";
 import { StatusBadge } from "@/components/ui/Badge";
 import { addDays, formatDate } from "@/lib/utils";
 import { APP_ROUTE } from "@/lib/routes";
@@ -131,51 +133,42 @@ export default async function ModerationDetailPage({
               subtitle="El comentario es visible para el registro. La nota interna es solo para staff."
             />
             <form className="space-y-4 px-5 pb-5">
-              <div>
-                <label className="mb-1.5 block text-xs font-semibold tracking-wide text-zinc-500 uppercase">
-                  Nota interna · solo staff
-                </label>
-                <textarea
-                  name="internalNote"
-                  defaultValue={kyc.internalNote ?? ""}
-                  rows={3}
-                  placeholder="Observaciones internas, nunca visibles para el registro…"
-                  className="w-full rounded-lg border border-zinc-200 bg-zinc-50 p-3 text-sm text-zinc-700 outline-none focus:border-zinc-400 focus:ring-1 focus:ring-zinc-400"
-                />
-              </div>
-              <div>
-                <label className="mb-1.5 block text-xs font-semibold tracking-wide text-gold-700 uppercase">
-                  Comentario para el modelo · visible en su notificación
-                </label>
-                <textarea
-                  name="comment"
-                  defaultValue={kyc.comment ?? ""}
-                  rows={3}
-                  placeholder="Lo que el modelo recibirá como retroalimentación…"
-                  className="w-full rounded-lg border border-gold-200 bg-gold-50 p-3 text-sm text-gold-900 outline-none focus:border-gold-400 focus:ring-1 focus:ring-gold-400"
-                />
-              </div>
+              <Textarea
+                label="Nota interna · solo staff"
+                labelClassName="text-xs font-semibold tracking-wide text-zinc-500 uppercase"
+                name="internalNote"
+                defaultValue={kyc.internalNote ?? ""}
+                placeholder="Observaciones internas, nunca visibles para el registro…"
+                className="border-zinc-200 bg-zinc-50 text-zinc-700 focus:border-zinc-400 focus:ring-zinc-400"
+              />
+              <Textarea
+                label="Comentario para el modelo · visible en su notificación"
+                labelClassName="text-xs font-semibold tracking-wide text-gold-700 uppercase"
+                name="comment"
+                defaultValue={kyc.comment ?? ""}
+                placeholder="Lo que el modelo recibirá como retroalimentación…"
+                className="border-gold-200 bg-gold-50 text-gold-900 focus:border-gold-400 focus:ring-gold-400"
+              />
 
               {canReview && (
                 <div className="flex flex-wrap items-center gap-2 pt-1">
-                  <button
+                  <Button
+                    variant="secondary"
                     formAction={moderateKycAction.bind(null, model.id, "REJECTED")}
-                    className="inline-flex items-center justify-center gap-2 rounded-lg bg-white px-4 py-2.5 text-sm font-medium text-zinc-700 ring-1 ring-inset ring-zinc-200 transition-colors hover:bg-rose-50 hover:text-rose-700 hover:ring-rose-200"
+                    className="hover:bg-rose-50 hover:text-rose-700 hover:ring-rose-200"
                   >
                     <XCircle className="h-4 w-4" /> Rechazar
-                  </button>
-                  <button
+                  </Button>
+                  <Button
+                    variant="secondary"
                     formAction={moderateKycAction.bind(null, model.id, "REQUIRES_CHANGES")}
-                    className="inline-flex items-center justify-center gap-2 rounded-lg bg-white px-4 py-2.5 text-sm font-medium text-zinc-700 ring-1 ring-inset ring-zinc-200 transition-colors hover:bg-amber-50 hover:text-amber-700 hover:ring-amber-200"
+                    className="hover:bg-amber-50 hover:text-amber-700 hover:ring-amber-200"
                   >
                     <RotateCcw className="h-4 w-4" /> Solicitar cambios
-                  </button>
-                  <button
-                    formAction={moderateKycAction.bind(null, model.id, "APPROVED")}
-                    className="inline-flex items-center justify-center gap-2 rounded-lg bg-zinc-950 px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-gold-600"
-                  >
+                  </Button>
+                  <Button formAction={moderateKycAction.bind(null, model.id, "APPROVED")}>
                     <CheckCircle2 className="h-4 w-4" /> Aprobar
-                  </button>
+                  </Button>
                 </div>
               )}
             </form>

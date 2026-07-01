@@ -4,6 +4,10 @@ import { useState, useTransition } from "react";
 import { Check, Copy, ImagePlus, RefreshCw } from "lucide-react";
 import { Card, CardHeader } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
+import { Input } from "@/components/ui/Input";
+import { Textarea } from "@/components/ui/Textarea";
+import { Switch } from "@/components/ui/Switch";
+import { ColorInput } from "@/components/ui/ColorInput";
 import { saveSiteSettingsAction, regenerateRegistrationLinkAction, togglePublicRegistrationAction } from "@/lib/actions";
 import { settingsSchema, type SettingsData } from "@/lib/schemas";
 import type { SiteSettings } from "@/lib/types";
@@ -67,27 +71,12 @@ export function SettingsForm({ config }: { config: SiteSettings }) {
       <Card>
         <CardHeader title="Identidad del sitio" subtitle="Se refleja en la landing pública." />
         <div className="grid grid-cols-1 gap-5 px-5 pb-5 sm:grid-cols-2">
-          <div>
-            <label className="mb-1.5 block text-sm font-medium text-zinc-700">Nombre de la agencia</label>
-            <input
-              {...register("agencyName")}
-              className="w-full rounded-lg border border-zinc-300 bg-white py-2.5 px-3 text-sm outline-none focus:border-gold-500 focus:ring-1 focus:ring-gold-500"
-            />
-            {errors.agencyName && <p className="mt-1 text-xs text-rose-600">{errors.agencyName.message}</p>}
-          </div>
+          <Input label="Nombre de la agencia" {...register("agencyName")} error={errors.agencyName?.message} />
           <div>
             <label className="mb-1.5 block text-sm font-medium text-zinc-700">Color primario</label>
             <div className="flex items-center gap-2">
-              <input
-                type="color"
-                value={primaryColor}
-                onChange={(e) => setValue("primaryColor", e.target.value)}
-                className="h-10 w-12 cursor-pointer rounded-lg border border-zinc-300"
-              />
-              <input
-                {...register("primaryColor")}
-                className="w-full rounded-lg border border-zinc-300 bg-white py-2.5 px-3 text-sm uppercase outline-none focus:border-gold-500 focus:ring-1 focus:ring-gold-500"
-              />
+              <ColorInput value={primaryColor} onChange={(e) => setValue("primaryColor", e.target.value)} />
+              <Input {...register("primaryColor")} className="uppercase" />
             </div>
             {errors.primaryColor && <p className="mt-1 text-xs text-rose-600">{errors.primaryColor.message}</p>}
           </div>
@@ -107,23 +96,8 @@ export function SettingsForm({ config }: { config: SiteSettings }) {
       <Card>
         <CardHeader title="Textos del hero" subtitle="Encabezado principal de la landing." />
         <div className="space-y-4 px-5 pb-5">
-          <div>
-            <label className="mb-1.5 block text-sm font-medium text-zinc-700">Título</label>
-            <input
-              {...register("heroTitle")}
-              className="w-full rounded-lg border border-zinc-300 bg-white py-2.5 px-3 text-sm outline-none focus:border-gold-500 focus:ring-1 focus:ring-gold-500"
-            />
-            {errors.heroTitle && <p className="mt-1 text-xs text-rose-600">{errors.heroTitle.message}</p>}
-          </div>
-          <div>
-            <label className="mb-1.5 block text-sm font-medium text-zinc-700">Subtítulo</label>
-            <textarea
-              {...register("heroSubtitle")}
-              rows={3}
-              className="w-full rounded-lg border border-zinc-300 bg-white py-2.5 px-3 text-sm outline-none focus:border-gold-500 focus:ring-1 focus:ring-gold-500"
-            />
-            {errors.heroSubtitle && <p className="mt-1 text-xs text-rose-600">{errors.heroSubtitle.message}</p>}
-          </div>
+          <Input label="Título" {...register("heroTitle")} error={errors.heroTitle?.message} />
+          <Textarea label="Subtítulo" {...register("heroSubtitle")} error={errors.heroSubtitle?.message} />
         </div>
       </Card>
 
@@ -139,33 +113,19 @@ export function SettingsForm({ config }: { config: SiteSettings }) {
                   : "El link sigue activo pero solo se comparte en privado."}
               </p>
             </div>
-            <button
-              type="button"
-              role="switch"
-              aria-checked={registrationActive}
-              onClick={handleToggleRegistration}
-              className={`relative h-6 w-11 shrink-0 rounded-full transition-colors ${
-                registrationActive ? "bg-zinc-950" : "bg-zinc-300"
-              }`}
-            >
-              <span
-                className={`absolute top-0.5 left-0.5 h-5 w-5 rounded-full bg-white transition-transform ${
-                  registrationActive ? "translate-x-5" : "translate-x-0"
-                }`}
-              />
-            </button>
+            <Switch checked={registrationActive} onChange={handleToggleRegistration} />
           </div>
 
           <div className="flex items-center gap-2 rounded-lg border border-zinc-200 bg-zinc-50 px-3 py-2.5">
             <span className="flex-1 truncate text-sm text-zinc-600">{registrationUrl}</span>
-            <button
-              type="button"
+            <Button
+              variant="ghost"
               onClick={handleCopy}
-              className="flex h-8 w-8 items-center justify-center rounded-lg text-zinc-400 hover:bg-zinc-200 hover:text-zinc-700"
+              className="h-8 w-8 p-0"
               aria-label="Copiar link"
             >
               {copied ? <Check className="h-4 w-4 text-emerald-600" /> : <Copy className="h-4 w-4" />}
-            </button>
+            </Button>
           </div>
 
           <Button type="button" variant="secondary" onClick={handleRegenerate}>
@@ -174,13 +134,9 @@ export function SettingsForm({ config }: { config: SiteSettings }) {
         </div>
       </Card>
 
-      <button
-        type="submit"
-        disabled={isSubmitting}
-        className="inline-flex items-center justify-center gap-2 rounded-lg bg-zinc-950 px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-gold-600 disabled:opacity-60"
-      >
+      <Button type="submit" disabled={isSubmitting}>
         {isSubmitting ? "Guardando…" : "Guardar cambios"}
-      </button>
+      </Button>
     </form>
   );
 }

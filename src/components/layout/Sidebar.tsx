@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { PanelLeftClose, PanelLeftOpen } from "lucide-react";
+import { Button } from "@/components/ui/Button";
 import { APP_ROUTE } from "@/lib/routes";
 import { NAV_GROUPS } from "@/lib/nav-config";
 import { cn } from "@/lib/utils";
@@ -26,13 +27,14 @@ export function Sidebar({
       )}
     >
       <div className="flex h-16 shrink-0 items-center gap-3 border-b border-white/5 px-4">
-        <button
+        <Button
+          variant="ghost"
           onClick={onToggle}
-          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-zinc-400 hover:bg-white/5 hover:text-gold-300"
+          className="h-9 w-9 shrink-0 p-0 text-zinc-400 hover:bg-white/5 hover:text-gold-300"
           aria-label="Contraer u expandir menú"
         >
           {collapsed ? <PanelLeftOpen className="h-[18px] w-[18px]" /> : <PanelLeftClose className="h-[18px] w-[18px]" />}
-        </button>
+        </Button>
         {!collapsed && (
           <Link href={APP_ROUTE.app.dashboard.index} className="truncate text-lg leading-none font-semibold text-white">
             Glamour<span className="text-gold-400">Models</span>

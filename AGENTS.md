@@ -22,6 +22,16 @@ Never revert unless user says "stop caveman" or "normal mode".
 
 ---
 
+# UI Component Convention
+
+Reusable UI primitives live in `src/components/ui/`. Before writing raw `<input>`, `<select>`, `<textarea>`, `<button>`, checkbox, color-picker, or toggle-switch markup, check if one already exists here and use it.
+
+Current primitives: `Input` · `Select` · `Textarea` · `Button` · `Checkbox` · `ColorInput` · `Switch` · `Card` · `Badge` · `Avatar` · `Field` · `PageHeader` · `SearchForm` · `StatCard` · `StatusTabs` · `Table` · `ImageUpload` · `VideoUpload`.
+
+**When to extract a new one**: once a raw HTML pattern (markup + Tailwind classes) repeats across 2+ files, pull it into `src/components/ui/` instead of copy-pasting. Match the established API shape: `forwardRef`, spread native HTML attrs (`React.<Tag>HTMLAttributes<...>`), optional `label`/`error` props, `cn()` for className merging, same border/focus/error styling as `Input.tsx`.
+
+---
+
 # Project Resume
 
 **Backoffice Models** — agency management platform for talent/model agencies.
