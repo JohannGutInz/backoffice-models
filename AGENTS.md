@@ -38,7 +38,7 @@ Never revert unless user says "stop caveman" or "normal mode".
 
 ## DB Models (Prisma)
 
-`User` · `Agency` · `Model` · `Kyc` · `Category` · `Country` · `State` · `Municipality`
+`User` · `Model` · `Kyc` · `Category` · `Country` · `State` · `Municipality`
 
 KYC statuses: `PENDING` · `APPROVED` · `REJECTED` · `REQUIRES_CHANGES`
 
