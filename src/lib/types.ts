@@ -1,12 +1,12 @@
-// Modelo de dominio v1 — backoffice de agencia de talentos.
-// Toda entidad lleva agencyId para soportar multi-tenancy lógico desde el día uno,
-// aunque hoy solo exista una agencia (ver CLAUDE-proyecto-real.md).
+// Domain model v1 — talent agency backoffice.
+// Every entity carries agencyId to support logical multi-tenancy from day one,
+// even though today only one agency exists (see CLAUDE-proyecto-real.md).
 
 import { User } from "@/generated/prisma/browser";
 
-export type EstadoModelo = "activo" | "borrador" | "inactivo";
+export type ModelStatus = "activo" | "borrador" | "inactivo";
 
-export type CategoriaModelo =
+export type ModelCategory =
   | "moda"
   | "comercial"
   | "editorial"
@@ -14,163 +14,163 @@ export type CategoriaModelo =
   | "promocional"
   | "influencer";
 
-export interface Modelo {
+export interface Model {
   id: string;
   agencyId: string;
-  numeroModelo: string;
-  nombreArtistico: string;
-  nombreLegal: string;
-  fechaNacimiento: string;
-  genero: "femenino" | "masculino" | "no binario";
-  nacionalidad: string;
-  contacto: {
-    correo: string;
-    telefono: string;
-    ubicacion: string;
-    redes?: string;
+  modelNumber: string;
+  stageName: string;
+  legalName: string;
+  birthDate: string;
+  gender: "femenino" | "masculino" | "no binario";
+  nationality: string;
+  contact: {
+    email: string;
+    phone: string;
+    location: string;
+    socialMedia?: string;
   };
-  fisico?: {
-    estaturaCm?: number;
-    medidas?: string;
-    tallas?: string;
-    colorCabello?: string;
-    colorOjos?: string;
-    tonoPiel?: string;
+  physical?: {
+    heightCm?: number;
+    measurements?: string;
+    sizes?: string;
+    hairColor?: string;
+    eyeColor?: string;
+    skinTone?: string;
   };
-  categoria: CategoriaModelo;
-  etiquetas: string[];
-  nivelExperiencia: "nuevo" | "intermedio" | "experimentado";
+  category: ModelCategory;
+  tags: string[];
+  experienceLevel: "nuevo" | "intermedio" | "experimentado";
   mainPhotoUrl: string;
   bookUrls: string[];
-  estado: EstadoModelo;
-  destacado: boolean;
-  // Curaduría explícita: un modelo puede estar "activo" para operar bookings
-  // sin todavía estar listo/aprobado para mostrarse en la vitrina pública.
-  publicoEnLanding: boolean;
-  disponibilidad: "disponible" | "ocupado" | "no disponible";
-  tarifaBase: number;
-  notasInternas?: string;
-  consentimiento?: {
-    aceptado: boolean;
-    fecha: string;
-    versionDocumento: string;
-    alcance: string;
+  status: ModelStatus;
+  featured: boolean;
+  // Explicit curation: a model can be "activo" to operate bookings
+  // without yet being ready/approved to show up in the public showcase.
+  publicOnLanding: boolean;
+  availability: "disponible" | "ocupado" | "no disponible";
+  baseRate: number;
+  internalNotes?: string;
+  consent?: {
+    accepted: boolean;
+    date: string;
+    documentVersion: string;
+    scope: string;
   };
-  creadoEn: string;
+  createdAt: string;
 }
 
-export type EstadoSolicitud =
+export type ApplicationStatus =
   | "pendiente"
   | "requiere_cambios"
   | "aprobado"
   | "rechazado";
 
-export interface SolicitudRegistro {
+export interface RegistrationApplication {
   id: string;
   agencyId: string;
-  nombreCompleto: string;
-  correo: string;
-  telefono: string;
-  fechaNacimiento: string;
-  genero: Modelo["genero"];
-  nacionalidad: string;
-  ubicacion: string;
-  categoria: CategoriaModelo;
-  fotoUrl: string;
-  estado: EstadoSolicitud;
-  notaInterna?: string;
-  retroParaModelo?: string;
-  enviadoEn: string;
-  actualizadoEn: string;
-  tokenRevision: string;
-  rechazadoEn?: string;
+  fullName: string;
+  email: string;
+  phone: string;
+  birthDate: string;
+  gender: Model["gender"];
+  nationality: string;
+  location: string;
+  category: ModelCategory;
+  photoUrl: string;
+  status: ApplicationStatus;
+  internalNote?: string;
+  feedbackForModel?: string;
+  submittedAt: string;
+  updatedAt: string;
+  reviewToken: string;
+  rejectedAt?: string;
 }
 
-export interface Cliente {
+export interface Client {
   id: string;
   agencyId: string;
-  empresa: string;
-  contactoNombre: string;
-  correo: string;
-  telefono: string;
-  industria: string;
-  eventosTotales: number;
-  ingresosTotales: number;
-  creadoEn: string;
+  company: string;
+  contactName: string;
+  email: string;
+  phone: string;
+  industry: string;
+  totalEvents: number;
+  totalRevenue: number;
+  createdAt: string;
 }
 
-export type EstadoEvento = "planeado" | "confirmado" | "en_curso" | "finalizado" | "cancelado";
+export type EventStatus = "planeado" | "confirmado" | "en_curso" | "finalizado" | "cancelado";
 
-export interface Evento {
+export interface AgencyEvent {
   id: string;
   agencyId: string;
-  nombre: string;
-  clienteId: string;
-  tipo: string;
-  lugar: string;
-  fechaInicio: string;
-  fechaFin: string;
-  estado: EstadoEvento;
-  bookingsIds: string[];
+  name: string;
+  clientId: string;
+  type: string;
+  venue: string;
+  startDate: string;
+  endDate: string;
+  status: EventStatus;
+  bookingIds: string[];
 }
 
-export type EstadoBooking = "pendiente" | "confirmado" | "completado" | "cancelado";
+export type BookingStatus = "pendiente" | "confirmado" | "completado" | "cancelado";
 
 export interface Booking {
   id: string;
   agencyId: string;
-  eventoId: string;
-  modeloId: string;
-  tarifa: number;
-  estado: EstadoBooking;
-  fecha: string;
-  notas?: string;
+  eventId: string;
+  modelId: string;
+  rate: number;
+  status: BookingStatus;
+  date: string;
+  notes?: string;
 }
 
-export type EstadoPaquete = "borrador" | "enviado" | "aprobado" | "rechazado";
+export type PackageStatus = "borrador" | "enviado" | "aprobado" | "rechazado";
 
-export interface Paquete {
+export interface Package {
   id: string;
   agencyId: string;
-  nombre: string;
-  clienteId: string;
-  modeloIds: string[];
-  estado: EstadoPaquete;
+  name: string;
+  clientId: string;
+  modelIds: string[];
+  status: PackageStatus;
   total: number;
-  creadoEn: string;
+  createdAt: string;
 }
 
-export interface Ingreso {
+export interface Income {
   id: string;
   agencyId: string;
-  eventoId: string;
-  clienteId: string;
-  monto: number;
-  metodo: "transferencia" | "tarjeta" | "efectivo";
-  fecha: string;
+  eventId: string;
+  clientId: string;
+  amount: number;
+  method: "transferencia" | "tarjeta" | "efectivo";
+  date: string;
 }
 
-export type RolStaff = "admin" | "booker" | "moderador" | "finanzas";
+export type StaffRole = "admin" | "booker" | "moderador" | "finanzas";
 
-export interface UsuarioStaff {
+export interface StaffUser {
   id: string;
   agencyId: string;
-  nombre: string;
-  correo: string;
-  rol: RolStaff;
-  avatarIniciales: string;
+  name: string;
+  email: string;
+  role: StaffRole;
+  avatarInitials: string;
 }
 
-export interface ConfiguracionSitio {
+export interface SiteSettings {
   agencyId: string;
-  nombreAgencia: string;
+  agencyName: string;
   logoUrl: string;
-  colorPrimario: string;
-  heroTitulo: string;
-  heroSubtitulo: string;
-  registroPublicoActivo: boolean;
-  registroLinkSlug: string;
+  primaryColor: string;
+  heroTitle: string;
+  heroSubtitle: string;
+  publicRegistrationActive: boolean;
+  registrationLinkSlug: string;
 }
 
 // UserWithoutPassword
-export type UserW = Omit<User, "hashedPassword">
+export type UserW = Omit<User, "hashedPassword">;

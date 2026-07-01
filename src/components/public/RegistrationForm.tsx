@@ -2,8 +2,8 @@
 
 import { useEffect, useState } from "react";
 import { CheckCircle2, Send } from "lucide-react";
-import { submitRegistroAction } from "@/lib/actions";
-import { registroFormSchema, type RegistroFormData } from "@/lib/schemas";
+import { submitRegistrationAction } from "@/lib/actions";
+import { registrationFormSchema, type RegistrationFormData } from "@/lib/schemas";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 
@@ -13,7 +13,7 @@ type Municipality = { id: string; name: string; stateId: string };
 type Category = { id: string; name: string };
 
 interface Props {
-  maxFecha: string;
+  maxDate: string;
   countries: Country[];
   states: State[];
   municipalities: Municipality[];
@@ -26,18 +26,18 @@ const INPUT_CLASS =
 const SELECT_CLASS =
   "w-full rounded-lg border border-zinc-300 bg-white py-2.5 px-3 text-sm outline-none focus:border-gold-500 disabled:cursor-not-allowed disabled:bg-zinc-50 disabled:text-zinc-400";
 
-function generarCaptcha() {
+function generateCaptcha() {
   return { a: 1 + Math.floor(Math.random() * 8), b: 1 + Math.floor(Math.random() * 8) };
 }
 
-export function RegistroForm({ maxFecha, countries, states, municipalities, categories }: Props) {
+export function RegistrationForm({ maxDate, countries, states, municipalities, categories }: Props) {
   const [success, setSuccess] = useState<string | null>(null);
   const [serverError, setServerError] = useState<string | null>(null);
   const [captcha, setCaptcha] = useState<{ a: number; b: number } | null>(null);
   const [categoryPickerId, setCategoryPickerId] = useState("");
 
   useEffect(() => {
-    setCaptcha(generarCaptcha());
+    setCaptcha(generateCaptcha());
   }, []);
 
   const {
@@ -47,8 +47,8 @@ export function RegistroForm({ maxFecha, countries, states, municipalities, cate
     watch,
     setValue,
     formState: { errors, isSubmitting },
-  } = useForm<RegistroFormData>({
-    resolver: zodResolver(registroFormSchema),
+  } = useForm<RegistrationFormData>({
+    resolver: zodResolver(registrationFormSchema),
     defaultValues: {
       countryId: "",
       stateId: "",
@@ -66,19 +66,19 @@ export function RegistroForm({ maxFecha, countries, states, municipalities, cate
   const filteredMunicipalities = municipalities.filter((m) => m.stateId === selectedStateId);
   const pickedCategories = categories.filter((c) => categoryIds.includes(c.id));
 
-  async function onSubmit(data: RegistroFormData) {
+  async function onSubmit(data: RegistrationFormData) {
     setServerError(null);
     if (!captcha) return;
-    if (data.captchaRespuesta !== captcha.a + captcha.b) {
+    if (data.captchaAnswer !== captcha.a + captcha.b) {
       setServerError("La respuesta de verificación no es correcta. Intenta de nuevo.");
       return;
     }
-    const result = await submitRegistroAction({
-      nombreCompleto: data.nombreCompleto,
-      correo: data.correo,
-      telefono: data.telefono,
-      fechaNacimiento: data.fechaNacimiento,
-      genero: data.genero,
+    const result = await submitRegistrationAction({
+      fullName: data.fullName,
+      email: data.email,
+      phone: data.phone,
+      birthDate: data.birthDate,
+      gender: data.gender,
       countryId: data.countryId,
       cityId: data.cityId,
       categoryIds: data.categoryIds,
@@ -103,22 +103,22 @@ export function RegistroForm({ maxFecha, countries, states, municipalities, cate
         {/* Nombre completo */}
         <div className="sm:col-span-2">
           <label className="mb-1.5 block text-sm font-medium text-zinc-700">Nombre completo</label>
-          <input {...register("nombreCompleto")} className={INPUT_CLASS} />
-          {errors.nombreCompleto && <p className="mt-1 text-xs text-rose-600">{errors.nombreCompleto.message}</p>}
+          <input {...register("fullName")} className={INPUT_CLASS} />
+          {errors.fullName && <p className="mt-1 text-xs text-rose-600">{errors.fullName.message}</p>}
         </div>
 
         {/* Correo */}
         <div>
           <label className="mb-1.5 block text-sm font-medium text-zinc-700">Correo</label>
-          <input type="email" {...register("correo")} className={INPUT_CLASS} />
-          {errors.correo && <p className="mt-1 text-xs text-rose-600">{errors.correo.message}</p>}
+          <input type="email" {...register("email")} className={INPUT_CLASS} />
+          {errors.email && <p className="mt-1 text-xs text-rose-600">{errors.email.message}</p>}
         </div>
 
         {/* Teléfono */}
         <div>
           <label className="mb-1.5 block text-sm font-medium text-zinc-700">Teléfono</label>
-          <input {...register("telefono")} className={INPUT_CLASS} />
-          {errors.telefono && <p className="mt-1 text-xs text-rose-600">{errors.telefono.message}</p>}
+          <input {...register("phone")} className={INPUT_CLASS} />
+          {errors.phone && <p className="mt-1 text-xs text-rose-600">{errors.phone.message}</p>}
         </div>
 
         {/* Contraseña */}
@@ -132,20 +132,20 @@ export function RegistroForm({ maxFecha, countries, states, municipalities, cate
         {/* Fecha de nacimiento */}
         <div>
           <label className="mb-1.5 block text-sm font-medium text-zinc-700">Fecha de nacimiento</label>
-          <input type="date" {...register("fechaNacimiento")} max={maxFecha} className={INPUT_CLASS} />
+          <input type="date" {...register("birthDate")} max={maxDate} className={INPUT_CLASS} />
           <p className="mt-1 text-xs text-zinc-400">Solo aceptamos talento mayor de edad.</p>
-          {errors.fechaNacimiento && <p className="mt-1 text-xs text-rose-600">{errors.fechaNacimiento.message}</p>}
+          {errors.birthDate && <p className="mt-1 text-xs text-rose-600">{errors.birthDate.message}</p>}
         </div>
 
         {/* Género */}
         <div>
           <label className="mb-1.5 block text-sm font-medium text-zinc-700">Género</label>
-          <select {...register("genero")} defaultValue="" className={SELECT_CLASS}>
+          <select {...register("gender")} defaultValue="" className={SELECT_CLASS}>
             <option value="" disabled>Selecciona…</option>
             <option value="FEMALE">Femenino</option>
             <option value="MALE">Masculino</option>
           </select>
-          {errors.genero && <p className="mt-1 text-xs text-rose-600">{errors.genero.message}</p>}
+          {errors.gender && <p className="mt-1 text-xs text-rose-600">{errors.gender.message}</p>}
         </div>
 
         {/* País */}
@@ -293,11 +293,11 @@ export function RegistroForm({ maxFecha, countries, states, municipalities, cate
             </label>
             <input
               type="number"
-              {...register("captchaRespuesta", { valueAsNumber: true })}
+              {...register("captchaAnswer", { valueAsNumber: true })}
               className="w-32 rounded-lg border border-zinc-300 bg-white py-2 px-3 text-sm outline-none focus:border-gold-500 focus:ring-1 focus:ring-gold-500"
             />
-            {errors.captchaRespuesta && (
-              <p className="mt-1 text-xs text-rose-600">{errors.captchaRespuesta.message}</p>
+            {errors.captchaAnswer && (
+              <p className="mt-1 text-xs text-rose-600">{errors.captchaAnswer.message}</p>
             )}
           </>
         ) : (

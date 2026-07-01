@@ -8,9 +8,10 @@ interface ImageUploadProps {
   onChange: (url: string) => void;
   label?: string;
   className?: string;
+  modelId?: string;
 }
 
-export function ImageUpload({ value, onChange, label = "Imagen", className }: ImageUploadProps) {
+export function ImageUpload({ value, onChange, label = "Imagen", className, modelId }: ImageUploadProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -21,6 +22,7 @@ export function ImageUpload({ value, onChange, label = "Imagen", className }: Im
     try {
       const formData = new FormData();
       formData.append("file", file);
+      if (modelId) formData.append("modelId", modelId);
 
       const res = await fetch("/api/upload/image", { method: "POST", body: formData });
       const data = await res.json();

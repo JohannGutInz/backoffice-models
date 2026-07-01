@@ -4,19 +4,19 @@ import { useState, useTransition } from "react";
 import { Check, Copy, ImagePlus, RefreshCw } from "lucide-react";
 import { Card, CardHeader } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
-import { guardarConfiguracionSitioAction, regenerarLinkRegistroAction, toggleRegistroPublicoAction } from "@/lib/actions";
-import { configuracionSchema, type ConfiguracionData } from "@/lib/schemas";
-import type { ConfiguracionSitio } from "@/lib/types";
+import { saveSiteSettingsAction, regenerateRegistrationLinkAction, togglePublicRegistrationAction } from "@/lib/actions";
+import { settingsSchema, type SettingsData } from "@/lib/schemas";
+import type { SiteSettings } from "@/lib/types";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 
-export function ConfiguracionForm({ config }: { config: ConfiguracionSitio }) {
-  const [registroActivo, setRegistroActivo] = useState(config.registroPublicoActivo);
-  const [slug, setSlug] = useState(config.registroLinkSlug);
-  const [copiado, setCopiado] = useState(false);
+export function SettingsForm({ config }: { config: SiteSettings }) {
+  const [registrationActive, setRegistrationActive] = useState(config.publicRegistrationActive);
+  const [slug, setSlug] = useState(config.registrationLinkSlug);
+  const [copied, setCopied] = useState(false);
   const [, startTransition] = useTransition();
 
-  const registroUrl = `agencia.com/registro/${slug}`;
+  const registrationUrl = `agencia.com/registro/${slug}`;
 
   const {
     register,
@@ -24,42 +24,42 @@ export function ConfiguracionForm({ config }: { config: ConfiguracionSitio }) {
     watch,
     setValue,
     formState: { errors, isSubmitting },
-  } = useForm<ConfiguracionData>({
-    resolver: zodResolver(configuracionSchema),
+  } = useForm<SettingsData>({
+    resolver: zodResolver(settingsSchema),
     defaultValues: {
-      nombreAgencia: config.nombreAgencia,
-      colorPrimario: config.colorPrimario,
-      heroTitulo: config.heroTitulo,
-      heroSubtitulo: config.heroSubtitulo,
+      agencyName: config.agencyName,
+      primaryColor: config.primaryColor,
+      heroTitle: config.heroTitle,
+      heroSubtitle: config.heroSubtitle,
     },
   });
 
-  const colorPrimario = watch("colorPrimario");
+  const primaryColor = watch("primaryColor");
 
-  async function onSubmit(data: ConfiguracionData) {
-    await guardarConfiguracionSitioAction(data);
+  async function onSubmit(data: SettingsData) {
+    await saveSiteSettingsAction(data);
   }
 
-  function handleToggleRegistro() {
-    const next = !registroActivo;
-    setRegistroActivo(next);
+  function handleToggleRegistration() {
+    const next = !registrationActive;
+    setRegistrationActive(next);
     startTransition(() => {
-      toggleRegistroPublicoAction(next);
+      togglePublicRegistrationAction(next);
     });
   }
 
-  function handleRegenerar() {
+  function handleRegenerate() {
     startTransition(async () => {
-      const nuevoSlug = await regenerarLinkRegistroAction();
-      setSlug(nuevoSlug);
-      setCopiado(false);
+      const newSlug = await regenerateRegistrationLinkAction();
+      setSlug(newSlug);
+      setCopied(false);
     });
   }
 
-  function handleCopiar() {
-    navigator.clipboard?.writeText(registroUrl).catch(() => {});
-    setCopiado(true);
-    setTimeout(() => setCopiado(false), 1500);
+  function handleCopy() {
+    navigator.clipboard?.writeText(registrationUrl).catch(() => {});
+    setCopied(true);
+    setTimeout(() => setCopied(false), 1500);
   }
 
   return (
@@ -70,26 +70,26 @@ export function ConfiguracionForm({ config }: { config: ConfiguracionSitio }) {
           <div>
             <label className="mb-1.5 block text-sm font-medium text-zinc-700">Nombre de la agencia</label>
             <input
-              {...register("nombreAgencia")}
+              {...register("agencyName")}
               className="w-full rounded-lg border border-zinc-300 bg-white py-2.5 px-3 text-sm outline-none focus:border-gold-500 focus:ring-1 focus:ring-gold-500"
             />
-            {errors.nombreAgencia && <p className="mt-1 text-xs text-rose-600">{errors.nombreAgencia.message}</p>}
+            {errors.agencyName && <p className="mt-1 text-xs text-rose-600">{errors.agencyName.message}</p>}
           </div>
           <div>
             <label className="mb-1.5 block text-sm font-medium text-zinc-700">Color primario</label>
             <div className="flex items-center gap-2">
               <input
                 type="color"
-                value={colorPrimario}
-                onChange={(e) => setValue("colorPrimario", e.target.value)}
+                value={primaryColor}
+                onChange={(e) => setValue("primaryColor", e.target.value)}
                 className="h-10 w-12 cursor-pointer rounded-lg border border-zinc-300"
               />
               <input
-                {...register("colorPrimario")}
+                {...register("primaryColor")}
                 className="w-full rounded-lg border border-zinc-300 bg-white py-2.5 px-3 text-sm uppercase outline-none focus:border-gold-500 focus:ring-1 focus:ring-gold-500"
               />
             </div>
-            {errors.colorPrimario && <p className="mt-1 text-xs text-rose-600">{errors.colorPrimario.message}</p>}
+            {errors.primaryColor && <p className="mt-1 text-xs text-rose-600">{errors.primaryColor.message}</p>}
           </div>
           <div className="sm:col-span-2">
             <label className="mb-1.5 block text-sm font-medium text-zinc-700">Logo</label>
@@ -110,19 +110,19 @@ export function ConfiguracionForm({ config }: { config: ConfiguracionSitio }) {
           <div>
             <label className="mb-1.5 block text-sm font-medium text-zinc-700">Título</label>
             <input
-              {...register("heroTitulo")}
+              {...register("heroTitle")}
               className="w-full rounded-lg border border-zinc-300 bg-white py-2.5 px-3 text-sm outline-none focus:border-gold-500 focus:ring-1 focus:ring-gold-500"
             />
-            {errors.heroTitulo && <p className="mt-1 text-xs text-rose-600">{errors.heroTitulo.message}</p>}
+            {errors.heroTitle && <p className="mt-1 text-xs text-rose-600">{errors.heroTitle.message}</p>}
           </div>
           <div>
             <label className="mb-1.5 block text-sm font-medium text-zinc-700">Subtítulo</label>
             <textarea
-              {...register("heroSubtitulo")}
+              {...register("heroSubtitle")}
               rows={3}
               className="w-full rounded-lg border border-zinc-300 bg-white py-2.5 px-3 text-sm outline-none focus:border-gold-500 focus:ring-1 focus:ring-gold-500"
             />
-            {errors.heroSubtitulo && <p className="mt-1 text-xs text-rose-600">{errors.heroSubtitulo.message}</p>}
+            {errors.heroSubtitle && <p className="mt-1 text-xs text-rose-600">{errors.heroSubtitle.message}</p>}
           </div>
         </div>
       </Card>
@@ -134,7 +134,7 @@ export function ConfiguracionForm({ config }: { config: ConfiguracionSitio }) {
             <div>
               <p className="text-sm font-medium text-zinc-800">Link visible en la landing</p>
               <p className="text-xs text-zinc-500">
-                {registroActivo
+                {registrationActive
                   ? "Cualquier visitante puede encontrar el formulario de registro."
                   : "El link sigue activo pero solo se comparte en privado."}
               </p>
@@ -142,33 +142,33 @@ export function ConfiguracionForm({ config }: { config: ConfiguracionSitio }) {
             <button
               type="button"
               role="switch"
-              aria-checked={registroActivo}
-              onClick={handleToggleRegistro}
+              aria-checked={registrationActive}
+              onClick={handleToggleRegistration}
               className={`relative h-6 w-11 shrink-0 rounded-full transition-colors ${
-                registroActivo ? "bg-zinc-950" : "bg-zinc-300"
+                registrationActive ? "bg-zinc-950" : "bg-zinc-300"
               }`}
             >
               <span
                 className={`absolute top-0.5 left-0.5 h-5 w-5 rounded-full bg-white transition-transform ${
-                  registroActivo ? "translate-x-5" : "translate-x-0"
+                  registrationActive ? "translate-x-5" : "translate-x-0"
                 }`}
               />
             </button>
           </div>
 
           <div className="flex items-center gap-2 rounded-lg border border-zinc-200 bg-zinc-50 px-3 py-2.5">
-            <span className="flex-1 truncate text-sm text-zinc-600">{registroUrl}</span>
+            <span className="flex-1 truncate text-sm text-zinc-600">{registrationUrl}</span>
             <button
               type="button"
-              onClick={handleCopiar}
+              onClick={handleCopy}
               className="flex h-8 w-8 items-center justify-center rounded-lg text-zinc-400 hover:bg-zinc-200 hover:text-zinc-700"
               aria-label="Copiar link"
             >
-              {copiado ? <Check className="h-4 w-4 text-emerald-600" /> : <Copy className="h-4 w-4" />}
+              {copied ? <Check className="h-4 w-4 text-emerald-600" /> : <Copy className="h-4 w-4" />}
             </button>
           </div>
 
-          <Button type="button" variant="secondary" onClick={handleRegenerar}>
+          <Button type="button" variant="secondary" onClick={handleRegenerate}>
             <RefreshCw className="h-4 w-4" /> Regenerar link (invalida el anterior)
           </Button>
         </div>

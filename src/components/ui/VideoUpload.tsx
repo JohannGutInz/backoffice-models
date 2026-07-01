@@ -7,9 +7,10 @@ interface VideoUploadProps {
   onChange: (url: string) => void;
   label?: string;
   className?: string;
+  modelId?: string;
 }
 
-export function VideoUpload({ value, onChange, label = "Video", className }: VideoUploadProps) {
+export function VideoUpload({ value, onChange, label = "Video", className, modelId }: VideoUploadProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
   const [progress, setProgress] = useState(0);
@@ -28,6 +29,7 @@ export function VideoUpload({ value, onChange, label = "Video", className }: Vid
           filename: file.name,
           contentType: file.type,
           sizeBytes: file.size,
+          modelId,
         }),
       });
 

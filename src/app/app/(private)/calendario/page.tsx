@@ -2,9 +2,9 @@ import Link from "next/link";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { Card, CardHeader } from "@/components/ui/Card";
-import { EstadoBadge } from "@/components/ui/Badge";
-import { MonthGrid } from "@/components/calendario/MonthGrid";
-import { listBookings, nombreEvento, nombreModelo } from "@/lib/data";
+import { StatusBadge } from "@/components/ui/Badge";
+import { MonthGrid } from "@/components/calendar/MonthGrid";
+import { listBookings, eventName, modelName } from "@/lib/data";
 import { APP_ROUTE } from "@/lib/routes";
 import { formatDate, formatMonthYear, toDateKey } from "@/lib/utils";
 import type { Booking } from "@/lib/types";
@@ -22,7 +22,7 @@ function monthParam(year: number, month: number) {
   return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
 }
 
-export default async function CalendarioPage({
+export default async function CalendarPage({
   searchParams,
 }: {
   searchParams: Promise<{ month?: string }>;
@@ -34,15 +34,15 @@ export default async function CalendarioPage({
   const bookings = await listBookings();
   const bookingsByDate = new Map<string, Booking[]>();
   for (const booking of bookings) {
-    const list = bookingsByDate.get(booking.fecha) ?? [];
+    const list = bookingsByDate.get(booking.date) ?? [];
     list.push(booking);
-    bookingsByDate.set(booking.fecha, list);
+    bookingsByDate.set(booking.date, list);
   }
 
   const todayKey = toDateKey(today);
-  const proximos = [...bookings]
-    .filter((b) => b.fecha >= todayKey && b.estado !== "cancelado")
-    .sort((a, b) => a.fecha.localeCompare(b.fecha))
+  const upcoming = [...bookings]
+    .filter((b) => b.date >= todayKey && b.status !== "cancelado")
+    .sort((a, b) => a.date.localeCompare(b.date))
     .slice(0, 6);
 
   const prevParam = monthParam(year, month - 1);
@@ -59,19 +59,19 @@ export default async function CalendarioPage({
             <h3 className="text-sm font-semibold text-zinc-900">{formatMonthYear(new Date(year, month, 1))}</h3>
             <div className="flex items-center gap-1.5">
               <Link
-                href={`${APP_ROUTE.app.calendario.index}?month=${currentParam}`}
+                href={`${APP_ROUTE.app.calendar.index}?month=${currentParam}`}
                 className="rounded-lg px-2.5 py-1.5 text-xs font-medium text-zinc-500 hover:bg-zinc-100"
               >
                 Hoy
               </Link>
               <Link
-                href={`${APP_ROUTE.app.calendario.index}?month=${prevParam}`}
+                href={`${APP_ROUTE.app.calendar.index}?month=${prevParam}`}
                 className="flex h-8 w-8 items-center justify-center rounded-lg text-zinc-500 hover:bg-zinc-100"
               >
                 <ChevronLeft className="h-4 w-4" />
               </Link>
               <Link
-                href={`${APP_ROUTE.app.calendario.index}?month=${nextParam}`}
+                href={`${APP_ROUTE.app.calendar.index}?month=${nextParam}`}
                 className="flex h-8 w-8 items-center justify-center rounded-lg text-zinc-500 hover:bg-zinc-100"
               >
                 <ChevronRight className="h-4 w-4" />
@@ -86,18 +86,18 @@ export default async function CalendarioPage({
         <Card>
           <CardHeader title="Próximos bookings" subtitle="Ordenados por fecha" />
           <ul className="divide-y divide-zinc-100 border-t border-zinc-100">
-            {proximos.map((booking) => (
+            {upcoming.map((booking) => (
               <li key={booking.id} className="px-5 py-3.5">
                 <div className="flex items-center justify-between">
-                  <span className="text-sm font-medium text-zinc-900">{formatDate(booking.fecha)}</span>
-                  <EstadoBadge estado={booking.estado} />
+                  <span className="text-sm font-medium text-zinc-900">{formatDate(booking.date)}</span>
+                  <StatusBadge status={booking.status} />
                 </div>
                 <p className="mt-1 text-xs text-zinc-500">
-                  {nombreModelo(booking.modeloId)} · {nombreEvento(booking.eventoId)}
+                  {modelName(booking.modelId)} · {eventName(booking.eventId)}
                 </p>
               </li>
             ))}
-            {proximos.length === 0 && (
+            {upcoming.length === 0 && (
               <li className="px-5 py-10 text-center text-sm text-zinc-400">Sin bookings próximos.</li>
             )}
           </ul>

@@ -14,6 +14,14 @@ Never revert unless user says "stop caveman" or "normal mode".
 
 ---
 
+# Code Language Convention
+
+**All code is written in English**: variable/function/type/component names, comments, file and directory names inside `src/`.
+
+**Paths and similar stay in Spanish**: URL routes/folders under `src/app/`, and anything user-facing (UI copy, labels, zod validation messages, emails) — this is a Spanish-market product.
+
+---
+
 # Project Resume
 
 **Backoffice Models** — agency management platform for talent/model agencies.

@@ -3,25 +3,25 @@
 import { useMemo, useState } from "react";
 import { Search } from "lucide-react";
 import { TalentCard } from "./TalentCard";
-import type { ModeloPublico } from "@/lib/public-data";
+import type { PublicModel } from "@/lib/public-data";
 
-export function TalentosGrid({ modelos }: { modelos: ModeloPublico[] }) {
+export function TalentsGrid({ models }: { models: PublicModel[] }) {
   const [query, setQuery] = useState("");
-  const [categoria, setCategoria] = useState("todas");
+  const [category, setCategory] = useState("todas");
 
-  const categorias = useMemo(() => {
-    const all = modelos.flatMap((m) => m.categories);
+  const categories = useMemo(() => {
+    const all = models.flatMap((m) => m.categories);
     return [...new Set(all)].sort();
-  }, [modelos]);
+  }, [models]);
 
-  const filtrados = useMemo(() => {
-    return modelos.filter((m) => {
+  const filtered = useMemo(() => {
+    return models.filter((m) => {
       const matchQuery =
         query.trim() === "" || m.fullName.toLowerCase().includes(query.toLowerCase());
-      const matchCategoria = categoria === "todas" || m.categories.includes(categoria);
-      return matchQuery && matchCategoria;
+      const matchCategory = category === "todas" || m.categories.includes(category);
+      return matchQuery && matchCategory;
     });
-  }, [modelos, query, categoria]);
+  }, [models, query, category]);
 
   return (
     <div>
@@ -35,30 +35,30 @@ export function TalentosGrid({ modelos }: { modelos: ModeloPublico[] }) {
             className="w-full rounded-full border border-zinc-200 bg-white py-2.5 pl-9 pr-3 text-sm outline-none focus:border-gold-500 focus:ring-1 focus:ring-gold-500"
           />
         </div>
-        {categorias.length > 0 && (
+        {categories.length > 0 && (
           <select
-            value={categoria}
-            onChange={(e) => setCategoria(e.target.value)}
+            value={category}
+            onChange={(e) => setCategory(e.target.value)}
             className="rounded-full border border-zinc-200 bg-white py-2.5 px-4 text-sm text-zinc-600 outline-none focus:border-gold-500"
           >
             <option value="todas">Todas las categorías</option>
-            {categorias.map((c) => (
+            {categories.map((c) => (
               <option key={c} value={c}>
                 {c}
               </option>
             ))}
           </select>
         )}
-        <span className="ml-auto text-xs text-zinc-400">{filtrados.length} talentos</span>
+        <span className="ml-auto text-xs text-zinc-400">{filtered.length} talentos</span>
       </div>
 
       <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
-        {filtrados.map((modelo) => (
-          <TalentCard key={modelo.id} modelo={modelo} />
+        {filtered.map((model) => (
+          <TalentCard key={model.id} model={model} />
         ))}
       </div>
 
-      {filtrados.length === 0 && (
+      {filtered.length === 0 && (
         <div className="rounded-xl border border-dashed border-zinc-300 py-20 text-center text-sm text-zinc-400">
           Ningún talento coincide con tu búsqueda.
         </div>

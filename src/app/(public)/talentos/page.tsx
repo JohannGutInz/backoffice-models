@@ -1,8 +1,8 @@
-import { TalentosGrid } from "@/components/public/TalentosGrid";
-import { listVitrinaModelos } from "@/lib/public-data";
+import { TalentsGrid } from "@/components/public/TalentsGrid";
+import { listPublicModels } from "@/lib/public-data";
 
-export default async function TalentosPage() {
-  const modelos = await listVitrinaModelos();
+export default async function TalentsPage() {
+  const models = await listPublicModels();
 
   return (
     <div className="mx-auto max-w-6xl px-6 py-16">
@@ -12,7 +12,7 @@ export default async function TalentosPage() {
           Explora el roster de modelos y talento representado por la agencia.
         </p>
       </div>
-      <TalentosGrid modelos={modelos} />
+      <TalentsGrid models={models} />
     </div>
   );
 }

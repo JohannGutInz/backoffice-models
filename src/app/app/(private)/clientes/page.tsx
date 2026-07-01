@@ -5,25 +5,25 @@ import { Card } from "@/components/ui/Card";
 import { SearchForm } from "@/components/ui/SearchForm";
 import { Table, THead, Th, Tr, Td } from "@/components/ui/Table";
 import { Avatar } from "@/components/ui/Avatar";
-import { listClientes } from "@/lib/data";
+import { listClients } from "@/lib/data";
 import { APP_ROUTE } from "@/lib/routes";
 import { formatCurrency, formatDate } from "@/lib/utils";
 
-export default async function ClientesPage({
+export default async function ClientsPage({
   searchParams,
 }: {
   searchParams: Promise<{ q?: string }>;
 }) {
   const { q } = await searchParams;
-  const clientes = await listClientes();
+  const clients = await listClients();
 
-  const filtrados = q
-    ? clientes.filter(
+  const filtered = q
+    ? clients.filter(
         (c) =>
-          c.empresa.toLowerCase().includes(q.toLowerCase()) ||
-          c.contactoNombre.toLowerCase().includes(q.toLowerCase()),
+          c.company.toLowerCase().includes(q.toLowerCase()) ||
+          c.contactName.toLowerCase().includes(q.toLowerCase()),
       )
-    : clientes;
+    : clients;
 
   return (
     <div>
@@ -31,7 +31,7 @@ export default async function ClientesPage({
         title="Clientes"
         subtitle="CRM de empresas y contactos que solicitan talento."
         actions={
-          <LinkButton href={APP_ROUTE.app.clientes.index}>
+          <LinkButton href={APP_ROUTE.app.clients.index}>
             <Plus className="h-4 w-4" /> Nuevo cliente
           </LinkButton>
         }
@@ -52,25 +52,25 @@ export default async function ClientesPage({
             <Th>Cliente desde</Th>
           </THead>
           <tbody>
-            {filtrados.map((cliente) => (
-              <Tr key={cliente.id}>
+            {filtered.map((client) => (
+              <Tr key={client.id}>
                 <Td className="font-medium text-zinc-900">
                   <div className="flex items-center gap-3">
-                    <Avatar name={cliente.empresa} size="sm" />
-                    {cliente.empresa}
+                    <Avatar name={client.company} size="sm" />
+                    {client.company}
                   </div>
                 </Td>
                 <Td>
-                  <span className="block text-zinc-700">{cliente.contactoNombre}</span>
-                  <span className="block text-xs text-zinc-400">{cliente.correo}</span>
+                  <span className="block text-zinc-700">{client.contactName}</span>
+                  <span className="block text-xs text-zinc-400">{client.email}</span>
                 </Td>
-                <Td>{cliente.industria}</Td>
-                <Td className="text-right">{cliente.eventosTotales}</Td>
-                <Td className="text-right font-medium text-zinc-900">{formatCurrency(cliente.ingresosTotales)}</Td>
-                <Td className="text-zinc-500">{formatDate(cliente.creadoEn)}</Td>
+                <Td>{client.industry}</Td>
+                <Td className="text-right">{client.totalEvents}</Td>
+                <Td className="text-right font-medium text-zinc-900">{formatCurrency(client.totalRevenue)}</Td>
+                <Td className="text-zinc-500">{formatDate(client.createdAt)}</Td>
               </Tr>
             ))}
-            {filtrados.length === 0 && (
+            {filtered.length === 0 && (
               <tr>
                 <td colSpan={6} className="px-5 py-16 text-center text-sm text-zinc-400">
                   Ningún cliente coincide con la búsqueda.

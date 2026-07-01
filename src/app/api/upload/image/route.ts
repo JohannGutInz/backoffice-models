@@ -3,6 +3,7 @@ import { cookies } from "next/headers";
 import { randomUUID } from "crypto";
 import { SESSION_COOKIE, verifySessionToken } from "@/lib/session";
 import { uploadImage } from "@/lib/storage";
+import { prisma } from "@/db";
 
 const ALLOWED_TYPES = new Set(["image/jpeg", "image/png", "image/webp", "image/gif"]);
 const MAX_BYTES = 10 * 1024 * 1024;
@@ -34,8 +35,20 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Archivo excede 10 MB" }, { status: 400 });
   }
 
+  let modelId: string | null = null;
+  if (session.role === "MODEL") {
+    const model = await prisma.model.findUnique({ where: { userId: session.sub }, select: { id: true } });
+    if (!model) return NextResponse.json({ error: "No autorizado" }, { status: 403 });
+    modelId = model.id;
+  } else {
+    const requestedModelId = formData.get("modelId");
+    if (typeof requestedModelId === "string" && requestedModelId) modelId = requestedModelId;
+  }
+
   const buffer = Buffer.from(await file.arrayBuffer());
-  const key = `media/images/${randomUUID()}.webp`;
+  const key = modelId
+    ? `modelos/${modelId}/photos/${randomUUID()}.webp`
+    : `media/images/${randomUUID()}.webp`;
 
   try {
     const url = await uploadImage(buffer, key);

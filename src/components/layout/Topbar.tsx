@@ -16,10 +16,10 @@ const ROLE_LABEL: Record<UserRole, string> = {
 };
 
 export function Topbar({
-  usuario,
+  user,
   notificationCount,
 }: {
-  usuario: UserW;
+  user: UserW;
   notificationCount: number;
 }) {
   const [menuOpen, setMenuOpen] = useState(false);
@@ -43,10 +43,10 @@ export function Topbar({
           onClick={() => setMenuOpen((open) => !open)}
           className="flex items-center gap-2.5 rounded-lg py-1.5 pl-1.5 pr-2 hover:bg-zinc-100"
         >
-          <Avatar name={usuario.username} size="md" />
+          <Avatar name={user.username} size="md" />
           <span className="hidden text-left sm:block">
-            <span className="block text-sm font-medium text-zinc-900">{usuario.username}</span>
-            <span className="block text-xs text-zinc-500">{ROLE_LABEL[usuario.role]}</span>
+            <span className="block text-sm font-medium text-zinc-900">{user.username}</span>
+            <span className="block text-xs text-zinc-500">{ROLE_LABEL[user.role]}</span>
           </span>
           <ChevronDown className="h-4 w-4 text-zinc-400" />
         </button>
@@ -56,14 +56,14 @@ export function Topbar({
             <div className="fixed inset-0 z-10" onClick={() => setMenuOpen(false)} />
             <div className="absolute right-0 z-20 mt-2 w-52 overflow-hidden rounded-xl border border-zinc-200 bg-white py-1.5 shadow-lg">
               <Link
-                href={APP_ROUTE.app.configuracion.index}
+                href={APP_ROUTE.app.settings.index}
                 className="flex items-center gap-2.5 px-3.5 py-2 text-sm text-zinc-600 hover:bg-zinc-50"
                 onClick={() => setMenuOpen(false)}
               >
                 <UserRound className="h-4 w-4" /> Mi perfil
               </Link>
               <Link
-                href={APP_ROUTE.app.configuracion.index}
+                href={APP_ROUTE.app.settings.index}
                 className="flex items-center gap-2.5 px-3.5 py-2 text-sm text-zinc-600 hover:bg-zinc-50"
                 onClick={() => setMenuOpen(false)}
               >

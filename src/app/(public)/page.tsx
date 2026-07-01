@@ -2,16 +2,16 @@ import Image from "next/image";
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 import { TalentCard } from "@/components/public/TalentCard";
-import { PresenciaSection } from "@/components/public/PresenciaSection";
-import { getConfiguracionSitio } from "@/lib/data";
-import { listDestacados, listEventosPortafolio } from "@/lib/public-data";
+import { PresenceSection } from "@/components/public/PresenceSection";
+import { getSiteSettings } from "@/lib/data";
+import { listFeaturedModels, listPortfolioEvents } from "@/lib/public-data";
 import { formatDate } from "@/lib/utils";
 
 export default async function HomePage() {
-  const [config, destacados, eventos] = await Promise.all([
-    getConfiguracionSitio(),
-    listDestacados(4),
-    listEventosPortafolio(),
+  const [config, featuredModels, events] = await Promise.all([
+    getSiteSettings(),
+    listFeaturedModels(4),
+    listPortfolioEvents(),
   ]);
 
   return (
@@ -28,9 +28,9 @@ export default async function HomePage() {
         </div>
         <div className="bg-zinc-950 px-6 py-16 text-center">
           <h1 className="mx-auto max-w-3xl text-4xl font-light tracking-tight text-white sm:text-5xl">
-            {config.heroTitulo}
+            {config.heroTitle}
           </h1>
-          <p className="mx-auto mt-5 max-w-xl text-base text-zinc-400">{config.heroSubtitulo}</p>
+          <p className="mx-auto mt-5 max-w-xl text-base text-zinc-400">{config.heroSubtitle}</p>
           <div className="mt-8 flex items-center justify-center gap-3">
             <Link
               href="/talentos"
@@ -48,7 +48,7 @@ export default async function HomePage() {
         </div>
       </section>
 
-      {destacados.length > 0 && (
+      {featuredModels.length > 0 && (
         <section className="mx-auto max-w-6xl px-6 py-20">
           <div className="mb-8 flex items-end justify-between">
             <h2 className="text-2xl font-semibold tracking-tight text-zinc-950">Talento destacado</h2>
@@ -57,14 +57,14 @@ export default async function HomePage() {
             </Link>
           </div>
           <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
-            {destacados.map((modelo) => (
-              <TalentCard key={modelo.id} modelo={modelo} />
+            {featuredModels.map((model) => (
+              <TalentCard key={model.id} model={model} />
             ))}
           </div>
         </section>
       )}
 
-      {eventos.length > 0 && (
+      {events.length > 0 && (
         <section className="border-t border-zinc-100 bg-zinc-50">
           <div className="mx-auto max-w-6xl px-6 py-20">
             <div className="mb-8 flex items-end justify-between">
@@ -74,12 +74,12 @@ export default async function HomePage() {
               </Link>
             </div>
             <div className="grid grid-cols-1 gap-5 sm:grid-cols-3">
-              {eventos.slice(0, 3).map((evento) => (
-                <div key={evento.id} className="rounded-xl border border-zinc-200 bg-white p-5">
-                  <p className="text-xs font-medium tracking-wide text-gold-700 uppercase">{evento.tipo}</p>
-                  <p className="mt-1.5 text-base font-semibold text-zinc-900">{evento.nombre}</p>
+              {events.slice(0, 3).map((event) => (
+                <div key={event.id} className="rounded-xl border border-zinc-200 bg-white p-5">
+                  <p className="text-xs font-medium tracking-wide text-gold-700 uppercase">{event.type}</p>
+                  <p className="mt-1.5 text-base font-semibold text-zinc-900">{event.name}</p>
                   <p className="mt-1 text-sm text-zinc-500">
-                    {evento.clienteNombre} · {formatDate(evento.fecha)}
+                    {event.clientName} · {formatDate(event.date)}
                   </p>
                 </div>
               ))}
@@ -101,7 +101,7 @@ export default async function HomePage() {
         </Link>
       </section>
 
-      <PresenciaSection />
+      <PresenceSection />
     </div>
   );
 }

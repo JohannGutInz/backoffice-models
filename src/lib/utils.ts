@@ -12,9 +12,9 @@ export function formatCurrency(amount: number): string {
   }).format(amount);
 }
 
-// Las fechas de dominio son "YYYY-MM-DD" (sin hora). Parsearlas con `new Date(iso)`
-// las interpreta como medianoche UTC, lo que puede mostrar el día anterior en
-// servidores con timezone negativo. Por eso se parsean siempre como fecha local.
+// Domain dates are "YYYY-MM-DD" (no time). Parsing them with `new Date(iso)`
+// interprets them as UTC midnight, which can show the previous day on
+// servers with a negative timezone. That's why they're always parsed as a local date.
 export function parseDateOnly(iso: string): Date {
   const [year, month, day] = iso.split("-").map(Number);
   return new Date(year, (month ?? 1) - 1, day ?? 1);
@@ -69,13 +69,13 @@ export function initials(name: string): string {
     .join("");
 }
 
-export function calcularEdad(fechaNacimientoIso: string): number {
-  const nacimiento = parseDateOnly(fechaNacimientoIso);
-  const hoy = new Date();
-  let edad = hoy.getFullYear() - nacimiento.getFullYear();
-  const aunNoCumple =
-    hoy.getMonth() < nacimiento.getMonth() ||
-    (hoy.getMonth() === nacimiento.getMonth() && hoy.getDate() < nacimiento.getDate());
-  if (aunNoCumple) edad -= 1;
-  return edad;
+export function calculateAge(birthDateIso: string): number {
+  const birthDate = parseDateOnly(birthDateIso);
+  const today = new Date();
+  let age = today.getFullYear() - birthDate.getFullYear();
+  const hasNotHadBirthdayYet =
+    today.getMonth() < birthDate.getMonth() ||
+    (today.getMonth() === birthDate.getMonth() && today.getDate() < birthDate.getDate());
+  if (hasNotHadBirthdayYet) age -= 1;
+  return age;
 }

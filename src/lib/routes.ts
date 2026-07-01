@@ -6,44 +6,44 @@ export const APP_ROUTE = {
     dashboard: {
       index: "/app/dashboard"
     },
-    configuracion: {
+    settings: {
       index: "/app/configuracion"
     },
-    moderacion: {
+    moderation: {
       index: "/app/moderacion"
     },
     bookings: {
       index: "/app/bookings"
     },
-    clientes: {
+    clients: {
       index: "/app/clientes"
     },
-    eventos: {
+    events: {
       index: "/app/eventos"
     },
-    modelos: {
+    models: {
       index: "/app/modelos"
     },
-    calendario: {
+    calendar: {
       index: "/app/calendario"
     },
-    paquetes: {
+    packages: {
       index: "/app/paquetes"
     },
-    ingresos: {
+    income: {
       index: "/app/ingresos"
     },
     catalogs: {
       index: "/app/catalogs"
     },
-    modelo: {
-      perfil: "/app/modelo/perfil"
+    model: {
+      profile: "/app/modelo/perfil"
     }
   },
-  registro: {
+  registration: {
     index: "/registro"
   },
-  contacto: {
+  contact: {
     index: "/contacto"
   }
 };

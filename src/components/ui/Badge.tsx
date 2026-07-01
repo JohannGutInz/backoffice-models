@@ -11,7 +11,7 @@ const toneClasses: Record<BadgeTone, string> = {
   info: "bg-sky-50 text-sky-700 ring-sky-200",
 };
 
-const ESTADO_TONE: Record<string, BadgeTone> = {
+const STATUS_TONE: Record<string, BadgeTone> = {
   activo: "success",
   aprobado: "success",
   confirmado: "success",
@@ -34,11 +34,11 @@ const ESTADO_TONE: Record<string, BadgeTone> = {
   REJECTED: "danger",
 };
 
-export function estadoTone(estado: string): BadgeTone {
-  return ESTADO_TONE[estado] ?? "neutral";
+export function statusTone(status: string): BadgeTone {
+  return STATUS_TONE[status] ?? "neutral";
 }
 
-const ESTADO_LABEL: Record<string, string> = {
+const STATUS_LABEL: Record<string, string> = {
   requiere_cambios: "Requiere cambios",
   no_disponible: "No disponible",
   PENDING: "Pendiente",
@@ -47,10 +47,10 @@ const ESTADO_LABEL: Record<string, string> = {
   REQUIRES_CHANGES: "Requiere cambios",
 };
 
-export function estadoLabel(estado: string): string {
+export function statusLabel(status: string): string {
   return (
-    ESTADO_LABEL[estado] ??
-    estado.replace(/_/g, " ").replace(/^\p{L}/u, (c) => c.toUpperCase())
+    STATUS_LABEL[status] ??
+    status.replace(/_/g, " ").replace(/^\p{L}/u, (c) => c.toUpperCase())
   );
 }
 
@@ -76,10 +76,10 @@ export function Badge({
   );
 }
 
-export function EstadoBadge({ estado, className }: { estado: string; className?: string }) {
+export function StatusBadge({ status, className }: { status: string; className?: string }) {
   return (
-    <Badge tone={estadoTone(estado)} className={className}>
-      {estadoLabel(estado)}
+    <Badge tone={statusTone(status)} className={className}>
+      {statusLabel(status)}
     </Badge>
   );
 }

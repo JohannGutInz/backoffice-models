@@ -5,21 +5,22 @@ import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import * as bcrypt from "bcrypt";
 import { prisma } from "@/db";
-import { configuracionSitio, modelos, solicitudesRegistro } from "./mock-data";
+import { siteSettings, models, registrationApplications } from "./mock-data";
 import { SESSION_COOKIE, createSessionToken, verifySessionToken } from "./session";
 import { toDateKey } from "./utils";
-import { emailContactoCliente } from "./email";
+import { emailClientContact } from "./email";
 import { APP_ROUTE } from "./routes";
-import { perfilModeloSchema } from "./schemas";
+import { ownModelProfileSchema } from "./schemas";
+import { deleteObject, keyFromObjectUrl } from "./storage";
 import z from "zod";
 import type {
   LoginData,
-  ContactoData,
+  ContactData,
   CategoryData,
-  ConfiguracionData,
-  ReenviarData,
-  RegistroActionData,
-  PerfilModeloData,
+  SettingsData,
+  ResendApplicationData,
+  RegistrationActionData,
+  OwnModelProfileData,
 } from "./schemas";
 import { UserRole } from "@/generated/prisma/enums";
 
@@ -32,7 +33,7 @@ export async function hashPassword(password: string) {
   return bcrypt.hash(password, 10);
 }
 
-// ---------- Sesión de staff (backoffice) ----------
+// ---------- Staff session (backoffice) ----------
 
 export async function loginAction(data: LoginData): Promise<ActionState> {
   const user = await prisma.user.findUnique({ where: { email: data.email } });
@@ -62,7 +63,7 @@ export async function loginAction(data: LoginData): Promise<ActionState> {
     maxAge: 60 * 60 * 8,
   });
 
-  redirect(user.role === "MODEL" ? APP_ROUTE.app.modelo.perfil : APP_ROUTE.app.dashboard.index);
+  redirect(user.role === "MODEL" ? APP_ROUTE.app.model.profile : APP_ROUTE.app.dashboard.index);
 }
 
 export async function logoutAction() {
@@ -75,10 +76,10 @@ function randomToken(prefix: string) {
   return `${prefix}_${Math.random().toString(36).slice(2, 10)}`;
 }
 
-// ---------- Auto-registro público ----------
+// ---------- Public self-registration ----------
 
-export async function submitRegistroAction(data: RegistroActionData): Promise<ActionState> {
-  const existing = await prisma.user.findUnique({ where: { email: data.correo } });
+export async function submitRegistrationAction(data: RegistrationActionData): Promise<ActionState> {
+  const existing = await prisma.user.findUnique({ where: { email: data.email } });
   if (existing) {
     return { status: "error", message: "Ya existe un registro con ese correo electrónico." };
   }
@@ -88,8 +89,8 @@ export async function submitRegistroAction(data: RegistroActionData): Promise<Ac
   await prisma.$transaction(async (tx) => {
     const user = await tx.user.create({
       data: {
-        email: data.correo,
-        username: data.nombreCompleto,
+        email: data.email,
+        username: data.fullName,
         hashedPassword,
         role: UserRole.MODEL,
       },
@@ -97,11 +98,11 @@ export async function submitRegistroAction(data: RegistroActionData): Promise<Ac
     const kyc = await tx.kyc.create({ data: {} });
     await tx.model.create({
       data: {
-        fullName: data.nombreCompleto,
-        email: data.correo,
-        phone: data.telefono,
-        birthDate: new Date(data.fechaNacimiento),
-        genre: data.genero,
+        fullName: data.fullName,
+        email: data.email,
+        phone: data.phone,
+        birthDate: new Date(data.birthDate),
+        genre: data.gender,
         countryId: data.countryId,
         cityId: data.cityId,
         kycId: kyc.id,
@@ -117,16 +118,16 @@ export async function submitRegistroAction(data: RegistroActionData): Promise<Ac
   };
 }
 
-// Edición + reenvío desde el enlace temporal por token (vuelve a "pendiente").
-export async function reenviarSolicitudAction(token: string, data: ReenviarData): Promise<ActionState> {
-  const solicitud = solicitudesRegistro.find((s) => s.tokenRevision === token);
-  if (!solicitud) return { status: "error", message: "Enlace inválido." };
+// Edit + resend from the temporary token link (goes back to "pendiente").
+export async function resendApplicationAction(token: string, data: ResendApplicationData): Promise<ActionState> {
+  const application = registrationApplications.find((s) => s.reviewToken === token);
+  if (!application) return { status: "error", message: "Enlace inválido." };
 
-  solicitud.nombreCompleto = data.nombreCompleto;
-  solicitud.correo = data.correo;
-  solicitud.telefono = data.telefono;
-  solicitud.estado = "pendiente";
-  solicitud.actualizadoEn = toDateKey(new Date());
+  application.fullName = data.fullName;
+  application.email = data.email;
+  application.phone = data.phone;
+  application.status = "pendiente";
+  application.updatedAt = toDateKey(new Date());
 
   revalidatePath("/moderacion");
   revalidatePath(`/retro/${token}`);
@@ -134,21 +135,21 @@ export async function reenviarSolicitudAction(token: string, data: ReenviarData)
   return { status: "success", message: "¡Listo! Reenviamos tu información actualizada para una nueva revisión." };
 }
 
-// ---------- KYC (moderación real) ----------
+// ---------- KYC (real moderation) ----------
 
-const moderarKycSchema = z.object({
+const moderateKycSchema = z.object({
   modelId: z.string().uuid(),
   decision: z.enum(["APPROVED", "REJECTED", "REQUIRES_CHANGES"]),
   comment: z.string().max(2000).optional(),
   internalNote: z.string().max(2000).optional(),
 });
 
-export async function moderarKycAction(
+export async function moderateKycAction(
   modelId: string,
   decision: "APPROVED" | "REJECTED" | "REQUIRES_CHANGES",
   formData: FormData,
 ) {
-  const result = moderarKycSchema.safeParse({
+  const result = moderateKycSchema.safeParse({
     modelId,
     decision,
     comment: String(formData.get("comment") ?? "").trim() || undefined,
@@ -179,7 +180,7 @@ export async function moderarKycAction(
   revalidatePath("/app/dashboard");
 }
 
-// ---------- Catálogos (categorías) ----------
+// ---------- Catalogs (categories) ----------
 
 export async function createCategoryAction(data: CategoryData): Promise<ActionState> {
   const existing = await prisma.category.findFirst({
@@ -200,13 +201,13 @@ export async function toggleCategoryEnabledAction(id: string, enabled: boolean):
   revalidatePath("/app/catalogs");
 }
 
-// ---------- Configuración del sitio (backoffice) ----------
+// ---------- Site settings (backoffice) ----------
 
-export async function guardarConfiguracionSitioAction(data: ConfiguracionData): Promise<void> {
-  configuracionSitio.nombreAgencia = data.nombreAgencia;
-  configuracionSitio.colorPrimario = data.colorPrimario;
-  configuracionSitio.heroTitulo = data.heroTitulo;
-  configuracionSitio.heroSubtitulo = data.heroSubtitulo;
+export async function saveSiteSettingsAction(data: SettingsData): Promise<void> {
+  siteSettings.agencyName = data.agencyName;
+  siteSettings.primaryColor = data.primaryColor;
+  siteSettings.heroTitle = data.heroTitle;
+  siteSettings.heroSubtitle = data.heroSubtitle;
 
   revalidatePath("/configuracion");
   revalidatePath("/");
@@ -215,44 +216,44 @@ export async function guardarConfiguracionSitioAction(data: ConfiguracionData): 
   revalidatePath("/contacto");
 }
 
-export async function toggleRegistroPublicoAction(activo: boolean) {
-  configuracionSitio.registroPublicoActivo = activo;
+export async function togglePublicRegistrationAction(active: boolean) {
+  siteSettings.publicRegistrationActive = active;
   revalidatePath("/configuracion");
   revalidatePath("/");
 }
 
-export async function regenerarLinkRegistroAction() {
-  configuracionSitio.registroLinkSlug = `registro-glamour-${Math.random().toString(36).slice(2, 8)}`;
+export async function regenerateRegistrationLinkAction() {
+  siteSettings.registrationLinkSlug = `registro-glamour-${Math.random().toString(36).slice(2, 8)}`;
   revalidatePath("/configuracion");
   revalidatePath("/");
-  return configuracionSitio.registroLinkSlug;
+  return siteSettings.registrationLinkSlug;
 }
 
-export async function toggleVisibilidadLandingAction(modeloId: string, visible: boolean) {
-  const modelo = modelos.find((m) => m.id === modeloId);
-  if (!modelo) return;
-  modelo.publicoEnLanding = visible;
-  revalidatePath(`/modelos/${modeloId}`);
+export async function toggleLandingVisibilityAction(modelId: string, visible: boolean) {
+  const model = models.find((m) => m.id === modelId);
+  if (!model) return;
+  model.publicOnLanding = visible;
+  revalidatePath(`/modelos/${modelId}`);
   revalidatePath("/talentos");
 }
 
-// ---------- Contacto de clientes (landing pública) ----------
+// ---------- Client contact (public landing) ----------
 
-export async function submitContactoAction(data: ContactoData): Promise<ActionState> {
-  await emailContactoCliente({
-    nombre: data.nombre,
-    empresa: data.empresa ?? "",
-    correo: data.correo,
-    mensaje: data.mensaje,
+export async function submitContactAction(data: ContactData): Promise<ActionState> {
+  await emailClientContact({
+    name: data.name,
+    company: data.company ?? "",
+    email: data.email,
+    message: data.message,
   });
 
   return { status: "success", message: "¡Gracias por tu mensaje! Te responderemos a la brevedad." };
 }
 
-// ---------- Portal de modelo (self-service) ----------
+// ---------- Model portal (self-service) ----------
 
-export async function actualizarPerfilModeloAction(data: PerfilModeloData): Promise<ActionState> {
-  const result = perfilModeloSchema.safeParse(data);
+export async function updateOwnModelProfileAction(data: OwnModelProfileData): Promise<ActionState> {
+  const result = ownModelProfileSchema.safeParse(data);
   if (!result.success) {
     return { status: "error", message: "Datos inválidos." };
   }
@@ -265,12 +266,30 @@ export async function actualizarPerfilModeloAction(data: PerfilModeloData): Prom
     redirect(APP_ROUTE.app.login.index);
   }
 
-  await prisma.model.update({
+  const newPhoto = result.data.mainPhotoUrl || null;
+
+  const currentModel = await prisma.model.findUnique({
     where: { userId: session.sub },
-    data: { phone: result.data.telefono },
+    select: { mainPhotoUrl: true },
   });
 
-  revalidatePath(APP_ROUTE.app.modelo.perfil);
+  await prisma.model.update({
+    where: { userId: session.sub },
+    data: { phone: result.data.phone, mainPhotoUrl: newPhoto },
+  });
+
+  if (currentModel?.mainPhotoUrl && currentModel.mainPhotoUrl !== newPhoto) {
+    const oldKey = keyFromObjectUrl(currentModel.mainPhotoUrl);
+    if (oldKey) {
+      await deleteObject(oldKey).catch((err) => {
+        console.error("[updateOwnModelProfileAction] failed to delete old photo", oldKey, err);
+      });
+    } else {
+      console.warn("[updateOwnModelProfileAction] old photo URL did not match bucket prefix, skipped delete", currentModel.mainPhotoUrl);
+    }
+  }
+
+  revalidatePath(APP_ROUTE.app.model.profile);
 
   return { status: "success", message: "Perfil actualizado." };
 }

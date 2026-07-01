@@ -4,29 +4,29 @@ import { LinkButton } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { SearchForm } from "@/components/ui/SearchForm";
 import { Table, THead, Th, Tr, Td } from "@/components/ui/Table";
-import { EstadoBadge } from "@/components/ui/Badge";
-import { listEventos, nombreCliente } from "@/lib/data";
+import { StatusBadge } from "@/components/ui/Badge";
+import { listEvents, clientName } from "@/lib/data";
 import { APP_ROUTE } from "@/lib/routes";
 import { formatDate } from "@/lib/utils";
 
-export default async function EventosPage({
+export default async function EventsPage({
   searchParams,
 }: {
   searchParams: Promise<{ q?: string }>;
 }) {
   const { q } = await searchParams;
-  const eventos = await listEventos();
+  const events = await listEvents();
 
-  const filtrados = q
-    ? eventos.filter(
+  const filtered = q
+    ? events.filter(
         (e) =>
-          e.nombre.toLowerCase().includes(q.toLowerCase()) ||
-          nombreCliente(e.clienteId).toLowerCase().includes(q.toLowerCase()),
+          e.name.toLowerCase().includes(q.toLowerCase()) ||
+          clientName(e.clientId).toLowerCase().includes(q.toLowerCase()),
       )
-    : eventos;
+    : events;
 
-  const ordenados = [...filtrados].sort(
-    (a, b) => new Date(b.fechaInicio).getTime() - new Date(a.fechaInicio).getTime(),
+  const sorted = [...filtered].sort(
+    (a, b) => new Date(b.startDate).getTime() - new Date(a.startDate).getTime(),
   );
 
   return (
@@ -35,7 +35,7 @@ export default async function EventosPage({
         title="Eventos"
         subtitle="Servicios y trabajos contratados por los clientes."
         actions={
-          <LinkButton href={APP_ROUTE.app.eventos.index}>
+          <LinkButton href={APP_ROUTE.app.events.index}>
             <Plus className="h-4 w-4" /> Nuevo evento
           </LinkButton>
         }
@@ -57,23 +57,23 @@ export default async function EventosPage({
             <Th>Estado</Th>
           </THead>
           <tbody>
-            {ordenados.map((evento) => (
-              <Tr key={evento.id}>
-                <Td className="font-medium text-zinc-900">{evento.nombre}</Td>
-                <Td>{nombreCliente(evento.clienteId)}</Td>
-                <Td>{evento.tipo}</Td>
-                <Td className="text-zinc-500">{evento.lugar}</Td>
+            {sorted.map((event) => (
+              <Tr key={event.id}>
+                <Td className="font-medium text-zinc-900">{event.name}</Td>
+                <Td>{clientName(event.clientId)}</Td>
+                <Td>{event.type}</Td>
+                <Td className="text-zinc-500">{event.venue}</Td>
                 <Td className="text-zinc-500">
-                  {formatDate(evento.fechaInicio)}
-                  {evento.fechaFin !== evento.fechaInicio ? ` – ${formatDate(evento.fechaFin)}` : ""}
+                  {formatDate(event.startDate)}
+                  {event.endDate !== event.startDate ? ` – ${formatDate(event.endDate)}` : ""}
                 </Td>
-                <Td className="text-right">{evento.bookingsIds.length}</Td>
+                <Td className="text-right">{event.bookingIds.length}</Td>
                 <Td>
-                  <EstadoBadge estado={evento.estado} />
+                  <StatusBadge status={event.status} />
                 </Td>
               </Tr>
             ))}
-            {ordenados.length === 0 && (
+            {sorted.length === 0 && (
               <tr>
                 <td colSpan={7} className="px-5 py-16 text-center text-sm text-zinc-400">
                   Ningún evento coincide con la búsqueda.

@@ -2,10 +2,10 @@ import Link from "next/link";
 import { ChevronRight } from "lucide-react";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { Card } from "@/components/ui/Card";
-import { EstadoBadge } from "@/components/ui/Badge";
+import { StatusBadge } from "@/components/ui/Badge";
 import { Avatar } from "@/components/ui/Avatar";
 import { StatusTabs } from "@/components/ui/StatusTabs";
-import { listModelosKyc } from "@/lib/data";
+import { listModelsKyc } from "@/lib/data";
 import { APP_ROUTE } from "@/lib/routes";
 import { formatDate } from "@/lib/utils";
 import type { KycStatus } from "@/generated/prisma/enums";
@@ -17,27 +17,27 @@ const PARAM_TO_STATUS: Record<string, KycStatus> = {
   requiere_cambios: "REQUIRES_CHANGES",
 };
 
-export default async function ModeracionPage({
+export default async function ModerationPage({
   searchParams,
 }: {
   searchParams: Promise<{ estado?: string }>;
 }) {
   const { estado } = await searchParams;
-  const activo = estado ?? "todas";
-  const modelos = await listModelosKyc();
+  const active = estado ?? "todas";
+  const models = await listModelsKyc();
 
   const counts: Record<string, number> = {
-    todas: modelos.length,
-    pendiente: modelos.filter((m) => m.kyc.status === "PENDING").length,
-    requiere_cambios: modelos.filter((m) => m.kyc.status === "REQUIRES_CHANGES").length,
-    aprobado: modelos.filter((m) => m.kyc.status === "APPROVED").length,
-    rechazado: modelos.filter((m) => m.kyc.status === "REJECTED").length,
+    todas: models.length,
+    pendiente: models.filter((m) => m.kyc.status === "PENDING").length,
+    requiere_cambios: models.filter((m) => m.kyc.status === "REQUIRES_CHANGES").length,
+    aprobado: models.filter((m) => m.kyc.status === "APPROVED").length,
+    rechazado: models.filter((m) => m.kyc.status === "REJECTED").length,
   };
 
-  const filtrados =
-    activo === "todas"
-      ? modelos
-      : modelos.filter((m) => m.kyc.status === PARAM_TO_STATUS[activo]);
+  const filtered =
+    active === "todas"
+      ? models
+      : models.filter((m) => m.kyc.status === PARAM_TO_STATUS[active]);
 
   return (
     <div>
@@ -47,8 +47,8 @@ export default async function ModeracionPage({
       />
 
       <StatusTabs
-        basePath={APP_ROUTE.app.moderacion.index}
-        activo={activo}
+        basePath={APP_ROUTE.app.moderation.index}
+        active={active}
         counts={counts}
         tabs={[
           { value: "todas", label: "Todas" },
@@ -61,26 +61,26 @@ export default async function ModeracionPage({
 
       <Card>
         <ul className="divide-y divide-zinc-100">
-          {filtrados.map((modelo) => (
-            <li key={modelo.id}>
+          {filtered.map((model) => (
+            <li key={model.id}>
               <Link
-                href={`${APP_ROUTE.app.moderacion.index}/${modelo.id}`}
+                href={`${APP_ROUTE.app.moderation.index}/${model.id}`}
                 className="flex items-center gap-4 px-5 py-4 hover:bg-zinc-50"
               >
-                <Avatar name={modelo.fullName} />
+                <Avatar name={model.fullName} />
                 <div className="min-w-0 flex-1">
-                  <p className="truncate text-sm font-medium text-zinc-900">{modelo.fullName}</p>
+                  <p className="truncate text-sm font-medium text-zinc-900">{model.fullName}</p>
                   <p className="truncate text-xs text-zinc-500">
-                    {modelo.categories.map((c) => c.name).join(", ")} · Enviado el{" "}
-                    {formatDate(modelo.kyc.createdAt)}
+                    {model.categories.map((c) => c.name).join(", ")} · Enviado el{" "}
+                    {formatDate(model.kyc.createdAt)}
                   </p>
                 </div>
-                <EstadoBadge estado={modelo.kyc.status} />
+                <StatusBadge status={model.kyc.status} />
                 <ChevronRight className="h-4 w-4 shrink-0 text-zinc-300" />
               </Link>
             </li>
           ))}
-          {filtrados.length === 0 && (
+          {filtered.length === 0 && (
             <li className="px-5 py-16 text-center text-sm text-zinc-400">
               No hay registros en este estado.
             </li>

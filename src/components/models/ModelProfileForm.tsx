@@ -2,32 +2,47 @@
 
 import { useState } from "react";
 import { Card, CardHeader } from "@/components/ui/Card";
-import { actualizarPerfilModeloAction } from "@/lib/actions";
-import { perfilModeloSchema, type PerfilModeloData } from "@/lib/schemas";
+import { ImageUpload } from "@/components/ui/ImageUpload";
+import { updateOwnModelProfileAction } from "@/lib/actions";
+import { ownModelProfileSchema, type OwnModelProfileData } from "@/lib/schemas";
 import type { ModelWithRelations } from "@/lib/data";
-import { useForm } from "react-hook-form";
+import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 
-export function PerfilModeloForm({ modelo }: { modelo: ModelWithRelations }) {
-  const [mensaje, setMensaje] = useState<string | null>(null);
+export function ModelProfileForm({ model }: { model: ModelWithRelations }) {
+  const [message, setMessage] = useState<string | null>(null);
 
   const {
     register,
+    control,
     handleSubmit,
     formState: { errors, isSubmitting },
-  } = useForm<PerfilModeloData>({
-    resolver: zodResolver(perfilModeloSchema),
-    defaultValues: { telefono: modelo.phone },
+  } = useForm<OwnModelProfileData>({
+    resolver: zodResolver(ownModelProfileSchema),
+    defaultValues: { phone: model.phone, mainPhotoUrl: model.mainPhotoUrl ?? "" },
   });
 
-  async function onSubmit(data: PerfilModeloData) {
-    setMensaje(null);
-    const result = await actualizarPerfilModeloAction(data);
-    setMensaje(result.message);
+  async function onSubmit(data: OwnModelProfileData) {
+    setMessage(null);
+    const result = await updateOwnModelProfileAction(data);
+    setMessage(result.message);
   }
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+      <Card>
+        <CardHeader title="Foto de perfil" />
+        <div className="px-5 pb-5">
+          <Controller
+            name="mainPhotoUrl"
+            control={control}
+            render={({ field }) => (
+              <ImageUpload label="Foto principal" value={field.value} onChange={field.onChange} modelId={model.id} />
+            )}
+          />
+        </div>
+      </Card>
+
       <Card>
         <CardHeader title="Datos de contacto" />
         <div className="space-y-4 px-5 pb-5">
@@ -35,7 +50,7 @@ export function PerfilModeloForm({ modelo }: { modelo: ModelWithRelations }) {
             <label className="mb-1.5 block text-sm font-medium text-zinc-700">Nombre completo</label>
             <input
               disabled
-              value={modelo.fullName}
+              value={model.fullName}
               className="w-full rounded-lg border border-zinc-200 bg-zinc-50 py-2.5 px-3 text-sm text-zinc-400"
             />
           </div>
@@ -43,22 +58,22 @@ export function PerfilModeloForm({ modelo }: { modelo: ModelWithRelations }) {
             <label className="mb-1.5 block text-sm font-medium text-zinc-700">Correo</label>
             <input
               disabled
-              value={modelo.email}
+              value={model.email}
               className="w-full rounded-lg border border-zinc-200 bg-zinc-50 py-2.5 px-3 text-sm text-zinc-400"
             />
           </div>
           <div>
             <label className="mb-1.5 block text-sm font-medium text-zinc-700">Teléfono</label>
             <input
-              {...register("telefono")}
+              {...register("phone")}
               className="w-full rounded-lg border border-zinc-300 bg-white py-2.5 px-3 text-sm outline-none focus:border-gold-500 focus:ring-1 focus:ring-gold-500"
             />
-            {errors.telefono && <p className="mt-1 text-xs text-rose-600">{errors.telefono.message}</p>}
+            {errors.phone && <p className="mt-1 text-xs text-rose-600">{errors.phone.message}</p>}
           </div>
         </div>
       </Card>
 
-      {mensaje && <p className="text-sm text-zinc-600">{mensaje}</p>}
+      {message && <p className="text-sm text-zinc-600">{message}</p>}
 
       <button
         type="submit"

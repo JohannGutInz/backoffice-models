@@ -1,18 +1,18 @@
-import { getUsuarioActual } from "@/lib/data";
+import { getCurrentUser } from "@/lib/data";
 import { APP_ROUTE } from "@/lib/routes";
 import { logoutAction } from "@/lib/actions";
 import { redirect } from "next/navigation";
 
 export const dynamic = "force-dynamic";
 
-export default async function ModeloGroupLayout({
+export default async function ModelGroupLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  const usuario = await getUsuarioActual();
+  const user = await getCurrentUser();
 
-  if (!usuario || usuario.role !== "MODEL") {
+  if (!user || user.role !== "MODEL") {
     redirect(APP_ROUTE.app.login.index);
   }
 

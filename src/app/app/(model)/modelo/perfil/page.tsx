@@ -1,19 +1,19 @@
 import { PageHeader } from "@/components/ui/PageHeader";
-import { PerfilModeloForm } from "@/components/modelo/PerfilModeloForm";
-import { getModeloPropio, getUsuarioActual } from "@/lib/data";
+import { ModelProfileForm } from "@/components/models/ModelProfileForm";
+import { getOwnModel, getCurrentUser } from "@/lib/data";
 import { notFound } from "next/navigation";
 
-export default async function PerfilModeloPage() {
-  const usuario = await getUsuarioActual();
-  const modelo = await getModeloPropio(usuario.id);
+export default async function ModelProfilePage() {
+  const user = await getCurrentUser();
+  const model = await getOwnModel(user.id);
 
-  if (!modelo) notFound();
+  if (!model) notFound();
 
   return (
     <div>
       <PageHeader title="Mi perfil" subtitle="Actualiza tus datos de contacto." />
       <div className="max-w-lg">
-        <PerfilModeloForm modelo={modelo} />
+        <ModelProfileForm model={model} />
       </div>
     </div>
   );

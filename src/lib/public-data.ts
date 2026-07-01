@@ -1,7 +1,7 @@
-import { clientes, eventos, AGENCY_ID } from "./mock-data";
+import { clients, events, AGENCY_ID } from "./mock-data";
 import { prisma } from "@/db";
 
-// Frontera pública. Solo devuelve modelos con KYC aprobado. Sin datos privados.
+// Public boundary. Only returns models with approved KYC. No private data.
 
 const publicModelInclude = {
   kyc: true,
@@ -12,73 +12,73 @@ const publicModelInclude = {
 
 type RawPublicModel = NonNullable<Awaited<ReturnType<typeof prisma.model.findFirst<{ include: typeof publicModelInclude }>>>>;
 
-export interface ModeloPublico {
+export interface PublicModel {
   id: string;
   fullName: string;
   categories: string[];
   genre: string;
   location: string;
-  destacado: boolean;
+  featured: boolean;
 }
 
-function toPublico(m: RawPublicModel): ModeloPublico {
+function toPublicModel(m: RawPublicModel): PublicModel {
   return {
     id: m.id,
     fullName: m.fullName,
     categories: m.categories.map((c) => c.name),
     genre: m.genre,
     location: `${m.city.name}, ${m.country.name}`,
-    destacado: false,
+    featured: false,
   };
 }
 
-export async function listVitrinaModelos(): Promise<ModeloPublico[]> {
-  const modelos = await prisma.model.findMany({
+export async function listPublicModels(): Promise<PublicModel[]> {
+  const models = await prisma.model.findMany({
     where: { kyc: { status: "APPROVED" } },
     include: publicModelInclude,
     orderBy: { fullName: "asc" },
   });
-  return modelos.map(toPublico);
+  return models.map(toPublicModel);
 }
 
-export async function getVitrinaModelo(id: string): Promise<ModeloPublico | undefined> {
-  const modelo = await prisma.model.findFirst({
+export async function getPublicModel(id: string): Promise<PublicModel | undefined> {
+  const model = await prisma.model.findFirst({
     where: { id, kyc: { status: "APPROVED" } },
     include: publicModelInclude,
   });
-  if (!modelo) return undefined;
-  return toPublico(modelo);
+  if (!model) return undefined;
+  return toPublicModel(model);
 }
 
-export async function listDestacados(limit = 4): Promise<ModeloPublico[]> {
-  const modelos = await prisma.model.findMany({
+export async function listFeaturedModels(limit = 4): Promise<PublicModel[]> {
+  const models = await prisma.model.findMany({
     where: { kyc: { status: "APPROVED" } },
     include: publicModelInclude,
     orderBy: { fullName: "asc" },
     take: limit,
   });
-  return modelos.map(toPublico);
+  return models.map(toPublicModel);
 }
 
-export interface EventoPortafolio {
+export interface PortfolioEvent {
   id: string;
-  nombre: string;
-  tipo: string;
-  lugar: string;
-  fecha: string;
-  clienteNombre: string;
+  name: string;
+  type: string;
+  venue: string;
+  date: string;
+  clientName: string;
 }
 
-export async function listEventosPortafolio(): Promise<EventoPortafolio[]> {
-  return eventos
-    .filter((e) => e.agencyId === AGENCY_ID && e.estado === "finalizado")
-    .sort((a, b) => new Date(b.fechaInicio).getTime() - new Date(a.fechaInicio).getTime())
+export async function listPortfolioEvents(): Promise<PortfolioEvent[]> {
+  return events
+    .filter((e) => e.agencyId === AGENCY_ID && e.status === "finalizado")
+    .sort((a, b) => new Date(b.startDate).getTime() - new Date(a.startDate).getTime())
     .map((e) => ({
       id: e.id,
-      nombre: e.nombre,
-      tipo: e.tipo,
-      lugar: e.lugar,
-      fecha: e.fechaInicio,
-      clienteNombre: clientes.find((c) => c.id === e.clienteId)?.empresa ?? "Cliente de la agencia",
+      name: e.name,
+      type: e.type,
+      venue: e.venue,
+      date: e.startDate,
+      clientName: clients.find((c) => c.id === e.clientId)?.company ?? "Cliente de la agencia",
     }));
 }

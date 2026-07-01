@@ -80,6 +80,11 @@ export async function deleteObject(key: string): Promise<void> {
   await s3.send(new DeleteObjectCommand({ Bucket: getBucket(), Key: key }));
 }
 
+export function keyFromObjectUrl(url: string): string | null {
+  const prefix = `${getPublicUrl()}/${getBucket()}/`;
+  return url.startsWith(prefix) ? url.slice(prefix.length) : null;
+}
+
 export async function getSignedDownloadUrl(key: string, expiresIn = 3600): Promise<string> {
   const s3 = getS3Client();
   return getSignedUrl(
