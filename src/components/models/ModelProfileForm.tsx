@@ -6,15 +6,16 @@ import { ImageUpload } from "@/components/ui/ImageUpload";
 import { updateOwnModelProfileAction } from "@/lib/actions";
 import { ownModelProfileSchema, type OwnModelProfileData } from "@/lib/schemas";
 import type { ModelWithRelations } from "@/lib/data";
-import { useForm, Controller } from "react-hook-form";
+import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 
 export function ModelProfileForm({ model }: { model: ModelWithRelations }) {
   const [message, setMessage] = useState<string | null>(null);
+  const [pendingPhoto, setPendingPhoto] = useState<File | null>(null);
+  const [photoRemoved, setPhotoRemoved] = useState(false);
 
   const {
     register,
-    control,
     handleSubmit,
     formState: { errors, isSubmitting },
   } = useForm<OwnModelProfileData>({
@@ -22,9 +23,33 @@ export function ModelProfileForm({ model }: { model: ModelWithRelations }) {
     defaultValues: { phone: model.phone, mainPhotoUrl: model.mainPhotoUrl ?? "" },
   });
 
+  function handlePhotoSelected(file: File | null) {
+    setPendingPhoto(file);
+    setPhotoRemoved(file === null);
+  }
+
   async function onSubmit(data: OwnModelProfileData) {
     setMessage(null);
-    const result = await updateOwnModelProfileAction(data);
+
+    let mainPhotoUrl = model.mainPhotoUrl ?? "";
+
+    if (pendingPhoto) {
+      const formData = new FormData();
+      formData.append("file", pendingPhoto);
+      formData.append("modelId", model.id);
+
+      const res = await fetch("/api/upload/image", { method: "POST", body: formData });
+      const uploadResult = await res.json();
+      if (!res.ok) {
+        setMessage(uploadResult.error ?? "Error al subir la imagen.");
+        return;
+      }
+      mainPhotoUrl = uploadResult.url;
+    } else if (photoRemoved) {
+      mainPhotoUrl = "";
+    }
+
+    const result = await updateOwnModelProfileAction({ ...data, mainPhotoUrl });
     setMessage(result.message);
   }
 
@@ -33,13 +58,7 @@ export function ModelProfileForm({ model }: { model: ModelWithRelations }) {
       <Card>
         <CardHeader title="Foto de perfil" />
         <div className="px-5 pb-5">
-          <Controller
-            name="mainPhotoUrl"
-            control={control}
-            render={({ field }) => (
-              <ImageUpload label="Foto principal" value={field.value} onChange={field.onChange} modelId={model.id} />
-            )}
-          />
+          <ImageUpload label="Foto principal" value={model.mainPhotoUrl ?? undefined} onFileSelected={handlePhotoSelected} />
         </div>
       </Card>
 

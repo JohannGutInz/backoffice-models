@@ -1,51 +1,52 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 
 interface ImageUploadProps {
   value?: string;
-  onChange: (url: string) => void;
+  onFileSelected: (file: File | null) => void;
   label?: string;
   className?: string;
-  modelId?: string;
 }
 
-export function ImageUpload({ value, onChange, label = "Imagen", className, modelId }: ImageUploadProps) {
+export function ImageUpload({ value, onFileSelected, label = "Imagen", className }: ImageUploadProps) {
   const inputRef = useRef<HTMLInputElement>(null);
-  const [uploading, setUploading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [localPreview, setLocalPreview] = useState<string | null>(null);
+  const [removed, setRemoved] = useState(false);
 
-  async function handleFile(file: File) {
-    setError(null);
-    setUploading(true);
-    try {
-      const formData = new FormData();
-      formData.append("file", file);
-      if (modelId) formData.append("modelId", modelId);
+  useEffect(() => {
+    return () => {
+      if (localPreview) URL.revokeObjectURL(localPreview);
+    };
+  }, [localPreview]);
 
-      const res = await fetch("/api/upload/image", { method: "POST", body: formData });
-      const data = await res.json();
-
-      if (!res.ok) throw new Error(data.error ?? "Error al subir");
-      onChange(data.url);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Error al subir la imagen");
-    } finally {
-      setUploading(false);
-    }
+  function pickFile(file: File) {
+    if (localPreview) URL.revokeObjectURL(localPreview);
+    setLocalPreview(URL.createObjectURL(file));
+    setRemoved(false);
+    onFileSelected(file);
   }
 
   function handleChange(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
-    if (file) handleFile(file);
+    if (file) pickFile(file);
   }
 
   function handleDrop(e: React.DragEvent) {
     e.preventDefault();
     const file = e.dataTransfer.files?.[0];
-    if (file) handleFile(file);
+    if (file) pickFile(file);
   }
+
+  function handleRemove() {
+    if (localPreview) URL.revokeObjectURL(localPreview);
+    setLocalPreview(null);
+    setRemoved(true);
+    onFileSelected(null);
+  }
+
+  const displayUrl = localPreview ?? (removed ? undefined : value);
 
   return (
     <div className={className}>
@@ -57,9 +58,9 @@ export function ImageUpload({ value, onChange, label = "Imagen", className, mode
         onDragOver={(e) => e.preventDefault()}
         className="relative flex cursor-pointer flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed border-zinc-200 bg-zinc-50 p-6 text-center transition hover:border-zinc-400 hover:bg-zinc-100"
       >
-        {value ? (
+        {displayUrl ? (
           <div className="relative h-40 w-full overflow-hidden rounded-md">
-            <Image src={value} alt="preview" fill className="object-cover" unoptimized />
+            <Image src={displayUrl} alt="preview" fill className="object-cover" unoptimized />
           </div>
         ) : (
           <>
@@ -68,31 +69,21 @@ export function ImageUpload({ value, onChange, label = "Imagen", className, mode
                 <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5m-13.5-9L12 3m0 0 4.5 4.5M12 3v13.5" />
               </svg>
             </div>
-            <p className="text-sm text-zinc-500">
-              {uploading ? "Subiendo…" : "Arrastra o haz clic para subir"}
-            </p>
+            <p className="text-sm text-zinc-500">Arrastra o haz clic para subir</p>
             <p className="text-xs text-zinc-400">JPG, PNG, WebP · máx 10 MB</p>
           </>
         )}
-
-        {uploading && (
-          <div className="absolute inset-0 flex items-center justify-center rounded-lg bg-white/70">
-            <div className="h-5 w-5 animate-spin rounded-full border-2 border-zinc-300 border-t-zinc-700" />
-          </div>
-        )}
       </div>
 
-      {value && (
+      {displayUrl && (
         <button
           type="button"
-          onClick={() => onChange("")}
+          onClick={handleRemove}
           className="mt-1.5 text-xs text-zinc-400 underline hover:text-red-500"
         >
           Eliminar imagen
         </button>
       )}
-
-      {error && <p className="mt-1 text-xs text-red-500">{error}</p>}
 
       <input
         ref={inputRef}
