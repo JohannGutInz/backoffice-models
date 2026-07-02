@@ -6,7 +6,7 @@ import { prisma } from "@/db";
 export default async function RegistrationPage() {
   const [config, countries, states, municipalities, categories] = await Promise.all([
     getSiteSettings(),
-    prisma.country.findMany({ select: { id: true, name: true }, orderBy: { name: "asc" } }),
+    prisma.country.findMany({ select: { id: true, name: true, demonym: true }, orderBy: { name: "asc" } }),
     prisma.state.findMany({ select: { id: true, name: true, countryId: true }, orderBy: { name: "asc" } }),
     prisma.municipality.findMany({ select: { id: true, name: true, stateId: true }, orderBy: { name: "asc" } }),
     prisma.category.findMany({

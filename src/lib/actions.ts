@@ -104,6 +104,7 @@ export async function submitRegistrationAction(data: RegistrationActionData): Pr
         birthDate: new Date(data.birthDate),
         genre: data.gender,
         countryId: data.countryId,
+        nationalityId: data.nationalityId,
         cityId: data.cityId,
         kycId: kyc.id,
         userId: user.id,

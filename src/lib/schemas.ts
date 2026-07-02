@@ -40,6 +40,7 @@ export const registrationFormSchema = z.object({
     .refine((v) => calculateAge(v) >= 18, "Solo aceptamos registros de personas mayores de 18 años."),
   gender: z.enum(["MALE", "FEMALE"], { error: "Selecciona un género." }),
   countryId: z.string().min(1, "Selecciona un país."),
+  nationalityId: z.string().min(1, "Selecciona una nacionalidad."),
   stateId: z.string().min(1, "Selecciona un estado."),
   cityId: z.string().min(1, "Selecciona una ciudad."),
   categoryIds: z.array(z.string()).min(1, "Selecciona al menos una categoría."),

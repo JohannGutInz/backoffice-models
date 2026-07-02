@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/Button";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 
-type Country = { id: string; name: string };
+type Country = { id: string; name: string; demonym: string };
 type State = { id: string; name: string; countryId: string };
 type Municipality = { id: string; name: string; stateId: string };
 type Category = { id: string; name: string };
@@ -48,6 +48,7 @@ export function RegistrationForm({ maxDate, countries, states, municipalities, c
     resolver: zodResolver(registrationFormSchema),
     defaultValues: {
       countryId: "",
+      nationalityId: "",
       stateId: "",
       cityId: "",
       categoryIds: [],
@@ -77,6 +78,7 @@ export function RegistrationForm({ maxDate, countries, states, municipalities, c
       birthDate: data.birthDate,
       gender: data.gender,
       countryId: data.countryId,
+      nationalityId: data.nationalityId,
       cityId: data.cityId,
       categoryIds: data.categoryIds,
       password: data.password,
@@ -157,6 +159,26 @@ export function RegistrationForm({ maxDate, countries, states, municipalities, c
               >
                 {countries.map((c) => (
                   <option key={c.id} value={c.id}>{c.name}</option>
+                ))}
+              </Select>
+            )}
+          />
+        </div>
+
+        {/* Nacionalidad */}
+        <div className="sm:col-span-2">
+          <Controller
+            name="nationalityId"
+            control={control}
+            render={({ field }) => (
+              <Select
+                {...field}
+                label="Nacionalidad"
+                placeholder="Selecciona una nacionalidad…"
+                error={errors.nationalityId?.message}
+              >
+                {countries.map((c) => (
+                  <option key={c.id} value={c.id}>{c.demonym}</option>
                 ))}
               </Select>
             )}

@@ -37,8 +37,9 @@ model Country {
   label   String @unique // MX, USA, etc
   demonym String // Mexicano, American, etc
 
-  models Model[]
-  states State[]
+  models                Model[] @relation("ModelResidenceCountry")
+  modelsWithNationality Model[] @relation("ModelNationality")
+  states                State[]
 
   @@map("countries")
 }
@@ -127,7 +128,10 @@ model Model {
   categories Category[]
 
   countryId String  @map("country_id")
-  country   Country @relation(fields: [countryId], references: [id])
+  country   Country @relation("ModelResidenceCountry", fields: [countryId], references: [id])
+
+  nationalityId String  @map("nationality_id")
+  nationality   Country @relation("ModelNationality", fields: [nationalityId], references: [id])
 
   cityId String       @map("city_id")
   city   Municipality @relation(fields: [cityId], references: [id])
