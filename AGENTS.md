@@ -14,6 +14,12 @@ Never revert unless user says "stop caveman" or "normal mode".
 
 ---
 
+# Commit Convention
+
+Do **not** add `Co-Authored-By: Claude` (or any Claude/Anthropic co-author trailer) to commit messages.
+
+---
+
 # Code Language Convention
 
 **All code is written in English**: variable/function/type/component names, comments, file and directory names inside `src/`.
