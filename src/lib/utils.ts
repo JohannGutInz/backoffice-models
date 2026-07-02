@@ -69,6 +69,32 @@ export function initials(name: string): string {
     .join("");
 }
 
+export function formatFullName(person: {
+  firstName: string;
+  paternalLastName: string;
+  maternalLastName?: string | null;
+}): string {
+  return [person.firstName, person.paternalLastName, person.maternalLastName].filter(Boolean).join(" ");
+}
+
+export function isProfileComplete(model: {
+  height: number | null;
+  currentWeight: number | null;
+  shirtSize: string | null;
+  pantsSizeScale: string | null;
+  pantsSize: string | null;
+  activities: unknown[];
+}): boolean {
+  return (
+    model.height !== null &&
+    model.currentWeight !== null &&
+    model.shirtSize !== null &&
+    model.pantsSizeScale !== null &&
+    model.pantsSize !== null &&
+    model.activities.length > 0
+  );
+}
+
 export function calculateAge(birthDateIso: string): number {
   const birthDate = parseDateOnly(birthDateIso);
   const today = new Date();

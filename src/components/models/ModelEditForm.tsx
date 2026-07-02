@@ -1,29 +1,37 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Card, CardHeader } from "@/components/ui/Card";
-import { ImageUpload } from "@/components/ui/ImageUpload";
 import { Input } from "@/components/ui/Input";
 import { Select } from "@/components/ui/Select";
 import { Checkbox } from "@/components/ui/Checkbox";
 import { MultiSelectPicker } from "@/components/ui/MultiSelectPicker";
 import { Button } from "@/components/ui/Button";
-import { updateOwnModelProfileAction } from "@/lib/actions";
-import { ownModelProfileSchema, type OwnModelProfileData } from "@/lib/schemas";
-import { formatFullName } from "@/lib/utils";
+import { updateModelAttributesAction } from "@/lib/actions";
+import { modelEditSchema, type ModelEditData } from "@/lib/schemas";
+import { APP_ROUTE } from "@/lib/routes";
 import type { ModelWithRelations } from "@/lib/data";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { PantsSizeScale, ShirtSize } from "@/generated/prisma/enums";
 
-interface Activity {
+interface Option {
   id: string;
   name: string;
 }
 
-export function ModelProfileForm({ model, activities }: { model: ModelWithRelations; activities: Activity[] }) {
-  const [message, setMessage] = useState<string | null>(null);
-  const [pendingPhoto, setPendingPhoto] = useState<File | null>(null);
-  const [photoRemoved, setPhotoRemoved] = useState(false);
+export function ModelEditForm({
+  model,
+  categories,
+  activities,
+}: {
+  model: ModelWithRelations;
+  categories: Option[];
+  activities: Option[];
+}) {
+  const router = useRouter();
+  const [serverError, setServerError] = useState<string | null>(null);
 
   const {
     register,
@@ -32,11 +40,13 @@ export function ModelProfileForm({ model, activities }: { model: ModelWithRelati
     watch,
     setValue,
     formState: { errors, isSubmitting },
-  } = useForm<OwnModelProfileData>({
-    resolver: zodResolver(ownModelProfileSchema),
+  } = useForm<ModelEditData>({
+    resolver: zodResolver(modelEditSchema),
     defaultValues: {
+      firstName: model.firstName,
+      paternalLastName: model.paternalLastName,
+      maternalLastName: model.maternalLastName ?? "",
       phone: model.phone,
-      mainPhotoUrl: model.mainPhotoUrl ?? "",
       height: model.height ?? undefined,
       currentWeight: model.currentWeight ?? undefined,
       hasVisibleTattoos: model.hasVisibleTattoos,
@@ -46,62 +56,46 @@ export function ModelProfileForm({ model, activities }: { model: ModelWithRelati
       travelAvailability: model.travelAvailability,
       hasPassport: model.hasPassport,
       hasVisa: model.hasVisa,
+      categoryIds: model.categories.map((c) => c.id),
       activityIds: model.activities.map((a) => a.id),
     },
   });
 
+  const categoryIds = watch("categoryIds");
   const activityIds = watch("activityIds");
 
-  function handlePhotoSelected(file: File | null) {
-    setPendingPhoto(file);
-    setPhotoRemoved(file === null);
-  }
-
-  async function onSubmit(data: OwnModelProfileData) {
-    setMessage(null);
-
-    let mainPhotoUrl = model.mainPhotoUrl ?? "";
-
-    if (pendingPhoto) {
-      const formData = new FormData();
-      formData.append("file", pendingPhoto);
-      formData.append("modelId", model.id);
-
-      const res = await fetch("/api/upload/image", { method: "POST", body: formData });
-      const uploadResult = await res.json();
-      if (!res.ok) {
-        setMessage(uploadResult.error ?? "Error al subir la imagen.");
-        return;
-      }
-      mainPhotoUrl = uploadResult.url;
-    } else if (photoRemoved) {
-      mainPhotoUrl = "";
+  async function onSubmit(data: ModelEditData) {
+    setServerError(null);
+    const result = await updateModelAttributesAction(model.id, data);
+    if (result.status === "error") {
+      setServerError(result.message);
+      return;
     }
-
-    const result = await updateOwnModelProfileAction({ ...data, mainPhotoUrl });
-    setMessage(result.message);
+    router.push(`${APP_ROUTE.app.models.index}/${model.id}`);
   }
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
       <Card>
-        <CardHeader title="Foto de perfil" />
-        <div className="px-5 pb-5">
-          <ImageUpload label="Foto principal" value={model.mainPhotoUrl ?? undefined} onFileSelected={handlePhotoSelected} />
-        </div>
-      </Card>
-
-      <Card>
-        <CardHeader title="Datos de contacto" />
-        <div className="space-y-4 px-5 pb-5">
-          <Input label="Nombre completo" disabled value={formatFullName(model)} />
-          <Input label="Correo" disabled value={model.email} />
+        <CardHeader title="Identidad" />
+        <div className="grid grid-cols-1 gap-4 px-5 pb-5 sm:grid-cols-2">
+          <Input label="Nombre(s)" {...register("firstName")} error={errors.firstName?.message} />
+          <Input
+            label="Apellido paterno"
+            {...register("paternalLastName")}
+            error={errors.paternalLastName?.message}
+          />
+          <Input
+            label="Apellido materno"
+            {...register("maternalLastName")}
+            error={errors.maternalLastName?.message}
+          />
           <Input label="Teléfono" {...register("phone")} error={errors.phone?.message} />
         </div>
       </Card>
 
       <Card>
-        <CardHeader title="Atributos físicos" subtitle="Necesarios para que tu perfil entre a revisión." />
+        <CardHeader title="Atributos físicos" />
         <div className="grid grid-cols-1 gap-4 px-5 pb-5 sm:grid-cols-2">
           <Input
             type="number"
@@ -122,12 +116,7 @@ export function ModelProfileForm({ model, activities }: { model: ModelWithRelati
             placeholder="Selecciona…"
             error={errors.shirtSize?.message}
           >
-            <option value="XS">XS</option>
-            <option value="S">S</option>
-            <option value="M">M</option>
-            <option value="L">L</option>
-            <option value="XL">XL</option>
-            <option value="XXL">XXL</option>
+            {Object.entries(ShirtSize).map((size) => <option key={size[0]} value={size[0]}>{size[1]}</option>)}
           </Select>
           <div />
           <Select
@@ -137,12 +126,12 @@ export function ModelProfileForm({ model, activities }: { model: ModelWithRelati
             placeholder="Selecciona…"
             error={errors.pantsSizeScale?.message}
           >
-            <option value="MEN">Hombre</option>
-            <option value="WOMEN">Mujer</option>
+            <option value={PantsSizeScale.MEN}>Hombre</option>
+            <option value={PantsSizeScale.WOMEN}>Mujer</option>
           </Select>
           <Input label="Talla de pantalón" {...register("pantsSize")} error={errors.pantsSize?.message} />
           <div className="sm:col-span-2">
-            <Checkbox label="¿Tienes tatuajes visibles?" {...register("hasVisibleTattoos")} />
+            <Checkbox label="¿Tiene tatuajes visibles?" {...register("hasVisibleTattoos")} />
           </div>
         </div>
       </Card>
@@ -151,14 +140,28 @@ export function ModelProfileForm({ model, activities }: { model: ModelWithRelati
         <CardHeader title="Logística" />
         <div className="space-y-3 px-5 pb-5">
           <Checkbox label="Disponibilidad para viajar" {...register("travelAvailability")} />
-          <Checkbox label="¿Cuentas con pasaporte?" {...register("hasPassport")} />
-          <Checkbox label="¿Cuentas con visa?" {...register("hasVisa")} />
+          <Checkbox label="¿Cuenta con pasaporte?" {...register("hasPassport")} />
+          <Checkbox label="¿Cuenta con visa?" {...register("hasVisa")} />
         </div>
       </Card>
 
       <Card>
-        <CardHeader title="Actividades" />
-        <div className="px-5 pb-5">
+        <CardHeader title="Categorías y actividades" />
+        <div className="space-y-4 px-5 pb-5">
+          <Controller
+            name="categoryIds"
+            control={control}
+            render={() => (
+              <MultiSelectPicker
+                label="Categorías"
+                hint="(mínimo 1)"
+                options={categories}
+                selectedIds={categoryIds}
+                onChange={(ids) => setValue("categoryIds", ids)}
+                error={errors.categoryIds?.message}
+              />
+            )}
+          />
           <Controller
             name="activityIds"
             control={control}
@@ -176,7 +179,7 @@ export function ModelProfileForm({ model, activities }: { model: ModelWithRelati
         </div>
       </Card>
 
-      {message && <p className="text-sm text-zinc-600">{message}</p>}
+      {serverError && <p className="text-sm text-rose-600">{serverError}</p>}
 
       <Button type="submit" disabled={isSubmitting}>
         {isSubmitting ? "Guardando…" : "Guardar cambios"}

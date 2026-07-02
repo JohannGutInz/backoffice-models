@@ -10,7 +10,7 @@ import { SESSION_COOKIE, createSessionToken, verifySessionToken } from "./sessio
 import { toDateKey } from "./utils";
 import { emailClientContact } from "./email";
 import { APP_ROUTE } from "./routes";
-import { ownModelProfileSchema } from "./schemas";
+import { ownModelProfileSchema, modelEditSchema } from "./schemas";
 import { deleteObject, keyFromObjectUrl } from "./storage";
 import z from "zod";
 import type {
@@ -21,6 +21,7 @@ import type {
   ResendApplicationData,
   RegistrationActionData,
   OwnModelProfileData,
+  ModelEditData,
 } from "./schemas";
 import { UserRole } from "@/generated/prisma/enums";
 
@@ -90,7 +91,7 @@ export async function submitRegistrationAction(data: RegistrationActionData): Pr
     const user = await tx.user.create({
       data: {
         email: data.email,
-        username: data.fullName,
+        username: `${data.firstName} ${data.paternalLastName}`,
         hashedPassword,
         role: UserRole.MODEL,
       },
@@ -98,7 +99,9 @@ export async function submitRegistrationAction(data: RegistrationActionData): Pr
     const kyc = await tx.kyc.create({ data: {} });
     await tx.model.create({
       data: {
-        fullName: data.fullName,
+        firstName: data.firstName,
+        paternalLastName: data.paternalLastName,
+        maternalLastName: data.maternalLastName || null,
         email: data.email,
         phone: data.phone,
         birthDate: new Date(data.birthDate),
@@ -202,6 +205,27 @@ export async function toggleCategoryEnabledAction(id: string, enabled: boolean):
   revalidatePath("/app/catalogs");
 }
 
+// ---------- Catalogs (activities) ----------
+
+export async function createActivityAction(data: CategoryData): Promise<ActionState> {
+  const existing = await prisma.activity.findFirst({
+    where: { name: { equals: data.name, mode: "insensitive" } },
+  });
+  if (existing) {
+    return { status: "error", message: "Ya existe una actividad con ese nombre." };
+  }
+
+  await prisma.activity.create({ data: { name: data.name } });
+  revalidatePath("/app/catalogs");
+
+  return { status: "success", message: "Actividad creada." };
+}
+
+export async function toggleActivityEnabledAction(id: string, enabled: boolean): Promise<void> {
+  await prisma.activity.update({ where: { id }, data: { enabled } });
+  revalidatePath("/app/catalogs");
+}
+
 // ---------- Site settings (backoffice) ----------
 
 export async function saveSiteSettingsAction(data: SettingsData): Promise<void> {
@@ -276,7 +300,20 @@ export async function updateOwnModelProfileAction(data: OwnModelProfileData): Pr
 
   await prisma.model.update({
     where: { userId: session.sub },
-    data: { phone: result.data.phone, mainPhotoUrl: newPhoto },
+    data: {
+      phone: result.data.phone,
+      mainPhotoUrl: newPhoto,
+      height: result.data.height,
+      currentWeight: result.data.currentWeight,
+      hasVisibleTattoos: result.data.hasVisibleTattoos,
+      shirtSize: result.data.shirtSize,
+      pantsSizeScale: result.data.pantsSizeScale,
+      pantsSize: result.data.pantsSize,
+      travelAvailability: result.data.travelAvailability,
+      hasPassport: result.data.hasPassport,
+      hasVisa: result.data.hasVisa,
+      activities: { set: result.data.activityIds.map((id) => ({ id })) },
+    },
   });
 
   if (currentModel?.mainPhotoUrl && currentModel.mainPhotoUrl !== newPhoto) {
@@ -293,4 +330,39 @@ export async function updateOwnModelProfileAction(data: OwnModelProfileData): Pr
   revalidatePath(APP_ROUTE.app.model.profile);
 
   return { status: "success", message: "Perfil actualizado." };
+}
+
+// ---------- Model admin edit ----------
+
+export async function updateModelAttributesAction(modelId: string, data: ModelEditData): Promise<ActionState> {
+  const result = modelEditSchema.safeParse(data);
+  if (!result.success) {
+    return { status: "error", message: "Datos inválidos." };
+  }
+
+  await prisma.model.update({
+    where: { id: modelId },
+    data: {
+      firstName: result.data.firstName,
+      paternalLastName: result.data.paternalLastName,
+      maternalLastName: result.data.maternalLastName || null,
+      phone: result.data.phone,
+      height: result.data.height,
+      currentWeight: result.data.currentWeight,
+      hasVisibleTattoos: result.data.hasVisibleTattoos,
+      shirtSize: result.data.shirtSize,
+      pantsSizeScale: result.data.pantsSizeScale,
+      pantsSize: result.data.pantsSize,
+      travelAvailability: result.data.travelAvailability,
+      hasPassport: result.data.hasPassport,
+      hasVisa: result.data.hasVisa,
+      categories: { set: result.data.categoryIds.map((id) => ({ id })) },
+      activities: { set: result.data.activityIds.map((id) => ({ id })) },
+    },
+  });
+
+  revalidatePath(`${APP_ROUTE.app.models.index}/${modelId}`);
+  revalidatePath(APP_ROUTE.app.models.index);
+
+  return { status: "success", message: "Modelo actualizado." };
 }

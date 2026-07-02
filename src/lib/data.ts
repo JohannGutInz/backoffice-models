@@ -24,6 +24,7 @@ import { SESSION_COOKIE, verifySessionToken } from "./session";
 import { prisma } from "@/db";
 import { redirect } from "next/navigation";
 import { APP_ROUTE } from "./routes";
+import { isProfileComplete } from "./utils";
 
 // Data access layer. Today it reads from the in-memory fixtures (mock-data.ts).
 // When the central API exists, these functions are the only place that changes:
@@ -70,6 +71,7 @@ export async function getCurrentUser() {
 
 const modelInclude = {
   categories: true,
+  activities: true,
   country: true,
   city: { include: { state: true } },
 } as const;
@@ -79,7 +81,7 @@ export type ModelWithRelations = Awaited<ReturnType<typeof listModels>>[number];
 export async function listModels() {
   return prisma.model.findMany({
     include: modelInclude,
-    orderBy: { fullName: "asc" },
+    orderBy: [{ paternalLastName: "asc" }, { firstName: "asc" }],
   });
 }
 
@@ -106,6 +108,7 @@ export function modelName(id: string): string {
 const kycModelInclude = {
   kyc: true,
   categories: true,
+  activities: true,
   country: true,
   city: { include: { state: true } },
 } as const;
@@ -113,10 +116,11 @@ const kycModelInclude = {
 export type ModelWithKyc = Awaited<ReturnType<typeof listModelsKyc>>[number];
 
 export async function listModelsKyc() {
-  return prisma.model.findMany({
+  const models = await prisma.model.findMany({
     include: kycModelInclude,
     orderBy: { kyc: { createdAt: "desc" } },
   });
+  return models.filter(isProfileComplete);
 }
 
 export async function getModelKyc(id: string) {
@@ -194,17 +198,25 @@ export async function listCategories() {
   return prisma.category.findMany({ orderBy: { name: "asc" } });
 }
 
+// ---------- Catalogs (activities) ----------
+
+export async function listActivities() {
+  return prisma.activity.findMany({ orderBy: { name: "asc" } });
+}
+
 // ---------- Dashboard stats ----------
 
 export async function getDashboardStats() {
-  const [bks, ings, pkgs, cli, pendingKyc, mdls] = await Promise.all([
+  const [bks, ings, pkgs, cli, kycModels, mdls] = await Promise.all([
     listBookings(),
     listIncome(),
     listPackages(),
     listClients(),
-    prisma.kyc.count({ where: { status: { in: ["PENDING", "REQUIRES_CHANGES"] } } }),
+    listModelsKyc(),
     listModels(),
   ]);
+
+  const pendingKyc = kycModels.filter((m) => m.kyc.status === "PENDING" || m.kyc.status === "REQUIRES_CHANGES").length;
 
   const activeBookings = bks.filter((b) => b.status === "pendiente" || b.status === "confirmado");
   const pendingBookings = bks.filter((b) => b.status === "pendiente");

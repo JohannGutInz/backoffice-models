@@ -8,7 +8,7 @@ import { Avatar } from "@/components/ui/Avatar";
 import { Input } from "@/components/ui/Input";
 import { Select } from "@/components/ui/Select";
 import { APP_ROUTE } from "@/lib/routes";
-import { formatDate } from "@/lib/utils";
+import { formatDate, formatFullName } from "@/lib/utils";
 
 const GENRE_LABEL: Record<string, string> = {
   MALE: "Masculino",
@@ -32,7 +32,7 @@ export function ModelsGrid({ models }: { models: ModelWithRelations[] }) {
     return models.filter((m) => {
       const matchQuery =
         query.trim() === "" ||
-        m.fullName.toLowerCase().includes(query.toLowerCase()) ||
+        formatFullName(m).toLowerCase().includes(query.toLowerCase()) ||
         m.email.toLowerCase().includes(query.toLowerCase());
       const matchGender = gender === "todos" || m.genre === gender;
       const matchCategory =
@@ -78,12 +78,12 @@ export function ModelsGrid({ models }: { models: ModelWithRelations[] }) {
             className="group overflow-hidden rounded-xl border border-zinc-200 bg-white transition-shadow hover:shadow-md"
           >
             <div className="relative flex h-40 items-center justify-center bg-gradient-to-br from-zinc-900 via-zinc-950 to-black">
-              <Avatar name={model.fullName} size="xl" />
+              <Avatar name={formatFullName(model)} size="xl" />
             </div>
             <div className="p-4">
               <div className="flex items-start justify-between gap-2">
                 <div>
-                  <p className="truncate text-sm font-semibold text-zinc-900">{model.fullName}</p>
+                  <p className="truncate text-sm font-semibold text-zinc-900">{formatFullName(model)}</p>
                   <p className="text-xs text-zinc-400">{formatDate(model.birthDate)}</p>
                 </div>
                 <span className="shrink-0 rounded-full bg-zinc-100 px-2 py-0.5 text-xs font-medium text-zinc-600">

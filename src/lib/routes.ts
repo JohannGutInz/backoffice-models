@@ -22,7 +22,10 @@ export const APP_ROUTE = {
       index: "/app/eventos"
     },
     models: {
-      index: "/app/modelos"
+      index: "/app/modelos",
+      edit: {
+        id: (id: string) => `/app/modelos/${id}/editar`
+      },
     },
     calendar: {
       index: "/app/calendario"

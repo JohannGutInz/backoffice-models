@@ -6,6 +6,7 @@ import { TalentCard } from "./TalentCard";
 import { Input } from "@/components/ui/Input";
 import { Select } from "@/components/ui/Select";
 import type { PublicModel } from "@/lib/public-data";
+import { formatFullName } from "@/lib/utils";
 
 export function TalentsGrid({ models }: { models: PublicModel[] }) {
   const [query, setQuery] = useState("");
@@ -19,7 +20,7 @@ export function TalentsGrid({ models }: { models: PublicModel[] }) {
   const filtered = useMemo(() => {
     return models.filter((m) => {
       const matchQuery =
-        query.trim() === "" || m.fullName.toLowerCase().includes(query.toLowerCase());
+        query.trim() === "" || formatFullName(m).toLowerCase().includes(query.toLowerCase());
       const matchCategory = category === "todas" || m.categories.includes(category);
       return matchQuery && matchCategory;
     });

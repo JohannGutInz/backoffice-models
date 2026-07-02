@@ -72,7 +72,9 @@ export function RegistrationForm({ maxDate, countries, states, municipalities, c
       return;
     }
     const result = await submitRegistrationAction({
-      fullName: data.fullName,
+      firstName: data.firstName,
+      paternalLastName: data.paternalLastName,
+      maternalLastName: data.maternalLastName,
       email: data.email,
       phone: data.phone,
       birthDate: data.birthDate,
@@ -99,9 +101,23 @@ export function RegistrationForm({ maxDate, countries, states, municipalities, c
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-        {/* Nombre completo */}
+        {/* Nombre */}
+        <Input label="Nombre(s)" {...register("firstName")} error={errors.firstName?.message} />
+
+        {/* Apellido paterno */}
+        <Input
+          label="Apellido paterno"
+          {...register("paternalLastName")}
+          error={errors.paternalLastName?.message}
+        />
+
+        {/* Apellido materno */}
         <div className="sm:col-span-2">
-          <Input label="Nombre completo" {...register("fullName")} error={errors.fullName?.message} />
+          <Input
+            label="Apellido materno (opcional)"
+            {...register("maternalLastName")}
+            error={errors.maternalLastName?.message}
+          />
         </div>
 
         {/* Correo */}

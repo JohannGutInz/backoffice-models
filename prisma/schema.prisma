@@ -80,9 +80,33 @@ model Category {
   @@map("categories")
 }
 
+model Activity {
+  id      String  @id @default(uuid())
+  name    String
+  enabled Boolean @default(true)
+
+  models Model[]
+
+  @@map("activities")
+}
+
 enum ModelGenre {
   MALE
   FEMALE
+}
+
+enum ShirtSize {
+  XS
+  S
+  M
+  L
+  XL
+  XXL
+}
+
+enum PantsSizeScale {
+  MEN
+  WOMEN
 }
 
 enum KycStatus {
@@ -108,12 +132,24 @@ model Kyc {
 }
 
 model Model {
-  id        String     @id @default(uuid())
-  fullName  String     @map("full_name")
-  email     String     @unique
-  phone     String
-  birthDate DateTime   @map("birth_date") @db.Date
-  genre     ModelGenre
+  id               String   @id @default(uuid())
+  firstName        String   @map("first_name")
+  paternalLastName String   @map("paternal_last_name")
+  maternalLastName String?  @map("maternal_last_name")
+  email            String   @unique
+  phone            String
+  birthDate        DateTime @map("birth_date") @db.Date
+  genre            ModelGenre
+
+  height             Int?            @map("height_cm")
+  currentWeight      Int?            @map("current_weight_kg")
+  hasVisibleTattoos  Boolean         @default(false) @map("has_visible_tattoos")
+  shirtSize          ShirtSize?      @map("shirt_size")
+  pantsSizeScale     PantsSizeScale? @map("pants_size_scale")
+  pantsSize          String?         @map("pants_size")
+  travelAvailability Boolean         @default(false) @map("travel_availability")
+  hasPassport        Boolean         @default(false) @map("has_passport")
+  hasVisa            Boolean         @default(false) @map("has_visa")
 
   mainPhotoUrl String?  @map("main_photo_url")
   bookUrls     String[] @map("book_urls")
@@ -126,6 +162,7 @@ model Model {
   user   User   @relation(fields: [userId], references: [id])
 
   categories Category[]
+  activities Activity[]
 
   countryId String  @map("country_id")
   country   Country @relation("ModelResidenceCountry", fields: [countryId], references: [id])

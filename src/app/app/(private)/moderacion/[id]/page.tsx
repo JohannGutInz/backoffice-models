@@ -20,7 +20,7 @@ import { Card, CardHeader } from "@/components/ui/Card";
 import { Field, FieldGrid } from "@/components/ui/Field";
 import { Textarea } from "@/components/ui/Textarea";
 import { StatusBadge } from "@/components/ui/Badge";
-import { addDays, formatDate } from "@/lib/utils";
+import { addDays, formatDate, formatFullName } from "@/lib/utils";
 import { APP_ROUTE } from "@/lib/routes";
 
 const GENRE_LABEL: Record<string, string> = {
@@ -64,9 +64,9 @@ export default async function ModerationDetailPage({
 
       <div className="mb-6 flex flex-wrap items-start justify-between gap-4">
         <div className="flex items-center gap-4">
-          <Avatar name={model.fullName} size="lg" />
+          <Avatar name={formatFullName(model)} size="lg" />
           <div>
-            <h1 className="text-2xl font-semibold tracking-tight text-zinc-900">{model.fullName}</h1>
+            <h1 className="text-2xl font-semibold tracking-tight text-zinc-900">{formatFullName(model)}</h1>
             <div className="mt-1 flex items-center gap-2 text-sm text-zinc-500">
               <StatusBadge status={kyc.status} />
               <span>·</span>

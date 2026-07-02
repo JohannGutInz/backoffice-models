@@ -6,6 +6,7 @@ import { prisma } from "@/db";
 const publicModelInclude = {
   kyc: true,
   categories: { select: { name: true } },
+  activities: { select: { name: true } },
   country: { select: { name: true } },
   city: { select: { name: true } },
 } as const;
@@ -14,8 +15,11 @@ type RawPublicModel = NonNullable<Awaited<ReturnType<typeof prisma.model.findFir
 
 export interface PublicModel {
   id: string;
-  fullName: string;
+  firstName: string;
+  paternalLastName: string;
+  maternalLastName: string | null;
   categories: string[];
+  activities: string[];
   genre: string;
   location: string;
   featured: boolean;
@@ -24,8 +28,11 @@ export interface PublicModel {
 function toPublicModel(m: RawPublicModel): PublicModel {
   return {
     id: m.id,
-    fullName: m.fullName,
+    firstName: m.firstName,
+    paternalLastName: m.paternalLastName,
+    maternalLastName: m.maternalLastName,
     categories: m.categories.map((c) => c.name),
+    activities: m.activities.map((a) => a.name),
     genre: m.genre,
     location: `${m.city.name}, ${m.country.name}`,
     featured: false,
@@ -36,7 +43,7 @@ export async function listPublicModels(): Promise<PublicModel[]> {
   const models = await prisma.model.findMany({
     where: { kyc: { status: "APPROVED" } },
     include: publicModelInclude,
-    orderBy: { fullName: "asc" },
+    orderBy: [{ paternalLastName: "asc" }, { firstName: "asc" }],
   });
   return models.map(toPublicModel);
 }
@@ -54,7 +61,7 @@ export async function listFeaturedModels(limit = 4): Promise<PublicModel[]> {
   const models = await prisma.model.findMany({
     where: { kyc: { status: "APPROVED" } },
     include: publicModelInclude,
-    orderBy: { fullName: "asc" },
+    orderBy: [{ paternalLastName: "asc" }, { firstName: "asc" }],
     take: limit,
   });
   return models.map(toPublicModel);

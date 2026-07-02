@@ -3,6 +3,7 @@ import Link from "next/link";
 import { ArrowLeft, ArrowRight, Camera, MapPin } from "lucide-react";
 import { getPublicModel } from "@/lib/public-data";
 import { Avatar } from "@/components/ui/Avatar";
+import { formatFullName } from "@/lib/utils";
 
 const GENRE_LABEL: Record<string, string> = {
   MALE: "Masculino",
@@ -28,7 +29,7 @@ export default async function TalentDetailPage({
       <div className="grid grid-cols-1 gap-10 lg:grid-cols-3">
         <div className="lg:col-span-1">
           <div className="flex aspect-[3/4] items-center justify-center rounded-2xl bg-gradient-to-br from-zinc-900 via-zinc-950 to-black">
-            <Avatar name={model.fullName} size="xl" />
+            <Avatar name={formatFullName(model)} size="xl" />
           </div>
         </div>
 
@@ -38,7 +39,7 @@ export default async function TalentDetailPage({
               {model.categories.join(" · ")}
             </p>
           )}
-          <h1 className="mt-1 text-3xl font-light tracking-tight text-zinc-950">{model.fullName}</h1>
+          <h1 className="mt-1 text-3xl font-light tracking-tight text-zinc-950">{formatFullName(model)}</h1>
 
           <div className="mt-3 flex flex-wrap items-center gap-3 text-sm text-zinc-500">
             <span>{GENRE_LABEL[model.genre] ?? model.genre}</span>
@@ -53,10 +54,10 @@ export default async function TalentDetailPage({
           </div>
 
           <Link
-            href={`/contacto?modelo=${encodeURIComponent(model.fullName)}`}
+            href={`/contacto?modelo=${encodeURIComponent(formatFullName(model))}`}
             className="mt-8 inline-flex items-center gap-1.5 rounded-full bg-zinc-950 px-5 py-2.5 text-sm font-medium text-white transition-colors hover:bg-gold-600"
           >
-            Contactar a la agencia sobre {model.fullName.split(" ")[0]} <ArrowRight className="h-4 w-4" />
+            Contactar a la agencia sobre {model.firstName} <ArrowRight className="h-4 w-4" />
           </Link>
         </div>
       </div>

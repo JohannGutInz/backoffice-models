@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { createCategoryAction } from "@/lib/actions";
+import type { ActionState } from "@/lib/actions";
 import { categorySchema, type CategoryData } from "@/lib/schemas";
 import { Card, CardHeader } from "@/components/ui/Card";
 import { Input } from "@/components/ui/Input";
@@ -9,7 +9,14 @@ import { Button } from "@/components/ui/Button";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 
-export function CatalogForm() {
+interface CatalogFormProps {
+  title: string;
+  subtitle: string;
+  action: (data: CategoryData) => Promise<ActionState>;
+  placeholder?: string;
+}
+
+export function CatalogForm({ title, subtitle, action, placeholder = "Ej. Fitness, Editorial, Comercial…" }: CatalogFormProps) {
   const [serverMessage, setServerMessage] = useState<{ type: "error" | "success"; text: string } | null>(null);
 
   const {
@@ -21,7 +28,7 @@ export function CatalogForm() {
 
   async function onSubmit(data: CategoryData) {
     setServerMessage(null);
-    const result = await createCategoryAction(data);
+    const result = await action(data);
     if (result.status === "success") {
       reset();
       setServerMessage({ type: "success", text: result.message });
@@ -32,14 +39,14 @@ export function CatalogForm() {
 
   return (
     <Card>
-      <CardHeader title="Nuevo catálogo" subtitle="Agrega una categoría disponible para los modelos." />
+      <CardHeader title={title} subtitle={subtitle} />
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 px-5 pb-5">
         <Input
           id="name"
           label="Nombre"
           {...register("name")}
           type="text"
-          placeholder="Ej. Fitness, Editorial, Comercial…"
+          placeholder={placeholder}
           error={errors.name?.message}
         />
 

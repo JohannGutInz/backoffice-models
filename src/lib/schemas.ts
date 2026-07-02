@@ -31,7 +31,9 @@ export const resendApplicationSchema = z.object({
 });
 
 export const registrationFormSchema = z.object({
-  fullName: z.string().min(1, "El nombre completo es obligatorio."),
+  firstName: z.string().min(1, "El nombre es obligatorio."),
+  paternalLastName: z.string().min(1, "El apellido paterno es obligatorio."),
+  maternalLastName: z.string().optional(),
   email: z.email("Correo electrónico inválido."),
   phone: z.string().min(1, "El teléfono es obligatorio."),
   birthDate: z
@@ -53,10 +55,31 @@ export const registrationActionSchema = registrationFormSchema.omit({
   captchaAnswer: true,
 });
 
+export const modelAttributesSchema = z.object({
+  height: z.number({ error: "La estatura es obligatoria." }).int().positive(),
+  currentWeight: z.number({ error: "El peso es obligatorio." }).int().positive(),
+  hasVisibleTattoos: z.boolean(),
+  shirtSize: z.enum(["XS", "S", "M", "L", "XL", "XXL"], { error: "Selecciona una talla de camisa." }),
+  pantsSizeScale: z.enum(["MEN", "WOMEN"], { error: "Selecciona una escala de talla de pantalón." }),
+  pantsSize: z.string().min(1, "La talla de pantalón es obligatoria."),
+  travelAvailability: z.boolean(),
+  hasPassport: z.boolean(),
+  hasVisa: z.boolean(),
+  activityIds: z.array(z.string()).min(1, "Selecciona al menos una actividad."),
+});
+
 export const ownModelProfileSchema = z.object({
   phone: z.string().min(1, "El teléfono es obligatorio."),
   mainPhotoUrl: z.string().optional(),
-});
+}).merge(modelAttributesSchema);
+
+export const modelEditSchema = z.object({
+  firstName: z.string().min(1, "El nombre es obligatorio."),
+  paternalLastName: z.string().min(1, "El apellido paterno es obligatorio."),
+  maternalLastName: z.string().optional(),
+  phone: z.string().min(1, "El teléfono es obligatorio."),
+  categoryIds: z.array(z.string()).min(1, "Selecciona al menos una categoría."),
+}).merge(modelAttributesSchema);
 
 export type LoginData = z.infer<typeof loginSchema>;
 export type ContactData = z.infer<typeof contactSchema>;
@@ -65,4 +88,6 @@ export type SettingsData = z.infer<typeof settingsSchema>;
 export type ResendApplicationData = z.infer<typeof resendApplicationSchema>;
 export type RegistrationFormData = z.infer<typeof registrationFormSchema>;
 export type RegistrationActionData = z.infer<typeof registrationActionSchema>;
+export type ModelAttributesData = z.infer<typeof modelAttributesSchema>;
 export type OwnModelProfileData = z.infer<typeof ownModelProfileSchema>;
+export type ModelEditData = z.infer<typeof modelEditSchema>;

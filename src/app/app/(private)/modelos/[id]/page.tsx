@@ -1,17 +1,36 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft, Mail, MapPin, Phone, User } from "lucide-react";
+import { ArrowLeft, Mail, MapPin, Phone, User, Pencil } from "lucide-react";
 import { getModel } from "@/lib/data";
 import { Avatar } from "@/components/ui/Avatar";
 import { Card, CardHeader } from "@/components/ui/Card";
 import { Field, FieldGrid } from "@/components/ui/Field";
+import { LinkButton } from "@/components/ui/Button";
 import { APP_ROUTE } from "@/lib/routes";
-import { formatDate } from "@/lib/utils";
+import { formatDate, formatFullName } from "@/lib/utils";
 
 const GENRE_LABEL: Record<string, string> = {
   MALE: "Masculino",
   FEMALE: "Femenino",
 };
+
+const SHIRT_SIZE_LABEL: Record<string, string> = {
+  XS: "XS",
+  S: "S",
+  M: "M",
+  L: "L",
+  XL: "XL",
+  XXL: "XXL",
+};
+
+const PANTS_SCALE_LABEL: Record<string, string> = {
+  MEN: "Hombre",
+  WOMEN: "Mujer",
+};
+
+function yesNo(value: boolean): string {
+  return value ? "Sí" : "No";
+}
 
 function calculateAgeFrom(date: Date): number {
   const today = new Date();
@@ -42,12 +61,12 @@ export default async function ModelDetailPage({
         <ArrowLeft className="h-4 w-4" /> Volver a Modelos
       </Link>
 
-      <div className="mb-6 flex flex-wrap items-start gap-4">
+      <div className="mb-6 flex flex-wrap items-start justify-between gap-4">
         <div className="flex items-center gap-4">
-          <Avatar name={model.fullName} size="lg" />
+          <Avatar name={formatFullName(model)} size="lg" />
           <div>
             <h1 className="text-2xl font-semibold tracking-tight text-zinc-900">
-              {model.fullName}
+              {formatFullName(model)}
             </h1>
             <div className="mt-1 flex items-center gap-2 text-sm text-zinc-500">
               <span className="rounded-full bg-zinc-100 px-2 py-0.5 text-xs font-medium text-zinc-600">
@@ -58,6 +77,9 @@ export default async function ModelDetailPage({
             </div>
           </div>
         </div>
+        <LinkButton href={APP_ROUTE.app.models.edit.id(model.id)} variant="secondary">
+          <Pencil className="h-4 w-4" /> Editar
+        </LinkButton>
       </div>
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
@@ -66,12 +88,43 @@ export default async function ModelDetailPage({
             <CardHeader title="Datos personales" />
             <div className="px-5 pb-5">
               <FieldGrid>
-                <Field label="Nombre completo" value={model.fullName} />
+                <Field label="Nombre completo" value={formatFullName(model)} />
                 <Field
                   label="Fecha de nacimiento"
                   value={`${formatDate(model.birthDate)} · ${calculateAgeFrom(model.birthDate)} años`}
                 />
                 <Field label="Género" value={GENRE_LABEL[model.genre] ?? model.genre} />
+              </FieldGrid>
+            </div>
+          </Card>
+
+          <Card>
+            <CardHeader title="Atributos físicos" />
+            <div className="px-5 pb-5">
+              <FieldGrid>
+                <Field label="Estatura" value={model.height ? `${model.height} cm` : "Sin definir"} />
+                <Field label="Peso actual" value={model.currentWeight ? `${model.currentWeight} kg` : "Sin definir"} />
+                <Field label="Tatuajes visibles" value={yesNo(model.hasVisibleTattoos)} />
+                <Field label="Talla de camisa" value={model.shirtSize ? SHIRT_SIZE_LABEL[model.shirtSize] : "Sin definir"} />
+                <Field
+                  label="Talla de pantalón"
+                  value={
+                    model.pantsSizeScale && model.pantsSize
+                      ? `${PANTS_SCALE_LABEL[model.pantsSizeScale]} · ${model.pantsSize}`
+                      : "Sin definir"
+                  }
+                />
+              </FieldGrid>
+            </div>
+          </Card>
+
+          <Card>
+            <CardHeader title="Logística" />
+            <div className="px-5 pb-5">
+              <FieldGrid>
+                <Field label="Disponibilidad para viajar" value={yesNo(model.travelAvailability)} />
+                <Field label="Pasaporte" value={yesNo(model.hasPassport)} />
+                <Field label="Visa" value={yesNo(model.hasVisa)} />
               </FieldGrid>
             </div>
           </Card>
@@ -139,6 +192,24 @@ export default async function ModelDetailPage({
                       className="rounded-full bg-zinc-100 px-3 py-1 text-sm font-medium text-zinc-700"
                     >
                       {cat.name}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            </Card>
+          )}
+
+          {model.activities.length > 0 && (
+            <Card>
+              <CardHeader title="Actividades" />
+              <div className="px-5 pb-5">
+                <div className="flex flex-wrap gap-2">
+                  {model.activities.map((act) => (
+                    <span
+                      key={act.id}
+                      className="rounded-full bg-zinc-100 px-3 py-1 text-sm font-medium text-zinc-700"
+                    >
+                      {act.name}
                     </span>
                   ))}
                 </div>
