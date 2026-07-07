@@ -153,9 +153,7 @@ model Model {
   hasPassport        Boolean         @default(false) @map("has_passport")
   hasVisa            Boolean         @default(false) @map("has_visa")
 
-  mainPhotoUrl String?  @map("main_photo_url")
-  bookUrls     String[] @map("book_urls")
-  videoUrls    String[] @map("video_urls")
+  assets Asset[]
 
   kycId String @unique @map("kyc_id")
   kyc   Kyc    @relation(fields: [kycId], references: [id])
@@ -176,4 +174,24 @@ model Model {
   city   Municipality @relation(fields: [cityId], references: [id])
 
   @@map("models")
+}
+
+enum AssetType {
+  MAIN_PHOTO
+  PHOTO
+  VIDEO
+}
+
+model Asset {
+  id        String    @id @default(uuid())
+  type      AssetType
+  url       String
+  position  Int
+  createdAt DateTime  @default(now()) @map("created_at")
+
+  modelId String @map("model_id")
+  model   Model  @relation(fields: [modelId], references: [id], onDelete: Cascade)
+
+  @@unique([modelId, type, position])
+  @@map("assets")
 }

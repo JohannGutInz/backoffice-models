@@ -74,6 +74,8 @@ export const ownModelProfileSchema = z.object({
   maternalLastName: z.string().optional(),
   phone: z.string().min(1, "El teléfono es obligatorio."),
   mainPhotoUrl: z.string().optional(),
+  photoUrls: z.array(z.string()).max(5, "Máximo 5 fotos en el book."),
+  videoUrls: z.array(z.string()).max(3, "Máximo 3 videos."),
 }).merge(modelAttributesSchema);
 
 export const modelEditSchema = z.object({

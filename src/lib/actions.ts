@@ -23,7 +23,8 @@ import type {
   OwnModelProfileData,
   ModelEditData,
 } from "./schemas";
-import { UserRole } from "@/generated/prisma/enums";
+import { UserRole, AssetType } from "@/generated/prisma/enums";
+import { getMainPhotoUrl, getGalleryPhotos, getGalleryVideos } from "./utils";
 
 export interface ActionState {
   status: "idle" | "success" | "error";
@@ -277,6 +278,26 @@ export async function submitContactAction(data: ContactData): Promise<ActionStat
 
 // ---------- Model portal (self-service) ----------
 
+async function deleteRemovedAssets(oldUrls: string[], newUrls: string[]) {
+  const removed = oldUrls.filter((url) => !newUrls.includes(url));
+  await Promise.all(
+    removed.map(async (url) => {
+      const key = keyFromObjectUrl(url);
+      if (!key) {
+        console.warn("[deleteRemovedAssets] URL did not match bucket prefix, skipped delete", url);
+        return;
+      }
+      await deleteObject(key).catch((err) => {
+        console.error("[deleteRemovedAssets] failed to delete", key, err);
+      });
+    }),
+  );
+}
+
+function assetRows(modelId: string, type: AssetType, urls: string[]) {
+  return urls.map((url, position) => ({ modelId, type, url, position }));
+}
+
 export async function updateOwnModelProfileAction(data: OwnModelProfileData): Promise<ActionState> {
   const result = ownModelProfileSchema.safeParse(data);
   if (!result.success) {
@@ -291,51 +312,60 @@ export async function updateOwnModelProfileAction(data: OwnModelProfileData): Pr
     redirect(APP_ROUTE.app.login.index);
   }
 
-  const newPhoto = result.data.mainPhotoUrl || null;
+  const newMainPhoto = result.data.mainPhotoUrl || null;
+  const newPhotos = result.data.photoUrls;
+  const newVideos = result.data.videoUrls;
 
   const currentModel = await prisma.model.findUnique({
     where: { userId: session.sub },
-    select: { mainPhotoUrl: true, kycId: true, kyc: { select: { status: true } } },
+    select: { id: true, kycId: true, kyc: { select: { status: true } }, assets: true },
   });
+  if (!currentModel) redirect(APP_ROUTE.app.login.index);
 
-  await prisma.model.update({
-    where: { userId: session.sub },
-    data: {
-      firstName: result.data.firstName,
-      paternalLastName: result.data.paternalLastName,
-      maternalLastName: result.data.maternalLastName || null,
-      phone: result.data.phone,
-      mainPhotoUrl: newPhoto,
-      height: result.data.height,
-      currentWeight: result.data.currentWeight,
-      hasVisibleTattoos: result.data.hasVisibleTattoos,
-      shirtSize: result.data.shirtSize,
-      pantsSizeScale: result.data.pantsSizeScale,
-      pantsSize: result.data.pantsSize,
-      travelAvailability: result.data.travelAvailability,
-      hasPassport: result.data.hasPassport,
-      hasVisa: result.data.hasVisa,
-      activities: { set: result.data.activityIds.map((id) => ({ id })) },
-    },
-  });
+  const currentMainPhoto = getMainPhotoUrl(currentModel.assets);
+  const currentPhotos = getGalleryPhotos(currentModel.assets);
+  const currentVideos = getGalleryVideos(currentModel.assets);
 
-  if (currentModel?.kyc.status === "APPROVED") {
+  await prisma.$transaction([
+    prisma.model.update({
+      where: { userId: session.sub },
+      data: {
+        firstName: result.data.firstName,
+        paternalLastName: result.data.paternalLastName,
+        maternalLastName: result.data.maternalLastName || null,
+        phone: result.data.phone,
+        height: result.data.height,
+        currentWeight: result.data.currentWeight,
+        hasVisibleTattoos: result.data.hasVisibleTattoos,
+        shirtSize: result.data.shirtSize,
+        pantsSizeScale: result.data.pantsSizeScale,
+        pantsSize: result.data.pantsSize,
+        travelAvailability: result.data.travelAvailability,
+        hasPassport: result.data.hasPassport,
+        hasVisa: result.data.hasVisa,
+        activities: { set: result.data.activityIds.map((id) => ({ id })) },
+      },
+    }),
+    prisma.asset.deleteMany({ where: { modelId: currentModel.id } }),
+    prisma.asset.createMany({
+      data: [
+        ...assetRows(currentModel.id, AssetType.MAIN_PHOTO, newMainPhoto ? [newMainPhoto] : []),
+        ...assetRows(currentModel.id, AssetType.PHOTO, newPhotos),
+        ...assetRows(currentModel.id, AssetType.VIDEO, newVideos),
+      ],
+    }),
+  ]);
+
+  if (currentModel.kyc.status === "APPROVED") {
     await prisma.kyc.update({
       where: { id: currentModel.kycId },
       data: { status: "PENDING" },
     });
   }
 
-  if (currentModel?.mainPhotoUrl && currentModel.mainPhotoUrl !== newPhoto) {
-    const oldKey = keyFromObjectUrl(currentModel.mainPhotoUrl);
-    if (oldKey) {
-      await deleteObject(oldKey).catch((err) => {
-        console.error("[updateOwnModelProfileAction] failed to delete old photo", oldKey, err);
-      });
-    } else {
-      console.warn("[updateOwnModelProfileAction] old photo URL did not match bucket prefix, skipped delete", currentModel.mainPhotoUrl);
-    }
-  }
+  await deleteRemovedAssets(currentMainPhoto ? [currentMainPhoto] : [], newMainPhoto ? [newMainPhoto] : []);
+  await deleteRemovedAssets(currentPhotos, newPhotos);
+  await deleteRemovedAssets(currentVideos, newVideos);
 
   revalidatePath(APP_ROUTE.app.model.profile);
   revalidatePath("/app/moderacion");
@@ -344,7 +374,7 @@ export async function updateOwnModelProfileAction(data: OwnModelProfileData): Pr
   return {
     status: "success",
     message:
-      currentModel?.kyc.status === "APPROVED"
+      currentModel.kyc.status === "APPROVED"
         ? "Perfil actualizado. Tu KYC vuelve a estar pendiente de aprobación."
         : "Perfil actualizado.",
   };

@@ -8,11 +8,17 @@ import { Select } from "@/components/ui/Select";
 import { Checkbox } from "@/components/ui/Checkbox";
 import { MultiSelectPicker } from "@/components/ui/MultiSelectPicker";
 import { Button } from "@/components/ui/Button";
+import { GalleryImageUpload } from "@/components/models/GalleryImageUpload";
+import { GalleryVideoUpload } from "@/components/models/GalleryVideoUpload";
 import { updateOwnModelProfileAction } from "@/lib/actions";
 import { ownModelProfileSchema, type OwnModelProfileData } from "@/lib/schemas";
 import type { OwnModelWithKyc } from "@/lib/data";
+import { getMainPhotoUrl, getGalleryPhotos, getGalleryVideos } from "@/lib/utils";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
+
+const MAX_PHOTOS = 5;
+const MAX_VIDEOS = 3;
 
 interface Activity {
   id: string;
@@ -30,6 +36,8 @@ export function ModelProfileForm({
   const [pendingPhoto, setPendingPhoto] = useState<File | null>(null);
   const [photoRemoved, setPhotoRemoved] = useState(false);
 
+  const mainPhotoUrl = getMainPhotoUrl(model.assets);
+
   const {
     register,
     control,
@@ -44,7 +52,9 @@ export function ModelProfileForm({
       paternalLastName: model.paternalLastName,
       maternalLastName: model.maternalLastName ?? "",
       phone: model.phone,
-      mainPhotoUrl: model.mainPhotoUrl ?? "",
+      mainPhotoUrl: mainPhotoUrl ?? "",
+      photoUrls: getGalleryPhotos(model.assets),
+      videoUrls: getGalleryVideos(model.assets),
       height: model.height ?? undefined,
       currentWeight: model.currentWeight ?? undefined,
       hasVisibleTattoos: model.hasVisibleTattoos,
@@ -59,6 +69,8 @@ export function ModelProfileForm({
   });
 
   const activityIds = watch("activityIds");
+  const photoUrls = watch("photoUrls");
+  const videoUrls = watch("videoUrls");
 
   function handlePhotoSelected(file: File | null) {
     setPendingPhoto(file);
@@ -75,7 +87,7 @@ export function ModelProfileForm({
 
     setMessage(null);
 
-    let mainPhotoUrl = model.mainPhotoUrl ?? "";
+    let newMainPhotoUrl = mainPhotoUrl ?? "";
 
     if (pendingPhoto) {
       const formData = new FormData();
@@ -88,12 +100,12 @@ export function ModelProfileForm({
         setMessage(uploadResult.error ?? "Error al subir la imagen.");
         return;
       }
-      mainPhotoUrl = uploadResult.url;
+      newMainPhotoUrl = uploadResult.url;
     } else if (photoRemoved) {
-      mainPhotoUrl = "";
+      newMainPhotoUrl = "";
     }
 
-    const result = await updateOwnModelProfileAction({ ...data, mainPhotoUrl });
+    const result = await updateOwnModelProfileAction({ ...data, mainPhotoUrl: newMainPhotoUrl });
     setMessage(result.message);
   }
 
@@ -102,7 +114,45 @@ export function ModelProfileForm({
       <Card>
         <CardHeader title="Foto de perfil" />
         <div className="px-5 pb-5">
-          <ImageUpload label="Foto principal" value={model.mainPhotoUrl ?? undefined} onFileSelected={handlePhotoSelected} />
+          <ImageUpload label="Foto principal" value={mainPhotoUrl ?? undefined} onFileSelected={handlePhotoSelected} />
+        </div>
+      </Card>
+
+      <Card>
+        <CardHeader title="Book" subtitle="Hasta 5 fotos adicionales para tu book público." />
+        <div className="px-5 pb-5">
+          <Controller
+            name="photoUrls"
+            control={control}
+            render={() => (
+              <GalleryImageUpload
+                value={photoUrls}
+                onChange={(urls) => setValue("photoUrls", urls, { shouldValidate: true })}
+                max={MAX_PHOTOS}
+                modelId={model.id}
+              />
+            )}
+          />
+          {errors.photoUrls && <p className="mt-1.5 text-xs text-red-500">{errors.photoUrls.message}</p>}
+        </div>
+      </Card>
+
+      <Card>
+        <CardHeader title="Videos" subtitle="Hasta 3 videos para tu book público." />
+        <div className="px-5 pb-5">
+          <Controller
+            name="videoUrls"
+            control={control}
+            render={() => (
+              <GalleryVideoUpload
+                value={videoUrls}
+                onChange={(urls) => setValue("videoUrls", urls, { shouldValidate: true })}
+                max={MAX_VIDEOS}
+                modelId={model.id}
+              />
+            )}
+          />
+          {errors.videoUrls && <p className="mt-1.5 text-xs text-red-500">{errors.videoUrls.message}</p>}
         </div>
       </Card>
 

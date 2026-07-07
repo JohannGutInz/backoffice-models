@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
+import Image from "next/image";
 import { ArrowLeft, Mail, MapPin, Phone, User, Pencil } from "lucide-react";
 import { getModel } from "@/lib/data";
 import { Avatar } from "@/components/ui/Avatar";
@@ -7,7 +8,7 @@ import { Card, CardHeader } from "@/components/ui/Card";
 import { Field, FieldGrid } from "@/components/ui/Field";
 import { LinkButton } from "@/components/ui/Button";
 import { APP_ROUTE } from "@/lib/routes";
-import { formatDate, formatFullName } from "@/lib/utils";
+import { formatDate, formatFullName, getMainPhotoUrl, getGalleryPhotos, getGalleryVideos } from "@/lib/utils";
 
 const GENRE_LABEL: Record<string, string> = {
   MALE: "Masculino",
@@ -52,6 +53,10 @@ export default async function ModelDetailPage({
 
   if (!model) notFound();
 
+  const mainPhotoUrl = getMainPhotoUrl(model.assets);
+  const photoUrls = getGalleryPhotos(model.assets);
+  const videoUrls = getGalleryVideos(model.assets);
+
   return (
     <div>
       <Link
@@ -63,7 +68,13 @@ export default async function ModelDetailPage({
 
       <div className="mb-6 flex flex-wrap items-start justify-between gap-4">
         <div className="flex items-center gap-4">
-          <Avatar name={formatFullName(model)} size="lg" />
+          {mainPhotoUrl ? (
+            <div className="relative h-16 w-16 shrink-0 overflow-hidden rounded-full">
+              <Image src={mainPhotoUrl} alt={formatFullName(model)} fill className="object-cover" unoptimized />
+            </div>
+          ) : (
+            <Avatar name={formatFullName(model)} size="lg" />
+          )}
           <div>
             <h1 className="text-2xl font-semibold tracking-tight text-zinc-900">
               {formatFullName(model)}
@@ -152,6 +163,30 @@ export default async function ModelDetailPage({
               </FieldGrid>
             </div>
           </Card>
+
+          {(photoUrls.length > 0 || videoUrls.length > 0) && (
+            <Card>
+              <CardHeader title="Book" />
+              <div className="space-y-4 px-5 pb-5">
+                {photoUrls.length > 0 && (
+                  <div className="grid grid-cols-3 gap-3 sm:grid-cols-4">
+                    {photoUrls.map((url) => (
+                      <div key={url} className="relative aspect-square overflow-hidden rounded-lg border border-zinc-200">
+                        <Image src={url} alt="Foto del book" fill className="object-cover" unoptimized />
+                      </div>
+                    ))}
+                  </div>
+                )}
+                {videoUrls.length > 0 && (
+                  <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                    {videoUrls.map((url) => (
+                      <video key={url} src={url} controls className="w-full rounded-lg" />
+                    ))}
+                  </div>
+                )}
+              </div>
+            </Card>
+          )}
 
           <Card>
             <CardHeader title="Ubicación" />

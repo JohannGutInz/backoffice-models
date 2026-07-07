@@ -1,7 +1,7 @@
 import { notFound, redirect } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
-import { ArrowLeft, ArrowRight, Camera, MapPin } from "lucide-react";
+import { ArrowLeft, ArrowRight, MapPin } from "lucide-react";
 import { getPublicModel } from "@/lib/public-data";
 import { Avatar } from "@/components/ui/Avatar";
 import { formatFullName } from "@/lib/utils";
@@ -131,20 +131,29 @@ export default async function TalentDetailPage({
         </div>
       </div>
 
-      <div className="mt-16 border-t border-zinc-100 pt-10">
-        <h2 className="mb-4 text-sm font-semibold text-zinc-900">Book</h2>
-        <div className="grid grid-cols-3 gap-3 sm:grid-cols-4">
-          {Array.from({ length: 4 }).map((_, i) => (
-            <div
-              key={i}
-              className="flex aspect-square flex-col items-center justify-center gap-1.5 rounded-lg border border-dashed border-zinc-200 bg-zinc-50 text-zinc-300"
-            >
-              <Camera className="h-5 w-5" />
-              <span className="text-[10px]">Próximamente</span>
-            </div>
-          ))}
+      {model.photoUrls.length > 0 && (
+        <div className="mt-16 border-t border-zinc-100 pt-10">
+          <h2 className="mb-4 text-sm font-semibold text-zinc-900">Book</h2>
+          <div className="grid grid-cols-3 gap-3 sm:grid-cols-4">
+            {model.photoUrls.map((url) => (
+              <div key={url} className="relative aspect-square overflow-hidden rounded-lg">
+                <Image src={url} alt={formatFullName(model)} fill className="object-cover" unoptimized />
+              </div>
+            ))}
+          </div>
         </div>
-      </div>
+      )}
+
+      {model.videoUrls.length > 0 && (
+        <div className="mt-16 border-t border-zinc-100 pt-10">
+          <h2 className="mb-4 text-sm font-semibold text-zinc-900">Videos</h2>
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            {model.videoUrls.map((url) => (
+              <video key={url} src={url} controls className="w-full rounded-lg" />
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

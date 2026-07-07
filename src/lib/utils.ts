@@ -95,6 +95,30 @@ export function isProfileComplete(model: {
   );
 }
 
+interface AssetShape {
+  type: string;
+  url: string;
+  position: number;
+}
+
+export function getMainPhotoUrl(assets: AssetShape[]): string | null {
+  return assets.find((a) => a.type === "MAIN_PHOTO")?.url ?? null;
+}
+
+export function getGalleryPhotos(assets: AssetShape[]): string[] {
+  return assets
+    .filter((a) => a.type === "PHOTO")
+    .sort((a, b) => a.position - b.position)
+    .map((a) => a.url);
+}
+
+export function getGalleryVideos(assets: AssetShape[]): string[] {
+  return assets
+    .filter((a) => a.type === "VIDEO")
+    .sort((a, b) => a.position - b.position)
+    .map((a) => a.url);
+}
+
 export function calculateAge(birthDateIso: string): number {
   const birthDate = parseDateOnly(birthDateIso);
   const today = new Date();

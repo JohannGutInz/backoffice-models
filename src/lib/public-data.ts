@@ -1,5 +1,6 @@
 import { clients, events, AGENCY_ID } from "./mock-data";
 import { prisma } from "@/db";
+import { getMainPhotoUrl, getGalleryPhotos, getGalleryVideos } from "./utils";
 
 // Public boundary. Only returns models with approved KYC. No private data.
 
@@ -10,6 +11,7 @@ const publicModelInclude = {
   country: { select: { name: true } },
   nationality: { select: { demonym: true } },
   city: { select: { name: true } },
+  assets: true,
 } as const;
 
 type RawPublicModel = NonNullable<Awaited<ReturnType<typeof prisma.model.findFirst<{ include: typeof publicModelInclude }>>>>;
@@ -20,6 +22,8 @@ export interface PublicModel {
   paternalLastName: string;
   maternalLastName: string | null;
   mainPhotoUrl: string | null;
+  photoUrls: string[];
+  videoUrls: string[];
   categories: string[];
   activities: string[];
   genre: string;
@@ -44,7 +48,9 @@ function toPublicModel(m: RawPublicModel): PublicModel {
     firstName: m.firstName,
     paternalLastName: m.paternalLastName,
     maternalLastName: m.maternalLastName,
-    mainPhotoUrl: m.mainPhotoUrl,
+    mainPhotoUrl: getMainPhotoUrl(m.assets),
+    photoUrls: getGalleryPhotos(m.assets),
+    videoUrls: getGalleryVideos(m.assets),
     categories: m.categories.map((c) => c.name),
     activities: m.activities.map((a) => a.name),
     genre: m.genre,

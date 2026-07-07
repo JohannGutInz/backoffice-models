@@ -74,6 +74,7 @@ const modelInclude = {
   activities: true,
   country: true,
   city: { include: { state: true } },
+  assets: true,
 } as const;
 
 export type ModelWithRelations = Awaited<ReturnType<typeof listModels>>[number];
@@ -113,6 +114,7 @@ const kycModelInclude = {
   activities: true,
   country: true,
   city: { include: { state: true } },
+  assets: true,
 } as const;
 
 export type ModelWithKyc = Awaited<ReturnType<typeof listModelsKyc>>[number];
