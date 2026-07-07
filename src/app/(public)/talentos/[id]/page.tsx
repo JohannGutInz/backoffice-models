@@ -1,5 +1,6 @@
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import Link from "next/link";
+import Image from "next/image";
 import { ArrowLeft, ArrowRight, Camera, MapPin } from "lucide-react";
 import { getPublicModel } from "@/lib/public-data";
 import { Avatar } from "@/components/ui/Avatar";
@@ -19,6 +20,7 @@ export default async function TalentDetailPage({
   const model = await getPublicModel(id);
 
   if (!model) notFound();
+  if (model.kycStatus !== "APPROVED") redirect("/");
 
   return (
     <div className="mx-auto max-w-5xl px-6 py-12">
@@ -28,8 +30,12 @@ export default async function TalentDetailPage({
 
       <div className="grid grid-cols-1 gap-10 lg:grid-cols-3">
         <div className="lg:col-span-1">
-          <div className="flex aspect-[3/4] items-center justify-center rounded-2xl bg-gradient-to-br from-zinc-900 via-zinc-950 to-black">
-            <Avatar name={formatFullName(model)} size="xl" />
+          <div className="relative flex aspect-[3/4] items-center justify-center overflow-hidden rounded-2xl bg-gradient-to-br from-zinc-900 via-zinc-950 to-black">
+            {model.mainPhotoUrl ? (
+              <Image src={model.mainPhotoUrl} alt={formatFullName(model)} fill className="object-cover" unoptimized />
+            ) : (
+              <Avatar name={formatFullName(model)} size="xl" />
+            )}
           </div>
         </div>
 
@@ -51,7 +57,70 @@ export default async function TalentDetailPage({
                 </span>
               </>
             )}
+            <span>·</span>
+            <span>{model.nationality}</span>
           </div>
+
+          <dl className="mt-8 grid grid-cols-2 gap-x-6 gap-y-4 border-t border-zinc-100 pt-6 sm:grid-cols-3">
+            {model.height && (
+              <div>
+                <dt className="text-xs text-zinc-400">Estatura</dt>
+                <dd className="text-sm text-zinc-800">{model.height} cm</dd>
+              </div>
+            )}
+            {model.currentWeight && (
+              <div>
+                <dt className="text-xs text-zinc-400">Peso</dt>
+                <dd className="text-sm text-zinc-800">{model.currentWeight} kg</dd>
+              </div>
+            )}
+            {model.shirtSize && (
+              <div>
+                <dt className="text-xs text-zinc-400">Talla de camisa</dt>
+                <dd className="text-sm text-zinc-800">{model.shirtSize}</dd>
+              </div>
+            )}
+            {model.pantsSize && (
+              <div>
+                <dt className="text-xs text-zinc-400">Talla de pantalón</dt>
+                <dd className="text-sm text-zinc-800">
+                  {model.pantsSize} {model.pantsSizeScale && `(${model.pantsSizeScale === "MEN" ? "Hombre" : "Mujer"})`}
+                </dd>
+              </div>
+            )}
+            <div>
+              <dt className="text-xs text-zinc-400">Tatuajes visibles</dt>
+              <dd className="text-sm text-zinc-800">{model.hasVisibleTattoos ? "Sí" : "No"}</dd>
+            </div>
+            <div>
+              <dt className="text-xs text-zinc-400">Disponibilidad para viajar</dt>
+              <dd className="text-sm text-zinc-800">{model.travelAvailability ? "Sí" : "No"}</dd>
+            </div>
+            <div>
+              <dt className="text-xs text-zinc-400">Pasaporte</dt>
+              <dd className="text-sm text-zinc-800">{model.hasPassport ? "Sí" : "No"}</dd>
+            </div>
+            <div>
+              <dt className="text-xs text-zinc-400">Visa</dt>
+              <dd className="text-sm text-zinc-800">{model.hasVisa ? "Sí" : "No"}</dd>
+            </div>
+          </dl>
+
+          {model.activities.length > 0 && (
+            <div className="mt-6">
+              <p className="text-xs text-zinc-400">Actividades</p>
+              <div className="mt-2 flex flex-wrap gap-2">
+                {model.activities.map((activity) => (
+                  <span
+                    key={activity}
+                    className="rounded-full bg-zinc-100 px-3 py-1 text-xs font-medium text-zinc-700"
+                  >
+                    {activity}
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
 
           <Link
             href={`/contacto?modelo=${encodeURIComponent(formatFullName(model))}`}

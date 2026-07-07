@@ -8,6 +8,7 @@ const publicModelInclude = {
   categories: { select: { name: true } },
   activities: { select: { name: true } },
   country: { select: { name: true } },
+  nationality: { select: { demonym: true } },
   city: { select: { name: true } },
 } as const;
 
@@ -18,10 +19,22 @@ export interface PublicModel {
   firstName: string;
   paternalLastName: string;
   maternalLastName: string | null;
+  mainPhotoUrl: string | null;
   categories: string[];
   activities: string[];
   genre: string;
   location: string;
+  nationality: string;
+  height: number | null;
+  currentWeight: number | null;
+  hasVisibleTattoos: boolean;
+  shirtSize: string | null;
+  pantsSizeScale: string | null;
+  pantsSize: string | null;
+  travelAvailability: boolean;
+  hasPassport: boolean;
+  hasVisa: boolean;
+  kycStatus: string;
   featured: boolean;
 }
 
@@ -31,10 +44,22 @@ function toPublicModel(m: RawPublicModel): PublicModel {
     firstName: m.firstName,
     paternalLastName: m.paternalLastName,
     maternalLastName: m.maternalLastName,
+    mainPhotoUrl: m.mainPhotoUrl,
     categories: m.categories.map((c) => c.name),
     activities: m.activities.map((a) => a.name),
     genre: m.genre,
     location: `${m.city.name}, ${m.country.name}`,
+    nationality: m.nationality.demonym,
+    height: m.height,
+    currentWeight: m.currentWeight,
+    hasVisibleTattoos: m.hasVisibleTattoos,
+    shirtSize: m.shirtSize,
+    pantsSizeScale: m.pantsSizeScale,
+    pantsSize: m.pantsSize,
+    travelAvailability: m.travelAvailability,
+    hasPassport: m.hasPassport,
+    hasVisa: m.hasVisa,
+    kycStatus: m.kyc.status,
     featured: false,
   };
 }
@@ -61,7 +86,7 @@ export async function listFeaturedModels(limit = 4): Promise<PublicModel[]> {
   const models = await prisma.model.findMany({
     where: { kyc: { status: "APPROVED" } },
     include: publicModelInclude,
-    orderBy: [{ paternalLastName: "asc" }, { firstName: "asc" }],
+    orderBy: [{ createdAt: "desc" }],
     take: limit,
   });
   return models.map(toPublicModel);

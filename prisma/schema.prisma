@@ -132,14 +132,16 @@ model Kyc {
 }
 
 model Model {
-  id               String   @id @default(uuid())
-  firstName        String   @map("first_name")
-  paternalLastName String   @map("paternal_last_name")
-  maternalLastName String?  @map("maternal_last_name")
-  email            String   @unique
+  id               String     @id @default(uuid())
+  firstName        String     @map("first_name")
+  paternalLastName String     @map("paternal_last_name")
+  maternalLastName String?    @map("maternal_last_name")
+  email            String     @unique
   phone            String
-  birthDate        DateTime @map("birth_date") @db.Date
+  birthDate        DateTime   @map("birth_date") @db.Date
   genre            ModelGenre
+  createdAt        DateTime   @default(now()) @map("created_at")
+  updatedAt        DateTime   @default(now()) @updatedAt @map("updated_at")
 
   height             Int?            @map("height_cm")
   currentWeight      Int?            @map("current_weight_kg")
