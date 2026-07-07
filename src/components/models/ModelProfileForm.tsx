@@ -10,7 +10,6 @@ import { MultiSelectPicker } from "@/components/ui/MultiSelectPicker";
 import { Button } from "@/components/ui/Button";
 import { updateOwnModelProfileAction } from "@/lib/actions";
 import { ownModelProfileSchema, type OwnModelProfileData } from "@/lib/schemas";
-import { formatFullName } from "@/lib/utils";
 import type { OwnModelWithKyc } from "@/lib/data";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -41,6 +40,9 @@ export function ModelProfileForm({
   } = useForm<OwnModelProfileData>({
     resolver: zodResolver(ownModelProfileSchema),
     defaultValues: {
+      firstName: model.firstName,
+      paternalLastName: model.paternalLastName,
+      maternalLastName: model.maternalLastName ?? "",
       phone: model.phone,
       mainPhotoUrl: model.mainPhotoUrl ?? "",
       height: model.height ?? undefined,
@@ -106,10 +108,22 @@ export function ModelProfileForm({
 
       <Card>
         <CardHeader title="Datos de contacto" />
-        <div className="space-y-4 px-5 pb-5">
-          <Input label="Nombre completo" disabled value={formatFullName(model)} />
+        <div className="grid grid-cols-1 gap-4 px-5 pb-5 sm:grid-cols-2">
+          <Input label="Nombre(s)" {...register("firstName")} error={errors.firstName?.message} />
+          <Input
+            label="Apellido paterno"
+            {...register("paternalLastName")}
+            error={errors.paternalLastName?.message}
+          />
+          <Input
+            label="Apellido materno"
+            {...register("maternalLastName")}
+            error={errors.maternalLastName?.message}
+          />
           <Input label="Correo" disabled value={model.email} />
-          <Input label="Teléfono" {...register("phone")} error={errors.phone?.message} />
+          <div className="sm:col-span-2">
+            <Input label="Teléfono" {...register("phone")} error={errors.phone?.message} />
+          </div>
         </div>
       </Card>
 

@@ -69,6 +69,9 @@ export const modelAttributesSchema = z.object({
 });
 
 export const ownModelProfileSchema = z.object({
+  firstName: z.string().min(1, "El nombre es obligatorio."),
+  paternalLastName: z.string().min(1, "El apellido paterno es obligatorio."),
+  maternalLastName: z.string().optional(),
   phone: z.string().min(1, "El teléfono es obligatorio."),
   mainPhotoUrl: z.string().optional(),
 }).merge(modelAttributesSchema);

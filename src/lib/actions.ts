@@ -301,6 +301,9 @@ export async function updateOwnModelProfileAction(data: OwnModelProfileData): Pr
   await prisma.model.update({
     where: { userId: session.sub },
     data: {
+      firstName: result.data.firstName,
+      paternalLastName: result.data.paternalLastName,
+      maternalLastName: result.data.maternalLastName || null,
       phone: result.data.phone,
       mainPhotoUrl: newPhoto,
       height: result.data.height,
