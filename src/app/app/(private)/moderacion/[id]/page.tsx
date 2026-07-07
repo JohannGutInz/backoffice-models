@@ -153,6 +153,7 @@ export default async function ModerationDetailPage({
               {canReview && (
                 <div className="flex flex-wrap items-center gap-2 pt-1">
                   <Button
+                    type="submit"
                     variant="secondary"
                     formAction={moderateKycAction.bind(null, model.id, "REJECTED")}
                     className="hover:bg-rose-50 hover:text-rose-700 hover:ring-rose-200"
@@ -160,13 +161,14 @@ export default async function ModerationDetailPage({
                     <XCircle className="h-4 w-4" /> Rechazar
                   </Button>
                   <Button
+                    type="submit"
                     variant="secondary"
                     formAction={moderateKycAction.bind(null, model.id, "REQUIRES_CHANGES")}
                     className="hover:bg-amber-50 hover:text-amber-700 hover:ring-amber-200"
                   >
                     <RotateCcw className="h-4 w-4" /> Solicitar cambios
                   </Button>
-                  <Button formAction={moderateKycAction.bind(null, model.id, "APPROVED")}>
+                  <Button type="submit" formAction={moderateKycAction.bind(null, model.id, "APPROVED")}>
                     <CheckCircle2 className="h-4 w-4" /> Aprobar
                   </Button>
                 </div>

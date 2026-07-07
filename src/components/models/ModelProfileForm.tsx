@@ -11,7 +11,7 @@ import { Button } from "@/components/ui/Button";
 import { updateOwnModelProfileAction } from "@/lib/actions";
 import { ownModelProfileSchema, type OwnModelProfileData } from "@/lib/schemas";
 import { formatFullName } from "@/lib/utils";
-import type { ModelWithRelations } from "@/lib/data";
+import type { OwnModelWithKyc } from "@/lib/data";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 
@@ -20,7 +20,13 @@ interface Activity {
   name: string;
 }
 
-export function ModelProfileForm({ model, activities }: { model: ModelWithRelations; activities: Activity[] }) {
+export function ModelProfileForm({
+  model,
+  activities,
+}: {
+  model: NonNullable<OwnModelWithKyc>;
+  activities: Activity[];
+}) {
   const [message, setMessage] = useState<string | null>(null);
   const [pendingPhoto, setPendingPhoto] = useState<File | null>(null);
   const [photoRemoved, setPhotoRemoved] = useState(false);
@@ -58,6 +64,13 @@ export function ModelProfileForm({ model, activities }: { model: ModelWithRelati
   }
 
   async function onSubmit(data: OwnModelProfileData) {
+    if (model.kyc.status === "APPROVED") {
+      const confirmed = window.confirm(
+        "Tu KYC ya está aprobado. Si guardas estos cambios, tu perfil deberá aprobarse de nuevo. ¿Deseas continuar?",
+      );
+      if (!confirmed) return;
+    }
+
     setMessage(null);
 
     let mainPhotoUrl = model.mainPhotoUrl ?? "";

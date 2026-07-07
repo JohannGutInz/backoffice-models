@@ -92,10 +92,12 @@ export async function getModel(id: string) {
   });
 }
 
+export type OwnModelWithKyc = Awaited<ReturnType<typeof getOwnModel>>;
+
 export async function getOwnModel(userId: string) {
   return prisma.model.findUnique({
     where: { userId },
-    include: modelInclude,
+    include: { ...modelInclude, kyc: true },
   });
 }
 

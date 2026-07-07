@@ -295,7 +295,7 @@ export async function updateOwnModelProfileAction(data: OwnModelProfileData): Pr
 
   const currentModel = await prisma.model.findUnique({
     where: { userId: session.sub },
-    select: { mainPhotoUrl: true },
+    select: { mainPhotoUrl: true, kycId: true, kyc: { select: { status: true } } },
   });
 
   await prisma.model.update({
@@ -316,6 +316,13 @@ export async function updateOwnModelProfileAction(data: OwnModelProfileData): Pr
     },
   });
 
+  if (currentModel?.kyc.status === "APPROVED") {
+    await prisma.kyc.update({
+      where: { id: currentModel.kycId },
+      data: { status: "PENDING" },
+    });
+  }
+
   if (currentModel?.mainPhotoUrl && currentModel.mainPhotoUrl !== newPhoto) {
     const oldKey = keyFromObjectUrl(currentModel.mainPhotoUrl);
     if (oldKey) {
@@ -328,8 +335,16 @@ export async function updateOwnModelProfileAction(data: OwnModelProfileData): Pr
   }
 
   revalidatePath(APP_ROUTE.app.model.profile);
+  revalidatePath("/app/moderacion");
+  revalidatePath("/app/dashboard");
 
-  return { status: "success", message: "Perfil actualizado." };
+  return {
+    status: "success",
+    message:
+      currentModel?.kyc.status === "APPROVED"
+        ? "Perfil actualizado. Tu KYC vuelve a estar pendiente de aprobación."
+        : "Perfil actualizado.",
+  };
 }
 
 // ---------- Model admin edit ----------
