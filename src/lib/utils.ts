@@ -69,6 +69,10 @@ export function initials(name: string): string {
     .join("");
 }
 
+export function modelNombreCompleto(m: { firstName: string; lastNameP: string; lastNameM?: string | null }): string {
+  return [m.firstName, m.lastNameP, m.lastNameM].filter(Boolean).join(" ");
+}
+
 export function calcularEdad(fechaNacimientoIso: string): number {
   const nacimiento = parseDateOnly(fechaNacimientoIso);
   const hoy = new Date();

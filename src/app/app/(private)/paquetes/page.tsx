@@ -1,25 +1,36 @@
-import { Plus } from "lucide-react";
+import Link from "next/link";
+import { ChevronRight, Plus } from "lucide-react";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { LinkButton } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { Table, THead, Th, Tr, Td } from "@/components/ui/Table";
-import { EstadoBadge } from "@/components/ui/Badge";
 import { Avatar } from "@/components/ui/Avatar";
-import { listPaquetes, nombreCliente, nombreModelo } from "@/lib/data";
+import { listPaquetes } from "@/lib/data";
 import { APP_ROUTE } from "@/lib/routes";
-import { formatCurrency, formatDate } from "@/lib/utils";
+import { formatDate, modelNombreCompleto } from "@/lib/utils";
+
+const STATUS_LABEL: Record<string, string> = {
+  DRAFT: "Borrador",
+  SENT: "Enviado",
+  CLOSED: "Cerrado",
+};
+
+const STATUS_CLASS: Record<string, string> = {
+  DRAFT: "bg-zinc-100 text-zinc-600",
+  SENT: "bg-blue-50 text-blue-700",
+  CLOSED: "bg-zinc-200 text-zinc-500",
+};
 
 export default async function PaquetesPage() {
   const paquetes = await listPaquetes();
-  const ordenados = [...paquetes].sort((a, b) => new Date(b.creadoEn).getTime() - new Date(a.creadoEn).getTime());
 
   return (
     <div>
       <PageHeader
         title="Paquetes"
-        subtitle="Agrupa modelos en una propuesta para enviar al cliente."
+        subtitle="Propuestas de talento para clientes — agrupá modelos y comparte el link."
         actions={
-          <LinkButton href={APP_ROUTE.app.paquetes.index}>
+          <LinkButton href={APP_ROUTE.app.paquetes.nuevo}>
             <Plus className="h-4 w-4" /> Nuevo paquete
           </LinkButton>
         }
@@ -29,40 +40,57 @@ export default async function PaquetesPage() {
         <Table>
           <THead>
             <Th>Paquete</Th>
-            <Th>Cliente</Th>
-            <Th>Modelos incluidos</Th>
-            <Th className="text-right">Total</Th>
+            <Th>Modelos</Th>
             <Th>Estado</Th>
             <Th>Creado</Th>
+            <Th>{""}</Th>
           </THead>
           <tbody>
-            {ordenados.map((paquete) => (
-              <Tr key={paquete.id}>
-                <Td className="font-medium text-zinc-900">{paquete.nombre}</Td>
-                <Td>{nombreCliente(paquete.clienteId)}</Td>
+            {paquetes.map((pkg) => (
+              <Tr key={pkg.id}>
                 <Td>
-                  <div className="flex items-center">
+                  <Link
+                    href={`${APP_ROUTE.app.paquetes.index}/${pkg.id}`}
+                    className="font-medium text-zinc-900 hover:text-gold-600"
+                  >
+                    {pkg.name}
+                  </Link>
+                  {pkg.description && (
+                    <p className="mt-0.5 text-xs text-zinc-400 line-clamp-1">{pkg.description}</p>
+                  )}
+                </Td>
+                <Td>
+                  <div className="flex items-center gap-2">
                     <div className="flex -space-x-2">
-                      {paquete.modeloIds.slice(0, 4).map((id) => (
-                        <Avatar key={id} name={nombreModelo(id)} size="sm" className="ring-2 ring-white" />
+                      {pkg.models.slice(0, 5).map((m) => (
+                        <Avatar key={m.id} name={modelNombreCompleto(m)} size="sm" className="ring-2 ring-white" />
                       ))}
                     </div>
-                    <span className="ml-2.5 text-xs text-zinc-500">
-                      {paquete.modeloIds.length} {paquete.modeloIds.length === 1 ? "modelo" : "modelos"}
+                    <span className="text-xs text-zinc-500">
+                      {pkg.models.length} {pkg.models.length === 1 ? "modelo" : "modelos"}
                     </span>
                   </div>
                 </Td>
-                <Td className="text-right font-medium text-zinc-900">{formatCurrency(paquete.total)}</Td>
                 <Td>
-                  <EstadoBadge estado={paquete.estado} />
+                  <span className={`rounded-full px-2.5 py-1 text-xs font-medium ${STATUS_CLASS[pkg.status] ?? ""}`}>
+                    {STATUS_LABEL[pkg.status] ?? pkg.status}
+                  </span>
                 </Td>
-                <Td className="text-zinc-500">{formatDate(paquete.creadoEn)}</Td>
+                <Td className="text-zinc-500">{formatDate(pkg.createdAt)}</Td>
+                <Td>
+                  <Link
+                    href={`${APP_ROUTE.app.paquetes.index}/${pkg.id}`}
+                    className="inline-flex items-center gap-1 rounded-lg px-3 py-1.5 text-xs font-medium text-zinc-500 transition-colors hover:bg-zinc-100 hover:text-zinc-900"
+                  >
+                    Ver <ChevronRight className="h-3.5 w-3.5" />
+                  </Link>
+                </Td>
               </Tr>
             ))}
-            {ordenados.length === 0 && (
+            {paquetes.length === 0 && (
               <tr>
-                <td colSpan={6} className="px-5 py-16 text-center text-sm text-zinc-400">
-                  Aún no hay paquetes creados.
+                <td colSpan={5} className="px-5 py-16 text-center text-sm text-zinc-400">
+                  Aún no hay paquetes. Crea el primero con el botón de arriba.
                 </td>
               </tr>
             )}

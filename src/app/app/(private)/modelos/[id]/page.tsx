@@ -1,12 +1,13 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft, Mail, MapPin, Phone, User } from "lucide-react";
+import { ArrowLeft, Eye, EyeOff, Mail, MapPin, Phone, User } from "lucide-react";
 import { getModelo } from "@/lib/data";
+import { toggleVisibilidadLandingAction } from "@/lib/actions";
 import { Avatar } from "@/components/ui/Avatar";
 import { Card, CardHeader } from "@/components/ui/Card";
 import { Field, FieldGrid } from "@/components/ui/Field";
 import { APP_ROUTE } from "@/lib/routes";
-import { formatDate } from "@/lib/utils";
+import { formatDate, modelNombreCompleto } from "@/lib/utils";
 
 const GENRE_LABEL: Record<string, string> = {
   MALE: "Masculino",
@@ -42,12 +43,12 @@ export default async function ModeloDetailPage({
         <ArrowLeft className="h-4 w-4" /> Volver a Modelos
       </Link>
 
-      <div className="mb-6 flex flex-wrap items-start gap-4">
+      <div className="mb-6 flex flex-wrap items-start justify-between gap-4">
         <div className="flex items-center gap-4">
-          <Avatar name={modelo.fullName} size="lg" />
+          <Avatar name={modelNombreCompleto(modelo)} size="lg" />
           <div>
             <h1 className="text-2xl font-semibold tracking-tight text-zinc-900">
-              {modelo.fullName}
+              {modelNombreCompleto(modelo)}
             </h1>
             <div className="mt-1 flex items-center gap-2 text-sm text-zinc-500">
               <span className="rounded-full bg-zinc-100 px-2 py-0.5 text-xs font-medium text-zinc-600">
@@ -58,6 +59,23 @@ export default async function ModeloDetailPage({
             </div>
           </div>
         </div>
+
+        <form>
+          <button
+            formAction={toggleVisibilidadLandingAction.bind(null, modelo.id, !modelo.isVisible)}
+            className={`inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition-colors ${
+              modelo.isVisible
+                ? "bg-emerald-50 text-emerald-700 hover:bg-emerald-100"
+                : "bg-zinc-100 text-zinc-600 hover:bg-zinc-200"
+            }`}
+          >
+            {modelo.isVisible ? (
+              <><Eye className="h-4 w-4" /> Visible en vitrina</>
+            ) : (
+              <><EyeOff className="h-4 w-4" /> Oculto en vitrina</>
+            )}
+          </button>
+        </form>
       </div>
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
@@ -66,12 +84,16 @@ export default async function ModeloDetailPage({
             <CardHeader title="Datos personales" />
             <div className="px-5 pb-5">
               <FieldGrid>
-                <Field label="Nombre completo" value={modelo.fullName} />
+                <Field label="Nombres" value={modelo.firstName} />
+                <Field label="Apellido paterno" value={modelo.lastNameP} />
+                {modelo.lastNameM && <Field label="Apellido materno" value={modelo.lastNameM} />}
+                {modelo.artisticName && <Field label="Nombre artístico" value={modelo.artisticName} />}
                 <Field
                   label="Fecha de nacimiento"
                   value={`${formatDate(modelo.birthDate)} · ${calcularEdadDesde(modelo.birthDate)} años`}
                 />
                 <Field label="Género" value={GENRE_LABEL[modelo.genre] ?? modelo.genre} />
+                {modelo.nationality && <Field label="Nacionalidad" value={modelo.nationality} />}
               </FieldGrid>
             </div>
           </Card>

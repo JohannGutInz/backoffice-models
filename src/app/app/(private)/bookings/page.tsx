@@ -5,7 +5,7 @@ import { Card } from "@/components/ui/Card";
 import { Table, THead, Th, Tr, Td } from "@/components/ui/Table";
 import { EstadoBadge } from "@/components/ui/Badge";
 import { StatusTabs } from "@/components/ui/StatusTabs";
-import { listBookings, listEventos, nombreCliente, nombreEvento, nombreModelo } from "@/lib/data";
+import { listBookings, listEventos, nombreEvento, nombreModelo } from "@/lib/data";
 import { APP_ROUTE } from "@/lib/routes";
 import { formatCurrency, formatDate } from "@/lib/utils";
 
@@ -74,7 +74,7 @@ export default async function BookingsPage({
                   <Td className="font-medium text-gold-700">{booking.id.replace("bkg_", "BK-").toUpperCase()}</Td>
                   <Td>{nombreModelo(booking.modeloId)}</Td>
                   <Td>{nombreEvento(booking.eventoId)}</Td>
-                  <Td className="text-zinc-500">{evento ? nombreCliente(evento.clienteId) : "—"}</Td>
+                  <Td className="text-zinc-500">—</Td>
                   <Td className="text-zinc-500">{formatDate(booking.fecha)}</Td>
                   <Td className="text-right font-medium text-zinc-900">{formatCurrency(booking.tarifa)}</Td>
                   <Td>

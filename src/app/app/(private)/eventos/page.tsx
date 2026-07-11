@@ -1,82 +1,110 @@
-import { Plus } from "lucide-react";
+import Link from "next/link";
+import { Plus, ChevronRight, CheckCircle2 } from "lucide-react";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { LinkButton } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
-import { SearchForm } from "@/components/ui/SearchForm";
 import { Table, THead, Th, Tr, Td } from "@/components/ui/Table";
-import { EstadoBadge } from "@/components/ui/Badge";
-import { listEventos, nombreCliente } from "@/lib/data";
+import { listEventos, getUsuarioActual } from "@/lib/data";
 import { APP_ROUTE } from "@/lib/routes";
-import { formatDate } from "@/lib/utils";
+import { cn, modelNombreCompleto } from "@/lib/utils";
+
+function formatRange(startAt: Date, endAt: Date) {
+  const sameDay =
+    startAt.getFullYear() === endAt.getFullYear() &&
+    startAt.getMonth() === endAt.getMonth() &&
+    startAt.getDate() === endAt.getDate();
+
+  const dateOpts: Intl.DateTimeFormatOptions = { day: "numeric", month: "short", year: "numeric" };
+  const timeOpts: Intl.DateTimeFormatOptions = { hour: "2-digit", minute: "2-digit" };
+  const locale = "es-MX";
+
+  if (sameDay) {
+    return `${startAt.toLocaleDateString(locale, dateOpts)} · ${startAt.toLocaleTimeString(locale, timeOpts)}–${endAt.toLocaleTimeString(locale, timeOpts)}`;
+  }
+  return `${startAt.toLocaleDateString(locale, dateOpts)} → ${endAt.toLocaleDateString(locale, dateOpts)}`;
+}
 
 export default async function EventosPage({
   searchParams,
 }: {
   searchParams: Promise<{ q?: string }>;
 }) {
+  await getUsuarioActual();
   const { q } = await searchParams;
   const eventos = await listEventos();
 
   const filtrados = q
-    ? eventos.filter(
-        (e) =>
-          e.nombre.toLowerCase().includes(q.toLowerCase()) ||
-          nombreCliente(e.clienteId).toLowerCase().includes(q.toLowerCase()),
-      )
+    ? eventos.filter((e) => e.nombre.toLowerCase().includes(q.toLowerCase()))
     : eventos;
-
-  const ordenados = [...filtrados].sort(
-    (a, b) => new Date(b.fechaInicio).getTime() - new Date(a.fechaInicio).getTime(),
-  );
 
   return (
     <div>
       <PageHeader
         title="Eventos"
-        subtitle="Servicios y trabajos contratados por los clientes."
+        subtitle="Convocatorias y trabajos del equipo de talento."
         actions={
-          <LinkButton href={APP_ROUTE.app.eventos.index}>
+          <LinkButton href={APP_ROUTE.app.eventos.nuevo}>
             <Plus className="h-4 w-4" /> Nuevo evento
           </LinkButton>
         }
       />
 
-      <div className="mb-5">
-        <SearchForm action="/eventos" placeholder="Buscar evento o cliente…" defaultValue={q} />
-      </div>
-
       <Card>
         <Table>
           <THead>
             <Th>Evento</Th>
-            <Th>Cliente</Th>
-            <Th>Tipo</Th>
-            <Th>Lugar</Th>
-            <Th>Fecha</Th>
-            <Th className="text-right">Bookings</Th>
+            <Th>Fechas</Th>
+            <Th>Modelo asignado</Th>
             <Th>Estado</Th>
+            <Th>{""}</Th>
           </THead>
           <tbody>
-            {ordenados.map((evento) => (
+            {filtrados.map((evento) => (
               <Tr key={evento.id}>
-                <Td className="font-medium text-zinc-900">{evento.nombre}</Td>
-                <Td>{nombreCliente(evento.clienteId)}</Td>
-                <Td>{evento.tipo}</Td>
-                <Td className="text-zinc-500">{evento.lugar}</Td>
-                <Td className="text-zinc-500">
-                  {formatDate(evento.fechaInicio)}
-                  {evento.fechaFin !== evento.fechaInicio ? ` – ${formatDate(evento.fechaFin)}` : ""}
-                </Td>
-                <Td className="text-right">{evento.bookingsIds.length}</Td>
                 <Td>
-                  <EstadoBadge estado={evento.estado} />
+                  <Link
+                    href={`${APP_ROUTE.app.eventos.index}/${evento.id}`}
+                    className="font-medium text-zinc-900 hover:text-gold-600"
+                  >
+                    {evento.nombre}
+                  </Link>
+                  {evento.notas && (
+                    <p className="mt-0.5 truncate text-xs text-zinc-400">{evento.notas}</p>
+                  )}
+                </Td>
+                <Td className="whitespace-nowrap text-zinc-500 text-sm">
+                  {formatRange(evento.startAt, evento.endAt)}
+                </Td>
+                <Td className="text-sm text-zinc-500">
+                  {evento.modelo ? modelNombreCompleto(evento.modelo) : "—"}
+                </Td>
+                <Td>
+                  <span
+                    className={cn(
+                      "inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium",
+                      evento.cubierto
+                        ? "bg-emerald-50 text-emerald-700"
+                        : "bg-amber-50 text-amber-700",
+                    )}
+                  >
+                    {evento.cubierto && <CheckCircle2 className="h-3 w-3" />}
+                    {evento.cubierto ? "Cubierto" : "Pendiente"}
+                  </span>
+                </Td>
+                <Td>
+                  <Link
+                    href={`${APP_ROUTE.app.eventos.index}/${evento.id}`}
+                    className="flex items-center gap-1 text-xs text-zinc-400 hover:text-zinc-700"
+                  >
+                    Ver <ChevronRight className="h-3.5 w-3.5" />
+                  </Link>
                 </Td>
               </Tr>
             ))}
-            {ordenados.length === 0 && (
+            {filtrados.length === 0 && (
               <tr>
-                <td colSpan={7} className="px-5 py-16 text-center text-sm text-zinc-400">
-                  Ningún evento coincide con la búsqueda.
+                <td colSpan={5} className="px-5 py-16 text-center text-sm text-zinc-400">
+                  {q ? "Ningún evento coincide con la búsqueda." : "No hay eventos registrados."}
                 </td>
               </tr>
             )}

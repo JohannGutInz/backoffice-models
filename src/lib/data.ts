@@ -79,7 +79,7 @@ export type ModelWithRelations = Awaited<ReturnType<typeof listModelos>>[number]
 export async function listModelos() {
   return prisma.model.findMany({
     include: modelInclude,
-    orderBy: { fullName: "asc" },
+    orderBy: { lastNameP: "asc" },
   });
 }
 
@@ -92,6 +92,10 @@ export async function getModelo(id: string) {
 
 export function nombreModelo(id: string): string {
   return byId(modelos, id)?.nombreArtistico ?? "Modelo eliminado";
+}
+
+export function nombreEvento(id: string): string {
+  return byId(eventos, id)?.nombre ?? "Evento eliminado";
 }
 
 // ---------- Moderación / KYC ----------
@@ -141,16 +145,29 @@ export function nombreCliente(id: string): string {
 
 // ---------- Eventos ----------
 
-export async function listEventos(): Promise<Evento[]> {
-  return eventos.filter((e) => e.agencyId === AGENCY_ID);
+const eventoInclude = {
+  modelo: { select: { id: true, firstName: true, lastNameP: true, lastNameM: true } },
+} as const;
+
+export type EventoWithRelations = Awaited<ReturnType<typeof listEventos>>[number];
+
+export async function listEventos() {
+  return prisma.evento.findMany({
+    include: eventoInclude,
+    orderBy: { startAt: "asc" },
+  });
 }
 
-export async function getEvento(id: string): Promise<Evento | undefined> {
-  return byId(eventos, id);
+export async function getEvento(id: string) {
+  return prisma.evento.findUnique({ where: { id }, include: eventoInclude });
 }
 
-export function nombreEvento(id: string): string {
-  return byId(eventos, id)?.nombre ?? "Evento eliminado";
+export async function listEventosRango(from: Date, to: Date) {
+  return prisma.evento.findMany({
+    where: { startAt: { lte: to }, endAt: { gte: from } },
+    include: eventoInclude,
+    orderBy: { startAt: "asc" },
+  });
 }
 
 // ---------- Bookings ----------
@@ -161,8 +178,36 @@ export async function listBookings(): Promise<Booking[]> {
 
 // ---------- Paquetes ----------
 
-export async function listPaquetes(): Promise<Paquete[]> {
-  return paquetes.filter((p) => p.agencyId === AGENCY_ID);
+const paqueteModelInclude = {
+  models: {
+    select: {
+      id: true,
+      firstName: true,
+      lastNameP: true,
+      lastNameM: true,
+      artisticName: true,
+      categories: { select: { name: true } },
+      city: { select: { name: true } },
+      country: { select: { name: true } },
+    },
+  },
+} as const;
+
+export type PaqueteWithModels = Awaited<ReturnType<typeof listPaquetes>>[number];
+export type PaqueteDetalle = NonNullable<Awaited<ReturnType<typeof getPaquete>>>;
+
+export async function listPaquetes() {
+  return prisma.package.findMany({
+    include: paqueteModelInclude,
+    orderBy: { createdAt: "desc" },
+  });
+}
+
+export async function getPaquete(id: string) {
+  return prisma.package.findUnique({
+    where: { id },
+    include: paqueteModelInclude,
+  });
 }
 
 // ---------- Ingresos ----------
@@ -187,6 +232,15 @@ export async function listCategories() {
   return prisma.category.findMany({ orderBy: { name: "asc" } });
 }
 
+export async function listGeografia() {
+  const [countries, states, municipalities] = await Promise.all([
+    prisma.country.findMany({ orderBy: { name: "asc" } }),
+    prisma.state.findMany({ orderBy: { name: "asc" } }),
+    prisma.municipality.findMany({ orderBy: { name: "asc" } }),
+  ]);
+  return { countries, states, municipalities };
+}
+
 // ---------- Estadísticas del dashboard ----------
 
 export async function getDashboardStats() {
@@ -208,7 +262,7 @@ export async function getDashboardStats() {
     .filter((i) => new Date(i.fecha).getMonth() === mesActual)
     .reduce((sum, i) => sum + i.monto, 0);
 
-  const paquetesPendientes = pkgs.filter((p) => p.estado === "borrador" || p.estado === "enviado");
+  const paquetesPendientes = pkgs.filter((p) => p.status === "DRAFT" || p.status === "SENT");
   const solicitudesPendientes = kycPendientes;
   const modelosActivos = mdls;
 
@@ -235,6 +289,6 @@ export async function getDashboardStats() {
     bookingsPorEstatus,
     bookingsTotal: bks.length,
     ultimosBookings,
-    paquetesBorrador: pkgs.filter((p) => p.estado === "borrador").length,
+    paquetesBorrador: pkgs.filter((p) => p.status === "DRAFT").length,
   };
 }

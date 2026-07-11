@@ -18,6 +18,9 @@ import type {
   ConfiguracionData,
   ReenviarData,
   RegistroActionData,
+  NuevoModeloAdminActionData,
+  CrearPaqueteData,
+  EventoFormData,
 } from "./schemas";
 
 export interface ActionState {
@@ -83,7 +86,9 @@ export async function submitRegistroAction(data: RegistroActionData): Promise<Ac
     const kyc = await tx.kyc.create({ data: {} });
     await tx.model.create({
       data: {
-        fullName: data.nombreCompleto,
+        firstName: data.nombres,
+        lastNameP: data.apellidoPaterno,
+        lastNameM: data.apellidoMaterno ?? null,
         email: data.correo,
         phone: data.telefono,
         birthDate: new Date(data.fechaNacimiento),
@@ -92,6 +97,16 @@ export async function submitRegistroAction(data: RegistroActionData): Promise<Ac
         cityId: data.cityId,
         kycId: kyc.id,
         categories: { connect: data.categoryIds.map((id) => ({ id })) },
+        artisticName: data.artisticName || null,
+        nationality: data.nationality || null,
+        height: data.height ? parseInt(data.height, 10) : null,
+        weight: data.weight ? parseFloat(data.weight) : null,
+        hasVisibleTattoos: data.hasVisibleTattoos,
+        shirtSize: data.shirtSize || null,
+        pantsSize: data.pantsSize || null,
+        availableToTravel: data.availableToTravel,
+        hasPassport: data.hasPassport,
+        hasVisaUS: data.hasVisaUS,
       },
     });
   });
@@ -213,12 +228,169 @@ export async function regenerarLinkRegistroAction() {
   return configuracionSitio.registroLinkSlug;
 }
 
+// ---------- Alta manual de modelo (backoffice admin) ----------
+
+export async function crearModeloAdminAction(
+  data: NuevoModeloAdminActionData,
+): Promise<ActionState & { modelId?: string }> {
+  const existing = await prisma.model.findUnique({ where: { email: data.email } });
+  if (existing) {
+    return { status: "error", message: "Ya existe un modelo con ese correo electrónico." };
+  }
+
+  const modelId = await prisma.$transaction(async (tx) => {
+    const kyc = await tx.kyc.create({
+      data: { status: "APPROVED", reviewedAt: new Date() },
+    });
+
+    const model = await tx.model.create({
+      data: {
+        firstName: data.firstName,
+        lastNameP: data.lastNameP,
+        lastNameM: data.lastNameM || null,
+        artisticName: data.artisticName || null,
+        email: data.email,
+        phone: data.phone,
+        birthDate: new Date(data.fechaNacimiento),
+        genre: data.genre,
+        nationality: data.nationality || null,
+        height: data.height ? parseInt(data.height, 10) : null,
+        weight: data.weight ? parseFloat(data.weight) : null,
+        hasVisibleTattoos: data.hasVisibleTattoos ?? null,
+        shirtSize: data.shirtSize || null,
+        pantsSize: data.pantsSize || null,
+        availableToTravel: data.availableToTravel ?? false,
+        hasPassport: data.hasPassport ?? false,
+        hasVisaUS: data.hasVisaUS ?? false,
+        countryId: data.countryId,
+        cityId: data.cityId,
+        kycId: kyc.id,
+        categories: data.categoryIds?.length
+          ? { connect: data.categoryIds.map((id) => ({ id })) }
+          : undefined,
+      },
+    });
+
+    return model.id;
+  });
+
+  revalidatePath("/app/modelos");
+  revalidatePath("/app/moderacion");
+
+  return { status: "success", message: "Modelo creado.", modelId };
+}
+
 export async function toggleVisibilidadLandingAction(modeloId: string, visible: boolean) {
-  const modelo = modelos.find((m) => m.id === modeloId);
-  if (!modelo) return;
-  modelo.publicoEnLanding = visible;
-  revalidatePath(`/modelos/${modeloId}`);
+  await prisma.model.update({
+    where: { id: modeloId },
+    data: { isVisible: visible },
+  });
+  revalidatePath(`/app/modelos/${modeloId}`);
   revalidatePath("/talentos");
+}
+
+// ---------- Paquetes ----------
+
+export async function crearPaqueteAction(data: CrearPaqueteData): Promise<ActionState & { paqueteId?: string }> {
+  const pkg = await prisma.package.create({
+    data: { name: data.name, description: data.description || null },
+  });
+  revalidatePath("/app/paquetes");
+  return { status: "success", message: "Paquete creado.", paqueteId: pkg.id };
+}
+
+export async function agregarModeloAPaqueteAction(paqueteId: string, modeloId: string) {
+  await prisma.package.update({
+    where: { id: paqueteId },
+    data: { models: { connect: { id: modeloId } } },
+  });
+  revalidatePath(`/app/paquetes/${paqueteId}`);
+}
+
+export async function quitarModeloDelPaqueteAction(paqueteId: string, modeloId: string) {
+  await prisma.package.update({
+    where: { id: paqueteId },
+    data: { models: { disconnect: { id: modeloId } } },
+  });
+  revalidatePath(`/app/paquetes/${paqueteId}`);
+}
+
+export async function cambiarStatusPaqueteAction(paqueteId: string, status: "DRAFT" | "SENT" | "CLOSED") {
+  await prisma.package.update({ where: { id: paqueteId }, data: { status } });
+  revalidatePath(`/app/paquetes/${paqueteId}`);
+  revalidatePath("/app/paquetes");
+}
+
+// ---------- Eventos ----------
+
+function eventoFormToDb(data: EventoFormData) {
+  if (data.isRecurring) {
+    const startAt = new Date(`${data.rangeStart}T${data.dailyStartTime}:00`);
+    const endAt = new Date(`${data.rangeEnd}T${data.dailyEndTime}:00`);
+    return {
+      startAt,
+      endAt,
+      recurringDays: data.recurringDays,
+      dailyStartTime: data.dailyStartTime!,
+      dailyEndTime: data.dailyEndTime!,
+    };
+  } else {
+    const startAt = new Date(`${data.startDate}T${data.startTime}:00`);
+    const endAt = new Date(`${data.endDate}T${data.endTime}:00`);
+    return { startAt, endAt, recurringDays: [], dailyStartTime: null, dailyEndTime: null };
+  }
+}
+
+export async function crearEventoAction(data: EventoFormData): Promise<ActionState & { eventoId?: string }> {
+  const db = eventoFormToDb(data);
+  if (db.endAt <= db.startAt) {
+    return { status: "error", message: "La fecha de fin debe ser posterior al inicio." };
+  }
+  const evento = await prisma.evento.create({
+    data: { nombre: data.nombre, notas: data.notas || null, ...db },
+  });
+  revalidatePath("/app/eventos");
+  revalidatePath("/app/calendario");
+  return { status: "success", message: "Evento creado.", eventoId: evento.id };
+}
+
+export async function editarEventoAction(
+  eventoId: string,
+  data: EventoFormData,
+): Promise<ActionState> {
+  const db = eventoFormToDb(data);
+  if (db.endAt <= db.startAt) {
+    return { status: "error", message: "La fecha de fin debe ser posterior al inicio." };
+  }
+  await prisma.evento.update({
+    where: { id: eventoId },
+    data: { nombre: data.nombre, notas: data.notas || null, ...db },
+  });
+  revalidatePath(`/app/eventos/${eventoId}`);
+  revalidatePath("/app/eventos");
+  revalidatePath("/app/calendario");
+  return { status: "success", message: "Evento actualizado." };
+}
+
+export async function marcarEventoCubiertoAction(
+  eventoId: string,
+  cubierto: boolean,
+  modeloId?: string | null,
+) {
+  await prisma.evento.update({
+    where: { id: eventoId },
+    data: { cubierto, modeloId: cubierto ? (modeloId ?? null) : null },
+  });
+  revalidatePath(`/app/eventos/${eventoId}`);
+  revalidatePath("/app/eventos");
+  revalidatePath("/app/calendario");
+}
+
+export async function eliminarEventoAction(eventoId: string) {
+  await prisma.evento.delete({ where: { id: eventoId } });
+  revalidatePath("/app/eventos");
+  revalidatePath("/app/calendario");
+  redirect(APP_ROUTE.app.eventos.index);
 }
 
 // ---------- Contacto de clientes (landing pública) ----------

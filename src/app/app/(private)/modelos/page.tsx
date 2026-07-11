@@ -14,7 +14,7 @@ export default async function ModelosPage() {
         title="Modelos"
         subtitle="Roster de talento de la agencia — alta interna y aprobados desde registro."
         actions={
-          <LinkButton href={APP_ROUTE.app.modelos.index}>
+          <LinkButton href={APP_ROUTE.app.modelos.nuevo}>
             <Plus className="h-4 w-4" /> Nuevo modelo
           </LinkButton>
         }

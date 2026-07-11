@@ -6,6 +6,7 @@ import { submitRegistroAction } from "@/lib/actions";
 import { registroFormSchema, type RegistroFormData } from "@/lib/schemas";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { MediaSection } from "@/components/modelos/MediaSection";
 
 type Country = { id: string; name: string };
 type State = { id: string; name: string; countryId: string };
@@ -26,8 +27,20 @@ const INPUT_CLASS =
 const SELECT_CLASS =
   "w-full rounded-lg border border-zinc-300 bg-white py-2.5 px-3 text-sm outline-none focus:border-gold-500 disabled:cursor-not-allowed disabled:bg-zinc-50 disabled:text-zinc-400";
 
+const SHIRT_SIZES = ["XS", "S", "M", "L", "XL", "XXL"];
+
 function generarCaptcha() {
   return { a: 1 + Math.floor(Math.random() * 8), b: 1 + Math.floor(Math.random() * 8) };
+}
+
+function SectionDivider({ label }: { label: string }) {
+  return (
+    <div className="sm:col-span-2 mt-2 flex items-center gap-3">
+      <span className="text-[11px] font-semibold uppercase tracking-widest text-zinc-400">{label}</span>
+      <div className="flex-1 h-px bg-zinc-200" />
+      <span className="text-[11px] text-zinc-300 italic">opcional</span>
+    </div>
+  );
 }
 
 export function RegistroForm({ maxFecha, countries, states, municipalities, categories }: Props) {
@@ -54,6 +67,10 @@ export function RegistroForm({ maxFecha, countries, states, municipalities, cate
       stateId: "",
       cityId: "",
       categoryIds: [],
+      hasVisibleTattoos: false,
+      availableToTravel: false,
+      hasPassport: false,
+      hasVisaUS: false,
     },
   });
 
@@ -73,7 +90,9 @@ export function RegistroForm({ maxFecha, countries, states, municipalities, cate
       return;
     }
     const result = await submitRegistroAction({
-      nombreCompleto: data.nombreCompleto,
+      nombres: data.nombres,
+      apellidoPaterno: data.apellidoPaterno,
+      apellidoMaterno: data.apellidoMaterno,
       correo: data.correo,
       telefono: data.telefono,
       fechaNacimiento: data.fechaNacimiento,
@@ -81,6 +100,16 @@ export function RegistroForm({ maxFecha, countries, states, municipalities, cate
       countryId: data.countryId,
       cityId: data.cityId,
       categoryIds: data.categoryIds,
+      artisticName: data.artisticName,
+      nationality: data.nationality,
+      height: data.height,
+      weight: data.weight,
+      hasVisibleTattoos: data.hasVisibleTattoos,
+      shirtSize: data.shirtSize,
+      pantsSize: data.pantsSize,
+      availableToTravel: data.availableToTravel,
+      hasPassport: data.hasPassport,
+      hasVisaUS: data.hasVisaUS,
     });
     if (result.status === "error") setServerError(result.message);
     else setSuccess(result.message);
@@ -98,30 +127,49 @@ export function RegistroForm({ maxFecha, countries, states, municipalities, cate
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-        {/* Nombre completo */}
+        {/* Nombres */}
         <div className="sm:col-span-2">
-          <label className="mb-1.5 block text-sm font-medium text-zinc-700">Nombre completo</label>
-          <input {...register("nombreCompleto")} className={INPUT_CLASS} />
-          {errors.nombreCompleto && <p className="mt-1 text-xs text-rose-600">{errors.nombreCompleto.message}</p>}
+          <label className="mb-1.5 block text-sm font-medium text-zinc-700">Nombres <span className="text-rose-500">*</span></label>
+          <input {...register("nombres")} placeholder="Juan Pablo" className={INPUT_CLASS} />
+          {errors.nombres && <p className="mt-1 text-xs text-rose-600">{errors.nombres.message}</p>}
+        </div>
+
+        {/* Apellido paterno */}
+        <div>
+          <label className="mb-1.5 block text-sm font-medium text-zinc-700">Apellido paterno <span className="text-rose-500">*</span></label>
+          <input {...register("apellidoPaterno")} className={INPUT_CLASS} />
+          {errors.apellidoPaterno && <p className="mt-1 text-xs text-rose-600">{errors.apellidoPaterno.message}</p>}
+        </div>
+
+        {/* Apellido materno */}
+        <div>
+          <label className="mb-1.5 block text-sm font-medium text-zinc-700">Apellido materno</label>
+          <input {...register("apellidoMaterno")} className={INPUT_CLASS} />
+        </div>
+
+        {/* Nombre artístico */}
+        <div>
+          <label className="mb-1.5 block text-sm font-medium text-zinc-700">Nombre artístico</label>
+          <input {...register("artisticName")} placeholder="Nombre para catálogo" className={INPUT_CLASS} />
         </div>
 
         {/* Correo */}
         <div>
-          <label className="mb-1.5 block text-sm font-medium text-zinc-700">Correo</label>
+          <label className="mb-1.5 block text-sm font-medium text-zinc-700">Correo <span className="text-rose-500">*</span></label>
           <input type="email" {...register("correo")} className={INPUT_CLASS} />
           {errors.correo && <p className="mt-1 text-xs text-rose-600">{errors.correo.message}</p>}
         </div>
 
         {/* Teléfono */}
         <div>
-          <label className="mb-1.5 block text-sm font-medium text-zinc-700">Teléfono</label>
+          <label className="mb-1.5 block text-sm font-medium text-zinc-700">Teléfono <span className="text-rose-500">*</span></label>
           <input {...register("telefono")} className={INPUT_CLASS} />
           {errors.telefono && <p className="mt-1 text-xs text-rose-600">{errors.telefono.message}</p>}
         </div>
 
         {/* Fecha de nacimiento */}
         <div>
-          <label className="mb-1.5 block text-sm font-medium text-zinc-700">Fecha de nacimiento</label>
+          <label className="mb-1.5 block text-sm font-medium text-zinc-700">Fecha de nacimiento <span className="text-rose-500">*</span></label>
           <input type="date" {...register("fechaNacimiento")} max={maxFecha} className={INPUT_CLASS} />
           <p className="mt-1 text-xs text-zinc-400">Solo aceptamos talento mayor de edad.</p>
           {errors.fechaNacimiento && <p className="mt-1 text-xs text-rose-600">{errors.fechaNacimiento.message}</p>}
@@ -129,7 +177,7 @@ export function RegistroForm({ maxFecha, countries, states, municipalities, cate
 
         {/* Género */}
         <div>
-          <label className="mb-1.5 block text-sm font-medium text-zinc-700">Género</label>
+          <label className="mb-1.5 block text-sm font-medium text-zinc-700">Género <span className="text-rose-500">*</span></label>
           <select {...register("genero")} defaultValue="" className={SELECT_CLASS}>
             <option value="" disabled>Selecciona…</option>
             <option value="FEMALE">Femenino</option>
@@ -138,9 +186,15 @@ export function RegistroForm({ maxFecha, countries, states, municipalities, cate
           {errors.genero && <p className="mt-1 text-xs text-rose-600">{errors.genero.message}</p>}
         </div>
 
+        {/* Nacionalidad */}
+        <div className="sm:col-span-2">
+          <label className="mb-1.5 block text-sm font-medium text-zinc-700">Nacionalidad</label>
+          <input {...register("nationality")} placeholder="Mexicana, Colombiana…" className={INPUT_CLASS} />
+        </div>
+
         {/* País */}
         <div className="sm:col-span-2">
-          <label className="mb-1.5 block text-sm font-medium text-zinc-700">País</label>
+          <label className="mb-1.5 block text-sm font-medium text-zinc-700">País <span className="text-rose-500">*</span></label>
           <Controller
             name="countryId"
             control={control}
@@ -166,7 +220,7 @@ export function RegistroForm({ maxFecha, countries, states, municipalities, cate
 
         {/* Estado */}
         <div>
-          <label className="mb-1.5 block text-sm font-medium text-zinc-700">Estado</label>
+          <label className="mb-1.5 block text-sm font-medium text-zinc-700">Estado <span className="text-rose-500">*</span></label>
           <Controller
             name="stateId"
             control={control}
@@ -194,7 +248,7 @@ export function RegistroForm({ maxFecha, countries, states, municipalities, cate
 
         {/* Ciudad */}
         <div>
-          <label className="mb-1.5 block text-sm font-medium text-zinc-700">Ciudad</label>
+          <label className="mb-1.5 block text-sm font-medium text-zinc-700">Ciudad <span className="text-rose-500">*</span></label>
           <select
             {...register("cityId")}
             disabled={!selectedStateId}
@@ -211,11 +265,77 @@ export function RegistroForm({ maxFecha, countries, states, municipalities, cate
           {errors.cityId && <p className="mt-1 text-xs text-rose-600">{errors.cityId.message}</p>}
         </div>
 
+        {/* ── Datos físicos ── */}
+        <SectionDivider label="Datos físicos" />
+
+        <div>
+          <label className="mb-1.5 block text-sm font-medium text-zinc-700">Estatura (cm)</label>
+          <input type="number" {...register("height")} placeholder="170" min={100} max={220} className={INPUT_CLASS} />
+        </div>
+
+        <div>
+          <label className="mb-1.5 block text-sm font-medium text-zinc-700">Peso (kg)</label>
+          <input type="number" {...register("weight")} placeholder="60" step="0.1" min={30} max={200} className={INPUT_CLASS} />
+        </div>
+
+        <div>
+          <label className="mb-1.5 block text-sm font-medium text-zinc-700">Talla de camisa</label>
+          <select {...register("shirtSize")} defaultValue="" className={SELECT_CLASS}>
+            <option value="">Sin especificar</option>
+            {SHIRT_SIZES.map((s) => (
+              <option key={s} value={s}>{s}</option>
+            ))}
+          </select>
+        </div>
+
+        <div>
+          <label className="mb-1.5 block text-sm font-medium text-zinc-700">Talla de pantalón</label>
+          <input {...register("pantsSize")} placeholder="28, 30, M…" className={INPUT_CLASS} />
+        </div>
+
+        <div className="sm:col-span-2">
+          <label className="flex cursor-pointer items-center gap-3">
+            <input
+              type="checkbox"
+              {...register("hasVisibleTattoos")}
+              className="h-4 w-4 rounded border-zinc-300"
+            />
+            <span className="text-sm font-medium text-zinc-700">Tengo tatuajes visibles</span>
+          </label>
+        </div>
+
+        {/* ── Disponibilidad ── */}
+        <SectionDivider label="Disponibilidad" />
+
+        <div className="sm:col-span-2 space-y-3">
+          {(
+            [
+              { name: "availableToTravel", label: "Estoy disponible para viajar" },
+              { name: "hasPassport", label: "Tengo pasaporte" },
+              { name: "hasVisaUS", label: "Tengo visa para Estados Unidos" },
+            ] as const
+          ).map(({ name, label }) => (
+            <label key={name} className="flex cursor-pointer items-center gap-3">
+              <input
+                type="checkbox"
+                {...register(name)}
+                className="h-4 w-4 rounded border-zinc-300"
+              />
+              <span className="text-sm font-medium text-zinc-700">{label}</span>
+            </label>
+          ))}
+        </div>
+
+        {/* Multimedia — placeholder */}
+        <div className="sm:col-span-2">
+          <MediaSection />
+        </div>
+
         {/* Categorías */}
         {categories.length > 0 && (
           <div className="sm:col-span-2">
             <label className="mb-1.5 block text-sm font-medium text-zinc-700">
-              Categorías <span className="text-zinc-400 font-normal">(mínimo 1)</span>
+              Categorías <span className="text-zinc-400 font-normal">(mínimo 1)</span> <span className="text-rose-500">*</span>
             </label>
             <div className="flex gap-2">
               <select

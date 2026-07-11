@@ -7,7 +7,7 @@ import { Avatar } from "@/components/ui/Avatar";
 import { StatusTabs } from "@/components/ui/StatusTabs";
 import { listModelosKyc } from "@/lib/data";
 import { APP_ROUTE } from "@/lib/routes";
-import { formatDate } from "@/lib/utils";
+import { formatDate, modelNombreCompleto } from "@/lib/utils";
 import type { KycStatus } from "@/generated/prisma/enums";
 
 const PARAM_TO_STATUS: Record<string, KycStatus> = {
@@ -67,9 +67,9 @@ export default async function ModeracionPage({
                 href={`${APP_ROUTE.app.moderacion.index}/${modelo.id}`}
                 className="flex items-center gap-4 px-5 py-4 hover:bg-zinc-50"
               >
-                <Avatar name={modelo.fullName} />
+                <Avatar name={modelNombreCompleto(modelo)} />
                 <div className="min-w-0 flex-1">
-                  <p className="truncate text-sm font-medium text-zinc-900">{modelo.fullName}</p>
+                  <p className="truncate text-sm font-medium text-zinc-900">{modelNombreCompleto(modelo)}</p>
                   <p className="truncate text-xs text-zinc-500">
                     {modelo.categories.map((c) => c.name).join(", ")} · Enviado el{" "}
                     {formatDate(modelo.kyc.createdAt)}

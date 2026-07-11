@@ -6,7 +6,7 @@ import { MapPin, Search } from "lucide-react";
 import type { ModelWithRelations } from "@/lib/data";
 import { Avatar } from "@/components/ui/Avatar";
 import { APP_ROUTE } from "@/lib/routes";
-import { formatDate } from "@/lib/utils";
+import { formatDate, modelNombreCompleto } from "@/lib/utils";
 
 const GENRE_LABEL: Record<string, string> = {
   MALE: "Masculino",
@@ -30,7 +30,7 @@ export function ModelosGrid({ modelos }: { modelos: ModelWithRelations[] }) {
     return modelos.filter((m) => {
       const matchQuery =
         query.trim() === "" ||
-        m.fullName.toLowerCase().includes(query.toLowerCase()) ||
+        modelNombreCompleto(m).toLowerCase().includes(query.toLowerCase()) ||
         m.email.toLowerCase().includes(query.toLowerCase());
       const matchGenero = genero === "todos" || m.genre === genero;
       const matchCat =
@@ -85,12 +85,12 @@ export function ModelosGrid({ modelos }: { modelos: ModelWithRelations[] }) {
             className="group overflow-hidden rounded-xl border border-zinc-200 bg-white transition-shadow hover:shadow-md"
           >
             <div className="relative flex h-40 items-center justify-center bg-gradient-to-br from-zinc-900 via-zinc-950 to-black">
-              <Avatar name={modelo.fullName} size="xl" />
+              <Avatar name={modelNombreCompleto(modelo)} size="xl" />
             </div>
             <div className="p-4">
               <div className="flex items-start justify-between gap-2">
                 <div>
-                  <p className="truncate text-sm font-semibold text-zinc-900">{modelo.fullName}</p>
+                  <p className="truncate text-sm font-semibold text-zinc-900">{modelNombreCompleto(modelo)}</p>
                   <p className="text-xs text-zinc-400">{formatDate(modelo.birthDate)}</p>
                 </div>
                 <span className="shrink-0 rounded-full bg-zinc-100 px-2 py-0.5 text-xs font-medium text-zinc-600">

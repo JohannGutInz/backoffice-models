@@ -34,6 +34,8 @@ export const NAV_GROUPS: NavGroup[] = [
     items: [
       { label: "Modelos", href: APP_ROUTE.app.modelos.index, icon: UsersRound },
       { label: "Moderación", href: APP_ROUTE.app.moderacion.index, icon: ShieldCheck },
+      { label: "Paquetes", href: APP_ROUTE.app.paquetes.index, icon: PackageOpen },
+      { label: "Eventos", href: APP_ROUTE.app.eventos.index, icon: Sparkles },
       { label: "Calendario", href: APP_ROUTE.app.calendario.index, icon: CalendarDays },
     ],
   },
@@ -41,9 +43,7 @@ export const NAV_GROUPS: NavGroup[] = [
     label: "Comercial",
     items: [
       { label: "Clientes", href: APP_ROUTE.app.clientes.index, icon: Building2 },
-      { label: "Eventos", href: APP_ROUTE.app.eventos.index, icon: Sparkles },
       { label: "Bookings", href: APP_ROUTE.app.bookings.index, icon: ClipboardList },
-      { label: "Paquetes", href: APP_ROUTE.app.paquetes.index, icon: PackageOpen },
     ],
   },
   {

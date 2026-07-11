@@ -19,16 +19,19 @@ export const APP_ROUTE = {
       index: "/app/clientes"
     },
     eventos: {
-      index: "/app/eventos"
+      index: "/app/eventos",
+      nuevo: "/app/eventos/nuevo",
     },
     modelos: {
-      index: "/app/modelos"
+      index: "/app/modelos",
+      nuevo: "/app/modelos/nuevo",
     },
     calendario: {
       index: "/app/calendario"
     },
     paquetes: {
-      index: "/app/paquetes"
+      index: "/app/paquetes",
+      nuevo: "/app/paquetes/nuevo",
     },
     ingresos: {
       index: "/app/ingresos"
