@@ -4,6 +4,7 @@ import {
   CircleDollarSign,
   ClipboardList,
   Globe,
+  Images,
   LayoutGrid,
   List,
   PackageOpen,
@@ -37,6 +38,7 @@ export const NAV_GROUPS: NavGroup[] = [
       { label: "Paquetes", href: APP_ROUTE.app.paquetes.index, icon: PackageOpen },
       { label: "Eventos", href: APP_ROUTE.app.eventos.index, icon: Sparkles },
       { label: "Calendario", href: APP_ROUTE.app.calendario.index, icon: CalendarDays },
+      { label: "Portafolio", href: APP_ROUTE.app.portafolio.index, icon: Images },
     ],
   },
   {

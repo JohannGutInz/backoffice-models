@@ -44,3 +44,9 @@ next-env.d.ts
 /src/generated/prisma
 
 .aider-desk
+
+# Videos no usados
+/public/video/video-banner.mp4
+
+# Archivos de trabajo local
+glam.html

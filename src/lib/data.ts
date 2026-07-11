@@ -241,6 +241,25 @@ export async function listGeografia() {
   return { countries, states, municipalities };
 }
 
+// ---------- Portafolio ----------
+
+const portfolioInclude = {
+  fotos: { orderBy: { orden: "asc" as const } },
+} as const;
+
+export type PortfolioEntryWithFotos = Awaited<ReturnType<typeof listPortfolioEntries>>[number];
+
+export async function listPortfolioEntries() {
+  return prisma.portfolioEntry.findMany({
+    include: portfolioInclude,
+    orderBy: { createdAt: "desc" },
+  });
+}
+
+export async function getPortfolioEntry(id: string) {
+  return prisma.portfolioEntry.findUnique({ where: { id }, include: portfolioInclude });
+}
+
 // ---------- Estadísticas del dashboard ----------
 
 export async function getDashboardStats() {

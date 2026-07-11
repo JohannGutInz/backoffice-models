@@ -21,6 +21,7 @@ import type {
   NuevoModeloAdminActionData,
   CrearPaqueteData,
   EventoFormData,
+  PortfolioEntryData,
 } from "./schemas";
 
 export interface ActionState {
@@ -391,6 +392,76 @@ export async function eliminarEventoAction(eventoId: string) {
   revalidatePath("/app/eventos");
   revalidatePath("/app/calendario");
   redirect(APP_ROUTE.app.eventos.index);
+}
+
+// ---------- Portafolio ----------
+
+function fotosCreateInput(fotos: PortfolioEntryData["fotos"]) {
+  const valid = fotos.filter((f) => f.url.trim());
+  // ensure exactly one portada
+  const hasPortada = valid.some((f) => f.isPortada);
+  return valid.map((f, i) => ({
+    url: f.url.trim(),
+    isPortada: hasPortada ? f.isPortada : i === 0,
+    orden: f.orden,
+  }));
+}
+
+export async function crearPortfolioEntryAction(
+  data: PortfolioEntryData,
+): Promise<ActionState & { entryId?: string }> {
+  const entry = await prisma.portfolioEntry.create({
+    data: {
+      marca: data.marca,
+      fecha: data.fecha,
+      lugar: data.lugar,
+      isVisible: data.isVisible,
+      fotos: { create: fotosCreateInput(data.fotos) },
+    },
+  });
+  revalidatePath("/app/portafolio");
+  revalidatePath("/");
+  revalidatePath("/portafolio");
+  return { status: "success", message: "Entrada creada.", entryId: entry.id };
+}
+
+export async function editarPortfolioEntryAction(
+  entryId: string,
+  data: PortfolioEntryData,
+): Promise<ActionState> {
+  await prisma.$transaction([
+    prisma.portfolioFoto.deleteMany({ where: { entryId } }),
+    prisma.portfolioEntry.update({
+      where: { id: entryId },
+      data: {
+        marca: data.marca,
+        fecha: data.fecha,
+        lugar: data.lugar,
+        isVisible: data.isVisible,
+        fotos: { create: fotosCreateInput(data.fotos) },
+      },
+    }),
+  ]);
+  revalidatePath(`/app/portafolio/${entryId}`);
+  revalidatePath("/app/portafolio");
+  revalidatePath("/");
+  revalidatePath("/portafolio");
+  return { status: "success", message: "Entrada actualizada." };
+}
+
+export async function eliminarPortfolioEntryAction(entryId: string) {
+  await prisma.portfolioEntry.delete({ where: { id: entryId } });
+  revalidatePath("/app/portafolio");
+  revalidatePath("/");
+  revalidatePath("/portafolio");
+  redirect(APP_ROUTE.app.portafolio.index);
+}
+
+export async function togglePortfolioVisibilidadAction(entryId: string, visible: boolean) {
+  await prisma.portfolioEntry.update({ where: { id: entryId }, data: { isVisible: visible } });
+  revalidatePath("/app/portafolio");
+  revalidatePath("/");
+  revalidatePath("/portafolio");
 }
 
 // ---------- Contacto de clientes (landing pública) ----------

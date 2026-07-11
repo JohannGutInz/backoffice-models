@@ -149,6 +149,23 @@ export type CrearPaqueteData = z.infer<typeof crearPaqueteSchema>;
 export type NuevoModeloAdminFormData = z.infer<typeof nuevoModeloAdminFormSchema>;
 export type NuevoModeloAdminActionData = z.infer<typeof nuevoModeloAdminActionSchema>;
 
+export const portfolioFotoSchema = z.object({
+  url: z.string(),
+  isPortada: z.boolean(),
+  orden: z.number().int(),
+});
+
+export const portfolioEntrySchema = z.object({
+  marca: z.string().min(1, "La marca es obligatoria."),
+  fecha: z.string().min(1, "La fecha es obligatoria."),
+  lugar: z.string().min(1, "El lugar es obligatorio."),
+  isVisible: z.boolean(),
+  fotos: z.array(portfolioFotoSchema),
+});
+
+export type PortfolioFotoData = z.infer<typeof portfolioFotoSchema>;
+export type PortfolioEntryData = z.infer<typeof portfolioEntrySchema>;
+
 export type LoginData = z.infer<typeof loginSchema>;
 export type ContactoData = z.infer<typeof contactoSchema>;
 export type CategoryData = z.infer<typeof categorySchema>;

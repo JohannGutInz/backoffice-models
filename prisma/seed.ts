@@ -173,6 +173,27 @@ async function main() {
       },
     });
 
+    // Portfolio entries (only seed if empty)
+    const portfolioCount = await prisma.portfolioEntry.count();
+    if (portfolioCount === 0) {
+      const IMG = "/glamour-models.webp";
+      const FOTOS = (n = 6) =>
+        Array.from({ length: n }, (_, i) => ({ url: IMG, isPortada: i === 0, orden: i }));
+
+      await Promise.all([
+        prisma.portfolioEntry.create({
+          data: { marca: "Armani", fecha: "Julio 2026", lugar: "Liverpool Guadalajara", isVisible: true, fotos: { create: FOTOS() } },
+        }),
+        prisma.portfolioEntry.create({
+          data: { marca: "Prada", fecha: "Julio 2026", lugar: "Culiacán", isVisible: true, fotos: { create: FOTOS(4) } },
+        }),
+        prisma.portfolioEntry.create({
+          data: { marca: "Nissan", fecha: "Junio 2026", lugar: "CDMX", isVisible: true, fotos: { create: FOTOS(5) } },
+        }),
+      ]);
+      console.log("Seeded 3 portfolio entries");
+    }
+
     console.log(`Initialized admin user: ${DEFAULT_ADMIN_EMAIL}`);
     console.log("Seeded countries, states, and municipalities in bulk");
   } finally {

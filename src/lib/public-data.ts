@@ -114,6 +114,31 @@ export async function getPaquetePublico(token: string) {
   };
 }
 
+// ---------- Portafolio público ----------
+
+export type PortfolioEntryPublico = {
+  id: string;
+  marca: string;
+  fecha: string;
+  lugar: string;
+  fotos: { url: string; isPortada: boolean }[];
+};
+
+export async function listPortfolioPublico(): Promise<PortfolioEntryPublico[]> {
+  const entries = await prisma.portfolioEntry.findMany({
+    where: { isVisible: true },
+    include: { fotos: { orderBy: { orden: "asc" } } },
+    orderBy: { createdAt: "desc" },
+  });
+  return entries.map((e) => ({
+    id: e.id,
+    marca: e.marca,
+    fecha: e.fecha,
+    lugar: e.lugar,
+    fotos: e.fotos.map((f) => ({ url: f.url, isPortada: f.isPortada })),
+  }));
+}
+
 export interface EventoPortafolio {
   id: string;
   nombre: string;

@@ -33,6 +33,10 @@ export const APP_ROUTE = {
       index: "/app/paquetes",
       nuevo: "/app/paquetes/nuevo",
     },
+    portafolio: {
+      index: "/app/portafolio",
+      nuevo: "/app/portafolio/nuevo",
+    },
     ingresos: {
       index: "/app/ingresos"
     },

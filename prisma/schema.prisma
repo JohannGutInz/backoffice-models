@@ -202,6 +202,31 @@ model Package {
   @@map("packages")
 }
 
+model PortfolioEntry {
+  id        String   @id @default(uuid())
+  marca     String
+  fecha     String
+  lugar     String
+  isVisible Boolean  @default(false) @map("is_visible")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  fotos PortfolioFoto[]
+
+  @@map("portfolio_entries")
+}
+
+model PortfolioFoto {
+  id        String         @id @default(uuid())
+  url       String
+  isPortada Boolean        @default(false) @map("is_portada")
+  orden     Int            @default(0)
+  entryId   String         @map("entry_id")
+  entry     PortfolioEntry @relation(fields: [entryId], references: [id], onDelete: Cascade)
+
+  @@map("portfolio_fotos")
+}
+
 model ModelMedia {
   id        String    @id @default(uuid())
   url       String

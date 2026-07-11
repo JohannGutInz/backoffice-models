@@ -16,7 +16,7 @@ export default async function PublicLayout({ children }: { children: React.React
         nombreAgencia={config.nombreAgencia}
         registroPublicoActivo={config.registroPublicoActivo}
       />
-      <main className="flex-1">{children}</main>
+      <main className="flex-1 pt-16">{children}</main>
       <PublicFooter nombreAgencia={config.nombreAgencia} />
     </div>
   );
