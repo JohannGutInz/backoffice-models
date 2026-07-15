@@ -1,19 +1,36 @@
-import { Plus } from "lucide-react";
+import Link from "next/link";
+import { Plus, ChevronRight, CheckCircle2 } from "lucide-react";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { LinkButton } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
-import { SearchForm } from "@/components/ui/SearchForm";
 import { Table, THead, Th, Tr, Td } from "@/components/ui/Table";
 import { StatusBadge } from "@/components/ui/Badge";
 import { listEvents, clientName } from "@/lib/data";
 import { APP_ROUTE } from "@/lib/routes";
-import { formatDate } from "@/lib/utils";
+import { cn, modelNombreCompleto } from "@/lib/utils";
+
+function formatRange(startAt: Date, endAt: Date) {
+  const sameDay =
+    startAt.getFullYear() === endAt.getFullYear() &&
+    startAt.getMonth() === endAt.getMonth() &&
+    startAt.getDate() === endAt.getDate();
+
+  const dateOpts: Intl.DateTimeFormatOptions = { day: "numeric", month: "short", year: "numeric" };
+  const timeOpts: Intl.DateTimeFormatOptions = { hour: "2-digit", minute: "2-digit" };
+  const locale = "es-MX";
+
+  if (sameDay) {
+    return `${startAt.toLocaleDateString(locale, dateOpts)} · ${startAt.toLocaleTimeString(locale, timeOpts)}–${endAt.toLocaleTimeString(locale, timeOpts)}`;
+  }
+  return `${startAt.toLocaleDateString(locale, dateOpts)} → ${endAt.toLocaleDateString(locale, dateOpts)}`;
+}
 
 export default async function EventsPage({
   searchParams,
 }: {
   searchParams: Promise<{ q?: string }>;
 }) {
+  await getUsuarioActual();
   const { q } = await searchParams;
   const events = await listEvents();
 
@@ -33,7 +50,7 @@ export default async function EventsPage({
     <div>
       <PageHeader
         title="Eventos"
-        subtitle="Servicios y trabajos contratados por los clientes."
+        subtitle="Convocatorias y trabajos del equipo de talento."
         actions={
           <LinkButton href={APP_ROUTE.app.events.index}>
             <Plus className="h-4 w-4" /> Nuevo evento
@@ -41,20 +58,14 @@ export default async function EventsPage({
         }
       />
 
-      <div className="mb-5">
-        <SearchForm action="/eventos" placeholder="Buscar evento o cliente…" defaultValue={q} />
-      </div>
-
       <Card>
         <Table>
           <THead>
             <Th>Evento</Th>
-            <Th>Cliente</Th>
-            <Th>Tipo</Th>
-            <Th>Lugar</Th>
-            <Th>Fecha</Th>
-            <Th className="text-right">Bookings</Th>
+            <Th>Fechas</Th>
+            <Th>Modelo asignado</Th>
             <Th>Estado</Th>
+            <Th>{""}</Th>
           </THead>
           <tbody>
             {sorted.map((event) => (
@@ -75,8 +86,8 @@ export default async function EventsPage({
             ))}
             {sorted.length === 0 && (
               <tr>
-                <td colSpan={7} className="px-5 py-16 text-center text-sm text-zinc-400">
-                  Ningún evento coincide con la búsqueda.
+                <td colSpan={5} className="px-5 py-16 text-center text-sm text-zinc-400">
+                  {q ? "Ningún evento coincide con la búsqueda." : "No hay eventos registrados."}
                 </td>
               </tr>
             )}

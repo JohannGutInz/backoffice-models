@@ -114,11 +114,48 @@ async function seedGeography() {
   });
 }
 
+const ACTIVIDADES = [
+  "Demostradora",
+  "Promotoria MX",
+  "Promotoria COL",
+  "Edecanía COL",
+  "Modelo de protocolo MX",
+  "G.O.",
+  "G.O/Promotor Perfumería",
+  "Volantero",
+  "Staff eventos",
+  "Supervisión",
+  "Coordinación",
+  "Animación por micrófono",
+  "Maestro de ceremonias",
+  "Conducción de eventos",
+  "Modelo para fotografía",
+  "Modelo para videos musicales",
+  "Modelo para comerciales",
+  "Pasarela",
+  "Actor",
+  "Actriz",
+  "Extra/figurante",
+  "Personal para limpieza",
+  "Personal para seguridad",
+];
+
+async function seedActividades() {
+  for (const name of ACTIVIDADES) {
+    await prisma.category.upsert({
+      where: { name } as never,
+      create: { name },
+      update: {},
+    });
+  }
+}
+
 async function main() {
   try {
     const hashedPassword = await hashPassword(DEFAULT_ADMIN_PASSWORD);
 
     await seedGeography();
+    await seedActividades();
 
     await prisma.user.upsert({
       where: { email: DEFAULT_ADMIN_EMAIL },

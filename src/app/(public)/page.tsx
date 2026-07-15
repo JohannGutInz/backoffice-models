@@ -1,4 +1,3 @@
-import Image from "next/image";
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 import { TalentCard } from "@/components/public/TalentCard";
@@ -34,18 +33,39 @@ export default async function HomePage() {
           <div className="mt-8 flex items-center justify-center gap-3">
             <Link
               href="/talentos"
-              className="inline-flex items-center gap-1.5 rounded-full bg-white px-5 py-2.5 text-sm font-medium text-zinc-950 transition-colors hover:bg-gold-400"
+              className="group flex flex-1 flex-col items-center justify-center gap-3 rounded-2xl border border-white/20 bg-white/5 px-7 py-8 backdrop-blur-sm transition-[border-color,transform] duration-200 hover:-translate-y-0.5 hover:border-gold-500"
             >
-              Ver talentos <ArrowRight className="h-4 w-4" />
+              <span className="text-sm font-bold tracking-[0.25em] text-white uppercase transition-colors duration-200 group-hover:text-gold-400">
+                Organizadores
+              </span>
+              <p className="text-base text-zinc-400">
+                Quiero contratar personal
+              </p>
             </Link>
+
             <Link
-              href="/contacto"
-              className="inline-flex items-center gap-1.5 rounded-full px-5 py-2.5 text-sm font-medium text-white ring-1 ring-inset ring-white/40 transition-colors hover:bg-white/10"
+              href="/registro"
+              className="group flex flex-1 flex-col items-center justify-center gap-3 rounded-2xl border border-white/20 bg-white/5 px-7 py-8 backdrop-blur-sm transition-[border-color,transform] duration-200 hover:-translate-y-0.5 hover:border-gold-500"
             >
-              Hablar con la agencia
+              <span className="text-sm font-bold tracking-[0.25em] text-white uppercase transition-colors duration-200 group-hover:text-gold-400">
+                Talento
+              </span>
+              <p className="text-base text-zinc-400">
+                Quiero unirme al equipo
+              </p>
             </Link>
           </div>
         </div>
+
+        {/* Scroll arrow — solo si hay portafolio */}
+        {portafolio.length > 0 && (
+          <a
+            href="#portafolio"
+            className="absolute bottom-8 left-1/2 z-10 flex h-10 w-10 -translate-x-1/2 items-center justify-center rounded-full border border-white/20 text-zinc-400 transition-colors hover:border-gold-500 hover:text-gold-400"
+          >
+            <ArrowDown className="h-5 w-5" />
+          </a>
+        )}
       </section>
 
       {featuredModels.length > 0 && (

@@ -1,8 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Get a free hosted Postgres database in seconds: `npx create-db`
-
 generator client {
   provider = "prisma-client"
   output   = "../src/generated/prisma"
@@ -47,7 +42,7 @@ model Country {
 model State {
   id    String @id @default(uuid())
   name  String
-  label String @unique // CDMX, SIN, etc
+  label String @unique
 
   cities Municipality[]
 
@@ -72,7 +67,7 @@ model Municipality {
 
 model Category {
   id      String  @id @default(uuid())
-  name    String
+  name    String  @unique
   enabled Boolean @default(true)
 
   models Model[]
@@ -114,6 +109,19 @@ enum KycStatus {
   APPROVED
   REJECTED
   REQUIRES_CHANGES
+}
+
+enum PackageStatus {
+  DRAFT
+  SENT
+  CLOSED
+}
+
+enum MediaType {
+  PHOTO_CASUAL
+  PHOTO_BOOK
+  PHOTO_EVENT
+  VIDEO_LINK
 }
 
 model Kyc {
@@ -172,6 +180,10 @@ model Model {
 
   cityId String       @map("city_id")
   city   Municipality @relation(fields: [cityId], references: [id])
+
+  media    ModelMedia[]
+  packages Package[]
+  eventos  Evento[]
 
   @@map("models")
 }

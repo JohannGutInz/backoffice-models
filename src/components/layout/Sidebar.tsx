@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { PanelLeftClose, PanelLeftOpen } from "lucide-react";
@@ -7,6 +8,24 @@ import { Button } from "@/components/ui/Button";
 import { APP_ROUTE } from "@/lib/routes";
 import { NAV_GROUPS } from "@/lib/nav-config";
 import { cn } from "@/lib/utils";
+
+const LS_KEY = "nav-collapsed-groups";
+
+function readCollapsed(): Set<string> {
+  if (typeof window === "undefined") return new Set();
+  try {
+    const raw = localStorage.getItem(LS_KEY);
+    return raw ? new Set(JSON.parse(raw) as string[]) : new Set();
+  } catch {
+    return new Set();
+  }
+}
+
+function saveCollapsed(groups: Set<string>) {
+  try {
+    localStorage.setItem(LS_KEY, JSON.stringify([...groups]));
+  } catch {}
+}
 
 export function Sidebar({
   collapsed,
@@ -18,6 +37,17 @@ export function Sidebar({
   pendingCount: number;
 }) {
   const pathname = usePathname();
+  const [collapsedGroups, setCollapsedGroups] = useState<Set<string>>(readCollapsed);
+
+  function toggleGroup(label: string) {
+    setCollapsedGroups((prev) => {
+      const next = new Set(prev);
+      if (next.has(label)) next.delete(label);
+      else next.add(label);
+      saveCollapsed(next);
+      return next;
+    });
+  }
 
   return (
     <aside
@@ -26,6 +56,7 @@ export function Sidebar({
         collapsed ? "w-20" : "w-64",
       )}
     >
+      {/* Logo / toggle */}
       <div className="flex h-16 shrink-0 items-center gap-3 border-b border-white/5 px-4">
         <Button
           variant="ghost"
@@ -36,7 +67,10 @@ export function Sidebar({
           {collapsed ? <PanelLeftOpen className="h-[18px] w-[18px]" /> : <PanelLeftClose className="h-[18px] w-[18px]" />}
         </Button>
         {!collapsed && (
-          <Link href={APP_ROUTE.app.dashboard.index} className="truncate text-lg leading-none font-semibold text-white">
+          <Link
+            href={APP_ROUTE.app.dashboard.index}
+            className="truncate text-lg font-semibold leading-none text-white"
+          >
             Glamour<span className="text-gold-400">Models</span>
           </Link>
         )}

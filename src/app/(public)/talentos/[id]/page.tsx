@@ -22,12 +22,26 @@ export default async function TalentDetailPage({
   if (!model) notFound();
   if (model.kycStatus !== "APPROVED") redirect("/");
 
+  const hasFisica =
+    modelo.height ||
+    modelo.weight ||
+    modelo.shirtSize ||
+    modelo.pantsSize ||
+    modelo.hasVisibleTattoos !== null;
+
+  const disponibilidadItems = [
+    modelo.availableToTravel && "Disponible para viajar",
+    modelo.hasPassport && "Tiene pasaporte",
+    modelo.hasVisaUS && "Tiene visa para EE. UU.",
+  ].filter(Boolean) as string[];
+
   return (
     <div className="mx-auto max-w-5xl px-6 py-12">
       <Link href="/talentos" className="mb-6 inline-flex items-center gap-1.5 text-sm text-zinc-500 hover:text-zinc-800">
         <ArrowLeft className="h-4 w-4" /> Volver a Talentos
       </Link>
 
+      {/* Hero */}
       <div className="grid grid-cols-1 gap-10 lg:grid-cols-3">
         <div className="lg:col-span-1">
           <div className="relative flex aspect-[3/4] items-center justify-center overflow-hidden rounded-2xl bg-gradient-to-br from-zinc-900 via-zinc-950 to-black">

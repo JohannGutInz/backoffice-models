@@ -1,13 +1,12 @@
-import Link from "next/link";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { Plus } from "lucide-react";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { Card, CardHeader } from "@/components/ui/Card";
 import { StatusBadge } from "@/components/ui/Badge";
 import { MonthGrid } from "@/components/calendar/MonthGrid";
 import { listBookings, eventName, modelName } from "@/lib/data";
 import { APP_ROUTE } from "@/lib/routes";
-import { formatDate, formatMonthYear, toDateKey } from "@/lib/utils";
-import type { Booking } from "@/lib/types";
+import { toDateKey } from "@/lib/utils";
+import type { SerializedEvento } from "@/lib/calendar-utils";
 
 function parseMonthParam(monthParam: string | undefined, fallback: Date) {
   if (monthParam && /^\d{4}-\d{2}$/.test(monthParam)) {
@@ -27,6 +26,7 @@ export default async function CalendarPage({
 }: {
   searchParams: Promise<{ month?: string }>;
 }) {
+  await getUsuarioActual();
   const { month: monthParamValue } = await searchParams;
   const today = new Date();
   const { year, month } = parseMonthParam(monthParamValue, today);
@@ -45,13 +45,36 @@ export default async function CalendarPage({
     .sort((a, b) => a.date.localeCompare(b.date))
     .slice(0, 6);
 
-  const prevParam = monthParam(year, month - 1);
-  const nextParam = monthParam(year, month + 1);
-  const currentParam = monthParam(today.getFullYear(), today.getMonth());
+  const serialized: SerializedEvento[] = eventos.map((e) => ({
+    id: e.id,
+    nombre: e.nombre,
+    startAt: e.startAt.toISOString(),
+    endAt: e.endAt.toISOString(),
+    cubierto: e.cubierto,
+    recurringDays: e.recurringDays,
+    dailyStartTime: e.dailyStartTime,
+    dailyEndTime: e.dailyEndTime,
+    modelo: e.modelo
+      ? {
+          id: e.modelo.id,
+          firstName: e.modelo.firstName,
+          lastNameP: e.modelo.lastNameP,
+          lastNameM: e.modelo.lastNameM,
+        }
+      : null,
+  }));
 
   return (
     <div>
-      <PageHeader title="Calendario / Agenda" subtitle="Bookings programados y disponibilidad del mes." />
+      <PageHeader
+        title="Calendario"
+        subtitle="Vista mensual de eventos y convocatorias."
+        actions={
+          <LinkButton href={APP_ROUTE.app.eventos.nuevo}>
+            <Plus className="h-4 w-4" /> Nuevo evento
+          </LinkButton>
+        }
+      />
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
         <Card className="lg:col-span-2">

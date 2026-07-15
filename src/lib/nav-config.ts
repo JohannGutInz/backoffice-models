@@ -4,6 +4,7 @@ import {
   CircleDollarSign,
   ClipboardList,
   Globe,
+  Images,
   LayoutGrid,
   List,
   PackageOpen,

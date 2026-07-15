@@ -113,6 +113,16 @@ export async function submitRegistrationAction(data: RegistrationActionData): Pr
         kycId: kyc.id,
         userId: user.id,
         categories: { connect: data.categoryIds.map((id) => ({ id })) },
+        artisticName: data.artisticName || null,
+        nationality: data.nationality || null,
+        height: data.height ? parseInt(data.height, 10) : null,
+        weight: data.weight ? parseFloat(data.weight) : null,
+        hasVisibleTattoos: data.hasVisibleTattoos,
+        shirtSize: data.shirtSize || null,
+        pantsSize: data.pantsSize || null,
+        availableToTravel: data.availableToTravel,
+        hasPassport: data.hasPassport,
+        hasVisaUS: data.hasVisaUS,
       },
     });
   });
