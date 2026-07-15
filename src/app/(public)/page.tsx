@@ -1,11 +1,8 @@
 import Link from "next/link";
 import { ArrowDown } from "lucide-react";
-import { PortfolioSection } from "@/components/public/PortfolioSection";
-import { listPortfolioPublico } from "@/lib/public-data";
+import { ClientesCarrusel } from "@/components/public/ClientesCarrusel";
 
 export default async function HomePage() {
-  const portafolio = await listPortfolioPublico();
-
   return (
     <div>
       {/* ── Hero ── */}
@@ -45,10 +42,10 @@ export default async function HomePage() {
               className="group flex flex-1 flex-col items-center justify-center gap-3 rounded-2xl border border-white/20 bg-white/5 px-7 py-8 backdrop-blur-sm transition-[border-color,transform] duration-200 hover:-translate-y-0.5 hover:border-gold-500"
             >
               <span className="text-sm font-bold tracking-[0.25em] text-white uppercase transition-colors duration-200 group-hover:text-gold-400">
-                Organizadores
+                 Contratar talento
               </span>
               <p className="text-base text-zinc-400">
-                Quiero contratar personal
+                Quiero contratar personal para mi evento
               </p>
             </Link>
 
@@ -57,7 +54,7 @@ export default async function HomePage() {
               className="group flex flex-1 flex-col items-center justify-center gap-3 rounded-2xl border border-white/20 bg-white/5 px-7 py-8 backdrop-blur-sm transition-[border-color,transform] duration-200 hover:-translate-y-0.5 hover:border-gold-500"
             >
               <span className="text-sm font-bold tracking-[0.25em] text-white uppercase transition-colors duration-200 group-hover:text-gold-400">
-                Talento
+                Ser talento
               </span>
               <p className="text-base text-zinc-400">
                 Quiero unirme al equipo
@@ -66,23 +63,19 @@ export default async function HomePage() {
           </div>
         </div>
 
-        {/* Scroll arrow — solo si hay portafolio */}
-        {portafolio.length > 0 && (
-          <a
-            href="#portafolio"
-            className="absolute bottom-8 left-1/2 z-10 flex h-10 w-10 -translate-x-1/2 items-center justify-center rounded-full border border-white/20 text-zinc-400 transition-colors hover:border-gold-500 hover:text-gold-400"
-          >
-            <ArrowDown className="h-5 w-5" />
-          </a>
-        )}
+        {/* Scroll arrow */}
+        <a
+          href="#clientes"
+          className="absolute bottom-8 left-1/2 z-10 flex h-10 w-10 -translate-x-1/2 items-center justify-center rounded-full border border-white/20 text-zinc-400 transition-colors hover:border-gold-500 hover:text-gold-400"
+        >
+          <ArrowDown className="h-5 w-5" />
+        </a>
       </section>
 
-      {/* ── Portafolio ── */}
-      {portafolio.length > 0 && (
-        <section id="portafolio" className="scroll-mt-20 bg-white px-6 py-20">
-          <PortfolioSection entries={portafolio} />
-        </section>
-      )}
+      {/* ── Clientes ── */}
+      <div id="clientes" className="scroll-mt-16">
+        <ClientesCarrusel />
+      </div>
     </div>
   );
 }
