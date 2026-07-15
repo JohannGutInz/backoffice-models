@@ -181,10 +181,6 @@ model Model {
   cityId String       @map("city_id")
   city   Municipality @relation(fields: [cityId], references: [id])
 
-  media    ModelMedia[]
-  packages Package[]
-  eventos  Evento[]
-
   @@map("models")
 }
 
