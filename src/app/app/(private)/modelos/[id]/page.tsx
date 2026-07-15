@@ -1,43 +1,66 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft, Eye, EyeOff, Mail, MapPin, Phone, User } from "lucide-react";
-import { getModelo } from "@/lib/data";
-import { toggleVisibilidadLandingAction } from "@/lib/actions";
+import Image from "next/image";
+import { ArrowLeft, Mail, MapPin, Phone, User, Pencil } from "lucide-react";
+import { getModel } from "@/lib/data";
 import { Avatar } from "@/components/ui/Avatar";
 import { Card, CardHeader } from "@/components/ui/Card";
 import { Field, FieldGrid } from "@/components/ui/Field";
+import { LinkButton } from "@/components/ui/Button";
 import { APP_ROUTE } from "@/lib/routes";
-import { formatDate, modelNombreCompleto } from "@/lib/utils";
+import { formatDate, formatFullName, getMainPhotoUrl, getGalleryPhotos, getGalleryVideos } from "@/lib/utils";
 
 const GENRE_LABEL: Record<string, string> = {
   MALE: "Masculino",
   FEMALE: "Femenino",
 };
 
-function calcularEdadDesde(fecha: Date): number {
-  const hoy = new Date();
-  let edad = hoy.getFullYear() - fecha.getFullYear();
-  const aunNoCumple =
-    hoy.getMonth() < fecha.getMonth() ||
-    (hoy.getMonth() === fecha.getMonth() && hoy.getDate() < fecha.getDate());
-  if (aunNoCumple) edad -= 1;
-  return edad;
+const SHIRT_SIZE_LABEL: Record<string, string> = {
+  XS: "XS",
+  S: "S",
+  M: "M",
+  L: "L",
+  XL: "XL",
+  XXL: "XXL",
+};
+
+const PANTS_SCALE_LABEL: Record<string, string> = {
+  MEN: "Hombre",
+  WOMEN: "Mujer",
+};
+
+function yesNo(value: boolean): string {
+  return value ? "Sí" : "No";
 }
 
-export default async function ModeloDetailPage({
+function calculateAgeFrom(date: Date): number {
+  const today = new Date();
+  let age = today.getFullYear() - date.getFullYear();
+  const hasNotHadBirthdayYet =
+    today.getMonth() < date.getMonth() ||
+    (today.getMonth() === date.getMonth() && today.getDate() < date.getDate());
+  if (hasNotHadBirthdayYet) age -= 1;
+  return age;
+}
+
+export default async function ModelDetailPage({
   params,
 }: {
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const modelo = await getModelo(id);
+  const model = await getModel(id);
 
-  if (!modelo) notFound();
+  if (!model) notFound();
+
+  const mainPhotoUrl = getMainPhotoUrl(model.assets);
+  const photoUrls = getGalleryPhotos(model.assets);
+  const videoUrls = getGalleryVideos(model.assets);
 
   return (
     <div>
       <Link
-        href={APP_ROUTE.app.modelos.index}
+        href={APP_ROUTE.app.models.index}
         className="mb-5 inline-flex items-center gap-1.5 text-sm text-zinc-500 hover:text-zinc-800"
       >
         <ArrowLeft className="h-4 w-4" /> Volver a Modelos
@@ -45,37 +68,29 @@ export default async function ModeloDetailPage({
 
       <div className="mb-6 flex flex-wrap items-start justify-between gap-4">
         <div className="flex items-center gap-4">
-          <Avatar name={modelNombreCompleto(modelo)} size="lg" />
+          {mainPhotoUrl ? (
+            <div className="relative h-16 w-16 shrink-0 overflow-hidden rounded-full">
+              <Image src={mainPhotoUrl} alt={formatFullName(model)} fill className="object-cover" unoptimized />
+            </div>
+          ) : (
+            <Avatar name={formatFullName(model)} size="lg" />
+          )}
           <div>
             <h1 className="text-2xl font-semibold tracking-tight text-zinc-900">
-              {modelNombreCompleto(modelo)}
+              {formatFullName(model)}
             </h1>
             <div className="mt-1 flex items-center gap-2 text-sm text-zinc-500">
               <span className="rounded-full bg-zinc-100 px-2 py-0.5 text-xs font-medium text-zinc-600">
-                {GENRE_LABEL[modelo.genre] ?? modelo.genre}
+                {GENRE_LABEL[model.genre] ?? model.genre}
               </span>
               <span>·</span>
-              <span>{calcularEdadDesde(modelo.birthDate)} años</span>
+              <span>{calculateAgeFrom(model.birthDate)} años</span>
             </div>
           </div>
         </div>
-
-        <form>
-          <button
-            formAction={toggleVisibilidadLandingAction.bind(null, modelo.id, !modelo.isVisible)}
-            className={`inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition-colors ${
-              modelo.isVisible
-                ? "bg-emerald-50 text-emerald-700 hover:bg-emerald-100"
-                : "bg-zinc-100 text-zinc-600 hover:bg-zinc-200"
-            }`}
-          >
-            {modelo.isVisible ? (
-              <><Eye className="h-4 w-4" /> Visible en vitrina</>
-            ) : (
-              <><EyeOff className="h-4 w-4" /> Oculto en vitrina</>
-            )}
-          </button>
-        </form>
+        <LinkButton href={APP_ROUTE.app.models.edit.id(model.id)} variant="secondary">
+          <Pencil className="h-4 w-4" /> Editar
+        </LinkButton>
       </div>
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
@@ -84,16 +99,43 @@ export default async function ModeloDetailPage({
             <CardHeader title="Datos personales" />
             <div className="px-5 pb-5">
               <FieldGrid>
-                <Field label="Nombres" value={modelo.firstName} />
-                <Field label="Apellido paterno" value={modelo.lastNameP} />
-                {modelo.lastNameM && <Field label="Apellido materno" value={modelo.lastNameM} />}
-                {modelo.artisticName && <Field label="Nombre artístico" value={modelo.artisticName} />}
+                <Field label="Nombre completo" value={formatFullName(model)} />
                 <Field
                   label="Fecha de nacimiento"
-                  value={`${formatDate(modelo.birthDate)} · ${calcularEdadDesde(modelo.birthDate)} años`}
+                  value={`${formatDate(model.birthDate)} · ${calculateAgeFrom(model.birthDate)} años`}
                 />
-                <Field label="Género" value={GENRE_LABEL[modelo.genre] ?? modelo.genre} />
-                {modelo.nationality && <Field label="Nacionalidad" value={modelo.nationality} />}
+                <Field label="Género" value={GENRE_LABEL[model.genre] ?? model.genre} />
+              </FieldGrid>
+            </div>
+          </Card>
+
+          <Card>
+            <CardHeader title="Atributos físicos" />
+            <div className="px-5 pb-5">
+              <FieldGrid>
+                <Field label="Estatura" value={model.height ? `${model.height} cm` : "Sin definir"} />
+                <Field label="Peso actual" value={model.currentWeight ? `${model.currentWeight} kg` : "Sin definir"} />
+                <Field label="Tatuajes visibles" value={yesNo(model.hasVisibleTattoos)} />
+                <Field label="Talla de camisa" value={model.shirtSize ? SHIRT_SIZE_LABEL[model.shirtSize] : "Sin definir"} />
+                <Field
+                  label="Talla de pantalón"
+                  value={
+                    model.pantsSizeScale && model.pantsSize
+                      ? `${PANTS_SCALE_LABEL[model.pantsSizeScale]} · ${model.pantsSize}`
+                      : "Sin definir"
+                  }
+                />
+              </FieldGrid>
+            </div>
+          </Card>
+
+          <Card>
+            <CardHeader title="Logística" />
+            <div className="px-5 pb-5">
+              <FieldGrid>
+                <Field label="Disponibilidad para viajar" value={yesNo(model.travelAvailability)} />
+                <Field label="Pasaporte" value={yesNo(model.hasPassport)} />
+                <Field label="Visa" value={yesNo(model.hasVisa)} />
               </FieldGrid>
             </div>
           </Card>
@@ -108,7 +150,7 @@ export default async function ModeloDetailPage({
                       <Mail className="h-3 w-3" /> Correo
                     </span>
                   }
-                  value={modelo.email}
+                  value={model.email}
                 />
                 <Field
                   label={
@@ -116,11 +158,35 @@ export default async function ModeloDetailPage({
                       <Phone className="h-3 w-3" /> Teléfono
                     </span>
                   }
-                  value={modelo.phone}
+                  value={model.phone}
                 />
               </FieldGrid>
             </div>
           </Card>
+
+          {(photoUrls.length > 0 || videoUrls.length > 0) && (
+            <Card>
+              <CardHeader title="Book" />
+              <div className="space-y-4 px-5 pb-5">
+                {photoUrls.length > 0 && (
+                  <div className="grid grid-cols-3 gap-3 sm:grid-cols-4">
+                    {photoUrls.map((url) => (
+                      <div key={url} className="relative aspect-square overflow-hidden rounded-lg border border-zinc-200">
+                        <Image src={url} alt="Foto del book" fill className="object-cover" unoptimized />
+                      </div>
+                    ))}
+                  </div>
+                )}
+                {videoUrls.length > 0 && (
+                  <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                    {videoUrls.map((url) => (
+                      <video key={url} src={url} controls className="w-full rounded-lg" />
+                    ))}
+                  </div>
+                )}
+              </div>
+            </Card>
+          )}
 
           <Card>
             <CardHeader title="Ubicación" />
@@ -132,30 +198,30 @@ export default async function ModeloDetailPage({
                       <MapPin className="h-3 w-3" /> Municipio
                     </span>
                   }
-                  value={modelo.city.name}
+                  value={model.city.name}
                 />
-                <Field label="Estado" value={modelo.city.state.name} />
+                <Field label="Estado" value={model.city.state.name} />
                 <Field
                   label={
                     <span className="inline-flex items-center gap-1">
                       <User className="h-3 w-3" /> País
                     </span>
                   }
-                  value={modelo.country.name}
+                  value={model.country.name}
                 />
-                <Field label="Nacionalidad" value={modelo.country.demonym} />
+                <Field label="Nacionalidad" value={model.country.demonym} />
               </FieldGrid>
             </div>
           </Card>
         </div>
 
         <div className="space-y-6">
-          {modelo.categories.length > 0 && (
+          {model.categories.length > 0 && (
             <Card>
               <CardHeader title="Categorías" />
               <div className="px-5 pb-5">
                 <div className="flex flex-wrap gap-2">
-                  {modelo.categories.map((cat) => (
+                  {model.categories.map((cat) => (
                     <span
                       key={cat.id}
                       className="rounded-full bg-zinc-100 px-3 py-1 text-sm font-medium text-zinc-700"
@@ -168,11 +234,29 @@ export default async function ModeloDetailPage({
             </Card>
           )}
 
+          {model.activities.length > 0 && (
+            <Card>
+              <CardHeader title="Actividades" />
+              <div className="px-5 pb-5">
+                <div className="flex flex-wrap gap-2">
+                  {model.activities.map((act) => (
+                    <span
+                      key={act.id}
+                      className="rounded-full bg-zinc-100 px-3 py-1 text-sm font-medium text-zinc-700"
+                    >
+                      {act.name}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            </Card>
+          )}
+
           <Card>
             <CardHeader title="Identificación interna" />
             <div className="px-5 pb-5">
               <FieldGrid>
-                <Field label="ID" value={<span className="font-mono text-xs">{modelo.id}</span>} />
+                <Field label="ID" value={<span className="font-mono text-xs">{model.id}</span>} />
               </FieldGrid>
             </div>
           </Card>

@@ -14,11 +14,11 @@ const NAV_LINKS = [
 ];
 
 export function PublicHeader({
-  nombreAgencia,
-  registroPublicoActivo,
+  agencyName,
+  publicRegistrationActive,
 }: {
-  nombreAgencia: string;
-  registroPublicoActivo: boolean;
+  agencyName: string;
+  publicRegistrationActive: boolean;
 }) {
   const [scrolled, setScrolled] = useState(false);
   const pathname = usePathname();
@@ -45,15 +45,8 @@ export function PublicHeader({
       )}
     >
       <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
-        {/* Logo */}
-        <Link
-          href="/"
-          className={cn(
-            "text-lg font-semibold tracking-tight transition-colors duration-300",
-            transparent ? "text-white" : "text-zinc-950",
-          )}
-        >
-          {nombreAgencia}
+        <Link href="/" className="text-lg font-semibold tracking-tight text-zinc-950">
+          {agencyName}
         </Link>
 
         {/* Desktop nav */}
@@ -86,28 +79,15 @@ export function PublicHeader({
             );
           })}
         </nav>
-
-        {/* CTA */}
-        {registroPublicoActivo ? (
+        {publicRegistrationActive ? (
           <Link
-            href={APP_ROUTE.registro.index}
-            className={cn(
-              "inline-flex items-center rounded-full px-4 py-2 text-sm font-semibold transition-all duration-300",
-              transparent
-                ? "border border-white/60 text-white hover:bg-white hover:text-zinc-950"
-                : "bg-zinc-950 text-white hover:bg-gold-600",
-            )}
+            href={APP_ROUTE.registration.index}
+            className="inline-flex items-center gap-1.5 rounded-full bg-zinc-950 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-gold-600"
           >
             Quiero ser parte
           </Link>
         ) : (
-          <Link
-            href={APP_ROUTE.contacto.index}
-            className={cn(
-              "text-sm font-semibold transition-colors duration-200",
-              transparent ? "text-white/80 hover:text-gold-400" : "text-zinc-500 hover:text-gold-500",
-            )}
-          >
+          <Link href={APP_ROUTE.contact.index} className="text-sm font-medium text-zinc-600 hover:text-zinc-950">
             Contacto
           </Link>
         )}

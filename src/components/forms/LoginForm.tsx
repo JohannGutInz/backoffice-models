@@ -2,6 +2,9 @@
 
 import { loginAction } from "@/lib/actions";
 import { loginSchema, type LoginData } from "@/lib/schemas";
+import { Input } from "@/components/ui/Input";
+import { Button } from "@/components/ui/Button";
+import { Checkbox } from "@/components/ui/Checkbox";
 import { Lock, Mail } from "lucide-react";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
@@ -62,59 +65,38 @@ export default function LoginForm() {
           </p>
 
           <form onSubmit={handleSubmit(onSubmit)} className="mt-8 space-y-4">
-            <div>
-              <label htmlFor="email" className="mb-1.5 block text-sm font-medium text-zinc-700">
-                Correo
-              </label>
-              <div className="relative">
-                <Mail className="pointer-events-none absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-zinc-400" />
-                <input
-                  id="email"
-                  {...register("email")}
-                  type="email"
-                  className="w-full rounded-lg border border-zinc-300 bg-white py-2.5 pl-10 pr-3 text-sm text-zinc-900 outline-none focus:border-gold-500 focus:ring-1 focus:ring-gold-500"
-                  placeholder="tu@agencia.com"
-                />
-              </div>
-              {errors.email && <p className="mt-1 text-xs text-rose-600">{errors.email.message}</p>}
-            </div>
+            <Input
+              id="email"
+              label="Correo"
+              icon={<Mail />}
+              {...register("email")}
+              type="email"
+              placeholder="tu@agencia.com"
+              error={errors.email?.message}
+            />
 
-            <div>
-              <label htmlFor="password" className="mb-1.5 block text-sm font-medium text-zinc-700">
-                Contraseña
-              </label>
-              <div className="relative">
-                <Lock className="pointer-events-none absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-zinc-400" />
-                <input
-                  id="password"
-                  {...register("password")}
-                  type="password"
-                  className="w-full rounded-lg border border-zinc-300 bg-white py-2.5 pl-10 pr-3 text-sm text-zinc-900 outline-none focus:border-gold-500 focus:ring-1 focus:ring-gold-500"
-                  placeholder="••••••••"
-                />
-              </div>
-              {errors.password && <p className="mt-1 text-xs text-rose-600">{errors.password.message}</p>}
-            </div>
+            <Input
+              id="password"
+              label="Contraseña"
+              icon={<Lock />}
+              {...register("password")}
+              type="password"
+              placeholder="••••••••"
+              error={errors.password?.message}
+            />
 
             {serverError && <p className="text-sm text-rose-600">{serverError}</p>}
 
             <div className="flex items-center justify-between pt-1 text-sm">
-              <label className="flex items-center gap-2 text-zinc-600">
-                <input type="checkbox" defaultChecked className="rounded border-zinc-300 text-gold-600 focus:ring-gold-500" />
-                Recordarme
-              </label>
+              <Checkbox defaultChecked label="Recordarme" />
               <a href="#" className="font-medium text-zinc-500 hover:text-gold-600">
                 ¿Olvidaste tu contraseña?
               </a>
             </div>
 
-            <button
-              type="submit"
-              disabled={isSubmitting}
-              className="mt-2 w-full rounded-lg bg-zinc-950 py-2.5 text-sm font-medium text-white transition-colors hover:bg-gold-600 disabled:cursor-not-allowed disabled:opacity-60"
-            >
+            <Button type="submit" disabled={isSubmitting} className="mt-2 w-full">
               {isSubmitting ? "Entrando…" : "Entrar"}
-            </button>
+            </Button>
           </form>
 
           <p className="mt-8 text-center text-xs text-zinc-400">

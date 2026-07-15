@@ -1,175 +1,98 @@
 import { z } from "zod";
-import { calcularEdad } from "./utils";
+import { calculateAge } from "./utils";
 
 export const loginSchema = z.object({
   email: z.email("Correo electrónico inválido."),
   password: z.string().min(1, "La contraseña es obligatoria."),
 });
 
-export const contactoSchema = z.object({
-  nombre: z.string().min(1, "El nombre es obligatorio."),
-  empresa: z.string().optional(),
-  correo: z.email("Correo electrónico inválido."),
-  mensaje: z.string().min(1, "El mensaje es obligatorio."),
+export const contactSchema = z.object({
+  name: z.string().min(1, "El nombre es obligatorio."),
+  company: z.string().optional(),
+  email: z.email("Correo electrónico inválido."),
+  message: z.string().min(1, "El mensaje es obligatorio."),
 });
 
 export const categorySchema = z.object({
   name: z.string().min(1, "El nombre es obligatorio."),
 });
 
-export const configuracionSchema = z.object({
-  nombreAgencia: z.string().min(1, "El nombre de la agencia es obligatorio."),
-  colorPrimario: z.string().min(1, "El color primario es obligatorio."),
-  heroTitulo: z.string().min(1, "El título es obligatorio."),
-  heroSubtitulo: z.string().min(1, "El subtítulo es obligatorio."),
+export const settingsSchema = z.object({
+  agencyName: z.string().min(1, "El nombre de la agencia es obligatorio."),
+  primaryColor: z.string().min(1, "El color primario es obligatorio."),
+  heroTitle: z.string().min(1, "El título es obligatorio."),
+  heroSubtitle: z.string().min(1, "El subtítulo es obligatorio."),
 });
 
-export const reenviarSchema = z.object({
-  nombreCompleto: z.string().min(1, "El nombre completo es obligatorio."),
-  correo: z.email("Correo electrónico inválido."),
-  telefono: z.string().min(1, "El teléfono es obligatorio."),
+export const resendApplicationSchema = z.object({
+  fullName: z.string().min(1, "El nombre completo es obligatorio."),
+  email: z.email("Correo electrónico inválido."),
+  phone: z.string().min(1, "El teléfono es obligatorio."),
 });
 
-export const registroFormSchema = z.object({
-  nombres: z.string().min(1, "Los nombres son obligatorios."),
-  apellidoPaterno: z.string().min(1, "El apellido paterno es obligatorio."),
-  apellidoMaterno: z.string().optional(),
-  correo: z.email("Correo electrónico inválido."),
-  telefono: z.string().min(1, "El teléfono es obligatorio."),
-  fechaNacimiento: z
+export const registrationFormSchema = z.object({
+  firstName: z.string().min(1, "El nombre es obligatorio."),
+  paternalLastName: z.string().min(1, "El apellido paterno es obligatorio."),
+  maternalLastName: z.string().optional(),
+  email: z.email("Correo electrónico inválido."),
+  phone: z.string().min(1, "El teléfono es obligatorio."),
+  birthDate: z
     .string()
     .min(1, "La fecha de nacimiento es obligatoria.")
-    .refine((v) => calcularEdad(v) >= 18, "Solo aceptamos registros de personas mayores de 18 años."),
-  genero: z.enum(["MALE", "FEMALE"], { error: "Selecciona un género." }),
+    .refine((v) => calculateAge(v) >= 18, "Solo aceptamos registros de personas mayores de 18 años."),
+  gender: z.enum(["MALE", "FEMALE"], { error: "Selecciona un género." }),
   countryId: z.string().min(1, "Selecciona un país."),
+  nationalityId: z.string().min(1, "Selecciona una nacionalidad."),
   stateId: z.string().min(1, "Selecciona un estado."),
   cityId: z.string().min(1, "Selecciona una ciudad."),
   categoryIds: z.array(z.string()).min(1, "Selecciona al menos una categoría."),
-  captchaRespuesta: z.number({ error: "Ingresa la respuesta de verificación." }),
-  artisticName: z.string().optional(),
-  nationality: z.string().optional(),
-  height: z.string().optional(),
-  weight: z.string().optional(),
-  hasVisibleTattoos: z.boolean(),
-  shirtSize: z.string().optional(),
-  pantsSize: z.string().optional(),
-  availableToTravel: z.boolean(),
-  hasPassport: z.boolean(),
-  hasVisaUS: z.boolean(),
+  password: z.string().min(8, "La contraseña debe tener al menos 8 caracteres."),
+  captchaAnswer: z.number({ error: "Ingresa la respuesta de verificación." }),
 });
 
-export const registroActionSchema = registroFormSchema.omit({
+export const registrationActionSchema = registrationFormSchema.omit({
   stateId: true,
-  captchaRespuesta: true,
+  captchaAnswer: true,
 });
 
-export const nuevoModeloAdminFormSchema = z.object({
-  firstName: z.string().min(1, "Requerido."),
-  lastNameP: z.string().min(1, "Requerido."),
-  lastNameM: z.string().optional(),
-  artisticName: z.string().optional(),
-  email: z.email("Correo inválido."),
-  phone: z.string().min(1, "Requerido."),
-  fechaNacimiento: z
-    .string()
-    .min(1, "Requerido.")
-    .refine((v) => calcularEdad(v) >= 18, "Solo registramos talento mayor de 18 años."),
-  genre: z.enum(["MALE", "FEMALE"], { error: "Selecciona un género." }),
-  nationality: z.string().optional(),
-  countryId: z.string().min(1, "Selecciona un país."),
-  stateId: z.string().optional(),
-  cityId: z.string().min(1, "Selecciona una ciudad."),
-  height: z.string().optional(),
-  weight: z.string().optional(),
-  hasVisibleTattoos: z.boolean().optional(),
-  shirtSize: z.string().optional(),
-  pantsSize: z.string().optional(),
-  availableToTravel: z.boolean(),
+export const modelAttributesSchema = z.object({
+  height: z.number({ error: "La estatura es obligatoria." }).int().positive(),
+  currentWeight: z.number({ error: "El peso es obligatorio." }).int().positive(),
+  hasVisibleTattoos: z.boolean(),
+  shirtSize: z.enum(["XS", "S", "M", "L", "XL", "XXL"], { error: "Selecciona una talla de camisa." }),
+  pantsSizeScale: z.enum(["MEN", "WOMEN"], { error: "Selecciona una escala de talla de pantalón." }),
+  pantsSize: z.string().min(1, "La talla de pantalón es obligatoria."),
+  travelAvailability: z.boolean(),
   hasPassport: z.boolean(),
-  hasVisaUS: z.boolean(),
-  categoryIds: z.array(z.string()),
+  hasVisa: z.boolean(),
+  activityIds: z.array(z.string()).min(1, "Selecciona al menos una actividad."),
 });
 
-export const nuevoModeloAdminActionSchema = nuevoModeloAdminFormSchema.omit({ stateId: true });
+export const ownModelProfileSchema = z.object({
+  firstName: z.string().min(1, "El nombre es obligatorio."),
+  paternalLastName: z.string().min(1, "El apellido paterno es obligatorio."),
+  maternalLastName: z.string().optional(),
+  phone: z.string().min(1, "El teléfono es obligatorio."),
+  mainPhotoUrl: z.string().optional(),
+  photoUrls: z.array(z.string()).max(5, "Máximo 5 fotos en el book."),
+  videoUrls: z.array(z.string()).max(3, "Máximo 3 videos."),
+}).merge(modelAttributesSchema);
 
-export const eventoFormSchema = z
-  .object({
-    nombre: z.string().min(1, "El nombre es obligatorio."),
-    notas: z.string().optional(),
-    isRecurring: z.boolean(),
-    // One-time event fields
-    startDate: z.string().optional(),
-    startTime: z.string().optional(),
-    endDate: z.string().optional(),
-    endTime: z.string().optional(),
-    // Recurring fields
-    recurringDays: z.array(z.number().int().min(0).max(6)),
-    dailyStartTime: z.string().optional(),
-    dailyEndTime: z.string().optional(),
-    rangeStart: z.string().optional(),
-    rangeEnd: z.string().optional(),
-  })
-  .superRefine((d, ctx) => {
-    if (d.isRecurring) {
-      if (!d.recurringDays.length)
-        ctx.addIssue({ code: z.ZodIssueCode.custom, path: ["recurringDays"], message: "Selecciona al menos un día." });
-      if (!d.rangeStart)
-        ctx.addIssue({ code: z.ZodIssueCode.custom, path: ["rangeStart"], message: "Requerido." });
-      if (!d.rangeEnd)
-        ctx.addIssue({ code: z.ZodIssueCode.custom, path: ["rangeEnd"], message: "Requerido." });
-      if (!d.dailyStartTime)
-        ctx.addIssue({ code: z.ZodIssueCode.custom, path: ["dailyStartTime"], message: "Requerido." });
-      if (!d.dailyEndTime)
-        ctx.addIssue({ code: z.ZodIssueCode.custom, path: ["dailyEndTime"], message: "Requerido." });
-    } else {
-      if (!d.startDate)
-        ctx.addIssue({ code: z.ZodIssueCode.custom, path: ["startDate"], message: "Requerido." });
-      if (!d.startTime)
-        ctx.addIssue({ code: z.ZodIssueCode.custom, path: ["startTime"], message: "Requerido." });
-      if (!d.endDate)
-        ctx.addIssue({ code: z.ZodIssueCode.custom, path: ["endDate"], message: "Requerido." });
-      if (!d.endTime)
-        ctx.addIssue({ code: z.ZodIssueCode.custom, path: ["endTime"], message: "Requerido." });
-    }
-  });
-
-export type EventoFormData = z.infer<typeof eventoFormSchema>;
-
-// Legacy alias used by existing action imports
-export const crearEventoSchema = eventoFormSchema;
-export type CrearEventoData = EventoFormData;
-
-export const crearPaqueteSchema = z.object({
-  name: z.string().min(1, "El nombre es obligatorio."),
-  description: z.string().optional(),
-});
-
-export type CrearPaqueteData = z.infer<typeof crearPaqueteSchema>;
-
-export type NuevoModeloAdminFormData = z.infer<typeof nuevoModeloAdminFormSchema>;
-export type NuevoModeloAdminActionData = z.infer<typeof nuevoModeloAdminActionSchema>;
-
-export const portfolioFotoSchema = z.object({
-  url: z.string(),
-  isPortada: z.boolean(),
-  orden: z.number().int(),
-});
-
-export const portfolioEntrySchema = z.object({
-  marca: z.string().min(1, "La marca es obligatoria."),
-  fecha: z.string().min(1, "La fecha es obligatoria."),
-  lugar: z.string().min(1, "El lugar es obligatorio."),
-  isVisible: z.boolean(),
-  fotos: z.array(portfolioFotoSchema),
-});
-
-export type PortfolioFotoData = z.infer<typeof portfolioFotoSchema>;
-export type PortfolioEntryData = z.infer<typeof portfolioEntrySchema>;
+export const modelEditSchema = z.object({
+  firstName: z.string().min(1, "El nombre es obligatorio."),
+  paternalLastName: z.string().min(1, "El apellido paterno es obligatorio."),
+  maternalLastName: z.string().optional(),
+  phone: z.string().min(1, "El teléfono es obligatorio."),
+  categoryIds: z.array(z.string()).min(1, "Selecciona al menos una categoría."),
+}).merge(modelAttributesSchema);
 
 export type LoginData = z.infer<typeof loginSchema>;
-export type ContactoData = z.infer<typeof contactoSchema>;
+export type ContactData = z.infer<typeof contactSchema>;
 export type CategoryData = z.infer<typeof categorySchema>;
-export type ConfiguracionData = z.infer<typeof configuracionSchema>;
-export type ReenviarData = z.infer<typeof reenviarSchema>;
-export type RegistroFormData = z.infer<typeof registroFormSchema>;
-export type RegistroActionData = z.infer<typeof registroActionSchema>;
+export type SettingsData = z.infer<typeof settingsSchema>;
+export type ResendApplicationData = z.infer<typeof resendApplicationSchema>;
+export type RegistrationFormData = z.infer<typeof registrationFormSchema>;
+export type RegistrationActionData = z.infer<typeof registrationActionSchema>;
+export type ModelAttributesData = z.infer<typeof modelAttributesSchema>;
+export type OwnModelProfileData = z.infer<typeof ownModelProfileSchema>;
+export type ModelEditData = z.infer<typeof modelEditSchema>;

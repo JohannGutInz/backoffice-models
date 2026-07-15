@@ -1,10 +1,10 @@
 import { AppShell } from "@/components/layout/AppShell";
-import { getDashboardStats, getUsuarioActual } from "@/lib/data";
+import { getDashboardStats, getCurrentUser } from "@/lib/data";
 import { APP_ROUTE } from "@/lib/routes";
 import { redirect } from "next/navigation";
 
-// El backoffice muta datos en memoria vía server actions (lib/actions.ts) —
-// nunca debe servirse una versión estática/cacheada al momento del build.
+// The backoffice mutates data in memory via server actions (lib/actions.ts) —
+// a static/cached version must never be served at build time.
 export const dynamic = "force-dynamic";
 
 export default async function AppGroupLayout({
@@ -12,14 +12,14 @@ export default async function AppGroupLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const [usuario, stats] = await Promise.all([getUsuarioActual(), getDashboardStats()]);
+  const [user, stats] = await Promise.all([getCurrentUser(), getDashboardStats()]);
 
-  if (!usuario) {
+  if (!user || user.role !== "ADMIN") {
     redirect(APP_ROUTE.app.login.index);
   }
 
   return (
-    <AppShell usuario={usuario} pendingCount={stats.solicitudesPendientes}>
+    <AppShell user={user} pendingCount={stats.pendingApplications}>
       {children}
     </AppShell>
   );
