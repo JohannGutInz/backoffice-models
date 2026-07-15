@@ -7,11 +7,11 @@ import { cn } from "@/lib/utils";
 import { UserW } from "@/lib/types";
 
 export function AppShell({
-  usuario,
+  user,
   pendingCount,
   children,
 }: {
-  usuario: UserW;
+  user: UserW;
   pendingCount: number;
   children: React.ReactNode;
 }) {
@@ -21,7 +21,7 @@ export function AppShell({
     <div className="min-h-screen bg-zinc-100">
       <Sidebar collapsed={collapsed} onToggle={() => setCollapsed((c) => !c)} pendingCount={pendingCount} />
       <div className={cn("flex min-h-screen flex-col transition-[padding] duration-200", collapsed ? "pl-20" : "pl-64")}>
-        <Topbar usuario={usuario} notificationCount={pendingCount} />
+        <Topbar user={user} notificationCount={pendingCount} />
         <main className="flex-1 p-6 lg:p-8">{children}</main>
       </div>
     </div>

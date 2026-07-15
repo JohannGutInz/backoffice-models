@@ -1,12 +1,12 @@
 import Link from "next/link";
 
-export function PublicFooter({ nombreAgencia }: { nombreAgencia: string }) {
+export function PublicFooter({ agencyName }: { agencyName: string }) {
   return (
     <footer className="border-t border-zinc-200/60 bg-white/95 text-zinc-500">
       <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-y-3 px-6 py-4">
         {/* Marca */}
         <div className="flex items-center gap-3">
-          <span className="text-lg font-semibold tracking-tight text-zinc-950">{nombreAgencia}</span>
+          <span className="text-lg font-semibold tracking-tight text-zinc-950">{agencyName}</span>
           <span className="hidden text-zinc-300 sm:inline">·</span>
           <span className="hidden text-sm sm:inline">Representación de talento y modelos.</span>
         </div>
@@ -39,7 +39,7 @@ export function PublicFooter({ nombreAgencia }: { nombreAgencia: string }) {
 
       <div className="border-t border-zinc-200/60 px-6 py-2.5">
         <p className="text-center text-xs text-zinc-400">
-          © {new Date().getFullYear()} {nombreAgencia}. Todos los derechos reservados.
+          © {new Date().getFullYear()} {agencyName}. Todos los derechos reservados.
         </p>
       </div>
     </footer>

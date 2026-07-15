@@ -9,18 +9,18 @@ export interface StatusTab {
 export function StatusTabs({
   basePath,
   tabs,
-  activo,
+  active,
   counts,
 }: {
   basePath: string;
   tabs: StatusTab[];
-  activo: string;
+  active: string;
   counts: Record<string, number>;
 }) {
   return (
     <div className="mb-5 flex flex-wrap gap-1.5 border-b border-zinc-200 pb-px">
       {tabs.map((tab) => {
-        const isActive = activo === tab.value;
+        const isActive = active === tab.value;
         return (
           <Link
             key={tab.value}

@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
+import Image from "next/image";
 import {
   AlertTriangle,
   ArrowLeft,
@@ -12,13 +13,15 @@ import {
   ShieldCheck,
   XCircle,
 } from "lucide-react";
-import { getModeloKyc } from "@/lib/data";
-import { moderarKycAction } from "@/lib/actions";
+import { getModelKyc } from "@/lib/data";
+import { moderateKycAction } from "@/lib/actions";
 import { Avatar } from "@/components/ui/Avatar";
+import { Button } from "@/components/ui/Button";
 import { Card, CardHeader } from "@/components/ui/Card";
 import { Field, FieldGrid } from "@/components/ui/Field";
-import { EstadoBadge } from "@/components/ui/Badge";
-import { addDays, formatDate, modelNombreCompleto } from "@/lib/utils";
+import { Textarea } from "@/components/ui/Textarea";
+import { StatusBadge } from "@/components/ui/Badge";
+import { addDays, formatDate, formatFullName, getMainPhotoUrl, getGalleryPhotos, getGalleryVideos } from "@/lib/utils";
 import { APP_ROUTE } from "@/lib/routes";
 
 const GENRE_LABEL: Record<string, string> = {
@@ -26,35 +29,39 @@ const GENRE_LABEL: Record<string, string> = {
   FEMALE: "Femenino",
 };
 
-function calcularEdad(birthDate: Date): number {
-  const hoy = new Date();
-  let edad = hoy.getFullYear() - birthDate.getFullYear();
-  const aunNoCumple =
-    hoy.getMonth() < birthDate.getMonth() ||
-    (hoy.getMonth() === birthDate.getMonth() && hoy.getDate() < birthDate.getDate());
-  if (aunNoCumple) edad -= 1;
-  return edad;
+function calculateAge(birthDate: Date): number {
+  const today = new Date();
+  let age = today.getFullYear() - birthDate.getFullYear();
+  const hasNotHadBirthdayYet =
+    today.getMonth() < birthDate.getMonth() ||
+    (today.getMonth() === birthDate.getMonth() && today.getDate() < birthDate.getDate());
+  if (hasNotHadBirthdayYet) age -= 1;
+  return age;
 }
 
-export default async function ModeracionDetailPage({
+export default async function ModerationDetailPage({
   params,
 }: {
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const modelo = await getModeloKyc(id);
+  const model = await getModelKyc(id);
 
-  if (!modelo) notFound();
+  if (!model) notFound();
 
-  const { kyc } = modelo;
-  const edad = calcularEdad(modelo.birthDate);
-  const purgaFecha = kyc.rejectedAt ? addDays(kyc.rejectedAt, 45) : null;
+  const { kyc } = model;
+  const age = calculateAge(model.birthDate);
+  const purgeDate = kyc.rejectedAt ? addDays(kyc.rejectedAt, 45) : null;
   const canReview = kyc.status !== "APPROVED" && kyc.status !== "REJECTED";
+
+  const mainPhotoUrl = getMainPhotoUrl(model.assets);
+  const photoUrls = getGalleryPhotos(model.assets);
+  const videoUrls = getGalleryVideos(model.assets);
 
   return (
     <div>
       <Link
-        href={APP_ROUTE.app.moderacion.index}
+        href={APP_ROUTE.app.moderation.index}
         className="mb-5 inline-flex items-center gap-1.5 text-sm text-zinc-500 hover:text-zinc-800"
       >
         <ArrowLeft className="h-4 w-4" /> Volver a Moderación
@@ -62,11 +69,17 @@ export default async function ModeracionDetailPage({
 
       <div className="mb-6 flex flex-wrap items-start justify-between gap-4">
         <div className="flex items-center gap-4">
-          <Avatar name={modelNombreCompleto(modelo)} size="lg" />
+          {mainPhotoUrl ? (
+            <div className="relative h-16 w-16 shrink-0 overflow-hidden rounded-full">
+              <Image src={mainPhotoUrl} alt={formatFullName(model)} fill className="object-cover" unoptimized />
+            </div>
+          ) : (
+            <Avatar name={formatFullName(model)} size="lg" />
+          )}
           <div>
-            <h1 className="text-2xl font-semibold tracking-tight text-zinc-900">{modelNombreCompleto(modelo)}</h1>
+            <h1 className="text-2xl font-semibold tracking-tight text-zinc-900">{formatFullName(model)}</h1>
             <div className="mt-1 flex items-center gap-2 text-sm text-zinc-500">
-              <EstadoBadge estado={kyc.status} />
+              <StatusBadge status={kyc.status} />
               <span>·</span>
               <span>Enviado el {formatDate(kyc.createdAt)}</span>
             </div>
@@ -74,7 +87,7 @@ export default async function ModeracionDetailPage({
         </div>
       </div>
 
-      {edad < 18 && (
+      {age < 18 && (
         <div className="mb-5 flex items-center gap-2 rounded-lg bg-rose-50 px-4 py-3 text-sm font-medium text-rose-700">
           <AlertTriangle className="h-4 w-4" /> Esta solicitud indica una edad menor a 18 años — no procesar.
         </div>
@@ -88,31 +101,31 @@ export default async function ModeracionDetailPage({
               <FieldGrid>
                 <Field
                   label={<span className="inline-flex items-center gap-1"><Mail className="h-3 w-3" /> Correo</span>}
-                  value={modelo.email}
+                  value={model.email}
                 />
                 <Field
                   label={<span className="inline-flex items-center gap-1"><Phone className="h-3 w-3" /> Teléfono</span>}
-                  value={modelo.phone}
+                  value={model.phone}
                 />
                 <Field
                   label="Fecha de nacimiento"
-                  value={`${formatDate(modelo.birthDate)} · ${edad} años`}
+                  value={`${formatDate(model.birthDate)} · ${age} años`}
                 />
-                <Field label="Género" value={GENRE_LABEL[modelo.genre] ?? modelo.genre} />
+                <Field label="Género" value={GENRE_LABEL[model.genre] ?? model.genre} />
                 <Field
                   label={<span className="inline-flex items-center gap-1"><MapPin className="h-3 w-3" /> Ubicación</span>}
-                  value={`${modelo.city.name}, ${modelo.city.state.name}, ${modelo.country.name}`}
+                  value={`${model.city.name}, ${model.city.state.name}, ${model.country.name}`}
                 />
               </FieldGrid>
             </div>
           </Card>
 
-          {modelo.categories.length > 0 && (
+          {model.categories.length > 0 && (
             <Card>
               <CardHeader title="Categorías" />
               <div className="px-5 pb-5">
                 <div className="flex flex-wrap gap-2">
-                  {modelo.categories.map((cat) => (
+                  {model.categories.map((cat) => (
                     <span
                       key={cat.id}
                       className="rounded-full bg-zinc-100 px-3 py-1 text-sm font-medium text-zinc-700"
@@ -125,57 +138,74 @@ export default async function ModeracionDetailPage({
             </Card>
           )}
 
+          {(photoUrls.length > 0 || videoUrls.length > 0) && (
+            <Card>
+              <CardHeader title="Book" subtitle="Fotos y videos que el modelo cargó a su perfil." />
+              <div className="space-y-4 px-5 pb-5">
+                {photoUrls.length > 0 && (
+                  <div className="grid grid-cols-3 gap-3 sm:grid-cols-4">
+                    {photoUrls.map((url) => (
+                      <div key={url} className="relative aspect-square overflow-hidden rounded-lg border border-zinc-200">
+                        <Image src={url} alt="Foto del book" fill className="object-cover" unoptimized />
+                      </div>
+                    ))}
+                  </div>
+                )}
+                {videoUrls.length > 0 && (
+                  <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                    {videoUrls.map((url) => (
+                      <video key={url} src={url} controls className="w-full rounded-lg" />
+                    ))}
+                  </div>
+                )}
+              </div>
+            </Card>
+          )}
+
           <Card>
             <CardHeader
               title="Revisión KYC"
               subtitle="El comentario es visible para el registro. La nota interna es solo para staff."
             />
             <form className="space-y-4 px-5 pb-5">
-              <div>
-                <label className="mb-1.5 block text-xs font-semibold tracking-wide text-zinc-500 uppercase">
-                  Nota interna · solo staff
-                </label>
-                <textarea
-                  name="internalNote"
-                  defaultValue={kyc.internalNote ?? ""}
-                  rows={3}
-                  placeholder="Observaciones internas, nunca visibles para el registro…"
-                  className="w-full rounded-lg border border-zinc-200 bg-zinc-50 p-3 text-sm text-zinc-700 outline-none focus:border-zinc-400 focus:ring-1 focus:ring-zinc-400"
-                />
-              </div>
-              <div>
-                <label className="mb-1.5 block text-xs font-semibold tracking-wide text-gold-700 uppercase">
-                  Comentario para el modelo · visible en su notificación
-                </label>
-                <textarea
-                  name="comment"
-                  defaultValue={kyc.comment ?? ""}
-                  rows={3}
-                  placeholder="Lo que el modelo recibirá como retroalimentación…"
-                  className="w-full rounded-lg border border-gold-200 bg-gold-50 p-3 text-sm text-gold-900 outline-none focus:border-gold-400 focus:ring-1 focus:ring-gold-400"
-                />
-              </div>
+              <Textarea
+                label="Nota interna · solo staff"
+                labelClassName="text-xs font-semibold tracking-wide text-zinc-500 uppercase"
+                name="internalNote"
+                defaultValue={kyc.internalNote ?? ""}
+                placeholder="Observaciones internas, nunca visibles para el registro…"
+                className="border-zinc-200 bg-zinc-50 text-zinc-700 focus:border-zinc-400 focus:ring-zinc-400"
+              />
+              <Textarea
+                label="Comentario para el modelo · visible en su notificación"
+                labelClassName="text-xs font-semibold tracking-wide text-gold-700 uppercase"
+                name="comment"
+                defaultValue={kyc.comment ?? ""}
+                placeholder="Lo que el modelo recibirá como retroalimentación…"
+                className="border-gold-200 bg-gold-50 text-gold-900 focus:border-gold-400 focus:ring-gold-400"
+              />
 
               {canReview && (
                 <div className="flex flex-wrap items-center gap-2 pt-1">
-                  <button
-                    formAction={moderarKycAction.bind(null, modelo.id, "REJECTED")}
-                    className="inline-flex items-center justify-center gap-2 rounded-lg bg-white px-4 py-2.5 text-sm font-medium text-zinc-700 ring-1 ring-inset ring-zinc-200 transition-colors hover:bg-rose-50 hover:text-rose-700 hover:ring-rose-200"
+                  <Button
+                    type="submit"
+                    variant="secondary"
+                    formAction={moderateKycAction.bind(null, model.id, "REJECTED")}
+                    className="hover:bg-rose-50 hover:text-rose-700 hover:ring-rose-200"
                   >
                     <XCircle className="h-4 w-4" /> Rechazar
-                  </button>
-                  <button
-                    formAction={moderarKycAction.bind(null, modelo.id, "REQUIRES_CHANGES")}
-                    className="inline-flex items-center justify-center gap-2 rounded-lg bg-white px-4 py-2.5 text-sm font-medium text-zinc-700 ring-1 ring-inset ring-zinc-200 transition-colors hover:bg-amber-50 hover:text-amber-700 hover:ring-amber-200"
+                  </Button>
+                  <Button
+                    type="submit"
+                    variant="secondary"
+                    formAction={moderateKycAction.bind(null, model.id, "REQUIRES_CHANGES")}
+                    className="hover:bg-amber-50 hover:text-amber-700 hover:ring-amber-200"
                   >
                     <RotateCcw className="h-4 w-4" /> Solicitar cambios
-                  </button>
-                  <button
-                    formAction={moderarKycAction.bind(null, modelo.id, "APPROVED")}
-                    className="inline-flex items-center justify-center gap-2 rounded-lg bg-zinc-950 px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-gold-600"
-                  >
+                  </Button>
+                  <Button type="submit" formAction={moderateKycAction.bind(null, model.id, "APPROVED")}>
                     <CheckCircle2 className="h-4 w-4" /> Aprobar
-                  </button>
+                  </Button>
                 </div>
               )}
             </form>
@@ -195,12 +225,12 @@ export default async function ModeracionDetailPage({
                   <span>Revisado el {formatDate(kyc.reviewedAt)}</span>
                 </div>
               )}
-              {kyc.status === "REJECTED" && purgaFecha && (
+              {kyc.status === "REJECTED" && purgeDate && (
                 <div className="flex items-start gap-2 rounded-lg bg-rose-50 p-3 text-xs text-rose-700">
                   <Clock className="mt-0.5 h-3.5 w-3.5 shrink-0" />
                   <span>
                     Rechazado el {formatDate(kyc.rejectedAt!)}. Datos se purgarán el{" "}
-                    <strong>{formatDate(purgaFecha)}</strong>.
+                    <strong>{formatDate(purgeDate)}</strong>.
                   </span>
                 </div>
               )}
@@ -222,7 +252,7 @@ export default async function ModeracionDetailPage({
             <CardHeader title="Identificación" />
             <div className="px-5 pb-5">
               <FieldGrid>
-                <Field label="ID modelo" value={<span className="font-mono text-xs">{modelo.id}</span>} />
+                <Field label="ID modelo" value={<span className="font-mono text-xs">{model.id}</span>} />
                 <Field label="ID KYC" value={<span className="font-mono text-xs">{kyc.id}</span>} />
               </FieldGrid>
             </div>

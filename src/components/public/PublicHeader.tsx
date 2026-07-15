@@ -45,11 +45,11 @@ const SOCIAL = [
 ];
 
 export function PublicHeader({
-  nombreAgencia,
-  registroPublicoActivo: _registroPublicoActivo,
+  agencyName,
+  publicRegistrationActive: _publicRegistrationActive,
 }: {
-  nombreAgencia: string;
-  registroPublicoActivo: boolean;
+  agencyName: string;
+  publicRegistrationActive: boolean;
 }) {
   const [scrolled, setScrolled] = useState(false);
   const pathname = usePathname();
@@ -84,7 +84,7 @@ export function PublicHeader({
             transparent ? "text-white" : "text-zinc-950",
           )}
         >
-          {nombreAgencia}
+          {agencyName}
         </Link>
 
         {/* Desktop nav */}

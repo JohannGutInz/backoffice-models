@@ -10,6 +10,7 @@ datasource db {
 enum UserRole {
   ADMIN
   USER
+  MODEL
 }
 
 model User {
@@ -20,30 +21,20 @@ model User {
   role           UserRole @default(USER)
   createdAt      DateTime @default(now()) @map("created_at")
 
-  agencyId String @map("agency_id")
-  agency   Agency @relation(fields: [agencyId], references: [id])
+  model Model?
 
   @@map("users")
-}
-
-model Agency {
-  id        String   @id @default(uuid())
-  name      String
-  createdAt DateTime @default(now()) @map("created_at")
-
-  users User[]
-
-  @@map("agencies")
 }
 
 model Country {
   id      String @id @default(uuid())
   name    String
-  label   String @unique
-  demonym String
+  label   String @unique // MX, USA, etc
+  demonym String // Mexicano, American, etc
 
-  models Model[]
-  states State[]
+  models                Model[] @relation("ModelResidenceCountry")
+  modelsWithNationality Model[] @relation("ModelNationality")
+  states                State[]
 
   @@map("countries")
 }
@@ -64,7 +55,7 @@ model State {
 model Municipality {
   id    String @id @default(uuid())
   name  String
-  label String @unique
+  label String @unique // CLN,
 
   stateId String @map("state_id")
   state   State  @relation(fields: [stateId], references: [id])
@@ -84,9 +75,33 @@ model Category {
   @@map("categories")
 }
 
+model Activity {
+  id      String  @id @default(uuid())
+  name    String
+  enabled Boolean @default(true)
+
+  models Model[]
+
+  @@map("activities")
+}
+
 enum ModelGenre {
   MALE
   FEMALE
+}
+
+enum ShirtSize {
+  XS
+  S
+  M
+  L
+  XL
+  XXL
+}
+
+enum PantsSizeScale {
+  MEN
+  WOMEN
 }
 
 enum KycStatus {
@@ -125,36 +140,43 @@ model Kyc {
 }
 
 model Model {
-  id           String     @id @default(uuid())
-  firstName    String     @map("first_name")
-  lastNameP    String     @map("last_name_p")
-  lastNameM    String?    @map("last_name_m")
-  artisticName String?    @map("artistic_name")
-  email        String     @unique
-  phone        String
-  birthDate    DateTime   @map("birth_date") @db.Date
-  nationality  String?
-  genre        ModelGenre
+  id               String     @id @default(uuid())
+  firstName        String     @map("first_name")
+  paternalLastName String     @map("paternal_last_name")
+  maternalLastName String?    @map("maternal_last_name")
+  email            String     @unique
+  phone            String
+  birthDate        DateTime   @map("birth_date") @db.Date
+  genre            ModelGenre
+  createdAt        DateTime   @default(now()) @map("created_at")
+  updatedAt        DateTime   @default(now()) @updatedAt @map("updated_at")
 
-  height            Int?
-  weight            Decimal?
-  hasVisibleTattoos Boolean? @map("has_visible_tattoos")
-  shirtSize         String?  @map("shirt_size")
-  pantsSize         String?  @map("pants_size")
+  height             Int?            @map("height_cm")
+  currentWeight      Int?            @map("current_weight_kg")
+  hasVisibleTattoos  Boolean         @default(false) @map("has_visible_tattoos")
+  shirtSize          ShirtSize?      @map("shirt_size")
+  pantsSizeScale     PantsSizeScale? @map("pants_size_scale")
+  pantsSize          String?         @map("pants_size")
+  travelAvailability Boolean         @default(false) @map("travel_availability")
+  hasPassport        Boolean         @default(false) @map("has_passport")
+  hasVisa            Boolean         @default(false) @map("has_visa")
 
-  availableToTravel Boolean @default(false) @map("available_to_travel")
-  hasPassport       Boolean @default(false) @map("has_passport")
-  hasVisaUS         Boolean @default(false) @map("has_visa_us")
-
-  isVisible Boolean @default(false) @map("is_visible")
+  assets Asset[]
 
   kycId String @unique @map("kyc_id")
   kyc   Kyc    @relation(fields: [kycId], references: [id])
 
+  userId String @unique @map("user_id")
+  user   User   @relation(fields: [userId], references: [id])
+
   categories Category[]
+  activities Activity[]
 
   countryId String  @map("country_id")
-  country   Country @relation(fields: [countryId], references: [id])
+  country   Country @relation("ModelResidenceCountry", fields: [countryId], references: [id])
+
+  nationalityId String  @map("nationality_id")
+  nationality   Country @relation("ModelNationality", fields: [nationalityId], references: [id])
 
   cityId String       @map("city_id")
   city   Municipality @relation(fields: [cityId], references: [id])
@@ -166,75 +188,22 @@ model Model {
   @@map("models")
 }
 
-model Evento {
-  id       String   @id @default(uuid())
-  nombre   String
-  startAt  DateTime @map("start_at")
-  endAt    DateTime @map("end_at")
-  cubierto Boolean  @default(false)
-  notas    String?
-
-  // Recurrence: empty = one-time event; populated = repeats on these JS weekdays (0=Dom,1=Lun…6=Sáb)
-  recurringDays  Int[]   @map("recurring_days")
-  dailyStartTime String? @map("daily_start_time")
-  dailyEndTime   String? @map("daily_end_time")
-
-  modeloId String? @map("modelo_id")
-  modelo   Model?  @relation(fields: [modeloId], references: [id])
-
-  createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @updatedAt @map("updated_at")
-
-  @@map("eventos")
+enum AssetType {
+  MAIN_PHOTO
+  PHOTO
+  VIDEO
 }
 
-model Package {
-  id          String        @id @default(uuid())
-  name        String
-  description String?
-  publicToken String        @unique @default(uuid()) @map("public_token")
-  status      PackageStatus @default(DRAFT)
-  createdAt   DateTime      @default(now()) @map("created_at")
-  updatedAt   DateTime      @updatedAt @map("updated_at")
-
-  models Model[]
-
-  @@map("packages")
-}
-
-model PortfolioEntry {
-  id        String   @id @default(uuid())
-  marca     String
-  fecha     String
-  lugar     String
-  isVisible Boolean  @default(false) @map("is_visible")
-  createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @updatedAt @map("updated_at")
-
-  fotos PortfolioFoto[]
-
-  @@map("portfolio_entries")
-}
-
-model PortfolioFoto {
-  id        String         @id @default(uuid())
-  url       String
-  isPortada Boolean        @default(false) @map("is_portada")
-  orden     Int            @default(0)
-  entryId   String         @map("entry_id")
-  entry     PortfolioEntry @relation(fields: [entryId], references: [id], onDelete: Cascade)
-
-  @@map("portfolio_fotos")
-}
-
-model ModelMedia {
+model Asset {
   id        String    @id @default(uuid())
+  type      AssetType
   url       String
-  type      MediaType
+  position  Int
   createdAt DateTime  @default(now()) @map("created_at")
 
   modelId String @map("model_id")
   model   Model  @relation(fields: [modelId], references: [id], onDelete: Cascade)
 
-  @@map("model_media")
+  @@unique([modelId, type, position])
+  @@map("assets")
 }

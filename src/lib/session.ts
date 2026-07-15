@@ -1,4 +1,5 @@
 import { SignJWT, jwtVerify, type JWTPayload } from "jose";
+import type { UserRole } from "@/generated/prisma/browser";
 
 export const SESSION_COOKIE = "glamour_session";
 export const SESSION_TTL_SECONDS = 60 * 60 * 8;
@@ -6,12 +7,14 @@ export const SESSION_TTL_SECONDS = 60 * 60 * 8;
 export interface SessionJwtPayload extends JWTPayload {
 	email: string;
 	username: string;
+	role: UserRole;
 }
 
 export interface SessionTokenInput {
 	sub: string;
 	email: string;
 	username: string;
+	role: UserRole;
 }
 
 function parsePayload(value: unknown): SessionJwtPayload | null {
@@ -21,7 +24,8 @@ function parsePayload(value: unknown): SessionJwtPayload | null {
 	if (
 		typeof payload.sub !== "string" ||
 		typeof payload.email !== "string" ||
-		typeof payload.username !== "string"
+		typeof payload.username !== "string" ||
+		typeof payload.role !== "string"
 	) {
 		return null;
 	}
@@ -49,7 +53,7 @@ function getSessionSecretKey() {
 }
 
 export async function createSessionToken(payload: SessionTokenInput) {
-	return new SignJWT({ email: payload.email, username: payload.username })
+	return new SignJWT({ email: payload.email, username: payload.username, role: payload.role })
 		.setProtectedHeader({ alg: "HS256", typ: "JWT" })
 		.setSubject(payload.sub)
 		.setIssuedAt()
@@ -70,6 +74,7 @@ export async function verifySessionToken(token: string): Promise<SessionJwtPaylo
 			sub: payload.sub,
 			email: session.email,
 			username: session.username,
+			role: session.role,
 			iat: typeof payload.iat === "number" ? payload.iat : undefined,
 			exp: typeof payload.exp === "number" ? payload.exp : undefined,
 		};

@@ -14,6 +14,30 @@ Never revert unless user says "stop caveman" or "normal mode".
 
 ---
 
+# Commit Convention
+
+Do **not** add `Co-Authored-By: Claude` (or any Claude/Anthropic co-author trailer) to commit messages.
+
+---
+
+# Code Language Convention
+
+**All code is written in English**: variable/function/type/component names, comments, file and directory names inside `src/`.
+
+**Paths and similar stay in Spanish**: URL routes/folders under `src/app/`, and anything user-facing (UI copy, labels, zod validation messages, emails) — this is a Spanish-market product.
+
+---
+
+# UI Component Convention
+
+Reusable UI primitives live in `src/components/ui/`. Before writing raw `<input>`, `<select>`, `<textarea>`, `<button>`, checkbox, color-picker, or toggle-switch markup, check if one already exists here and use it.
+
+Current primitives: `Input` · `Select` · `Textarea` · `Button` · `Checkbox` · `ColorInput` · `Switch` · `Card` · `Badge` · `Avatar` · `Field` · `PageHeader` · `SearchForm` · `StatCard` · `StatusTabs` · `Table` · `ImageUpload` · `VideoUpload` · `MultiSelectPicker`.
+
+**When to extract a new one**: once a raw HTML pattern (markup + Tailwind classes) repeats across 2+ files, pull it into `src/components/ui/` instead of copy-pasting. Match the established API shape: `forwardRef`, spread native HTML attrs (`React.<Tag>HTMLAttributes<...>`), optional `label`/`error` props, `cn()` for className merging, same border/focus/error styling as `Input.tsx`.
+
+---
+
 # Project Resume
 
 **Backoffice Models** — agency management platform for talent/model agencies.
@@ -38,7 +62,7 @@ Never revert unless user says "stop caveman" or "normal mode".
 
 ## DB Models (Prisma)
 
-`User` · `Agency` · `Model` · `Kyc` · `Category` · `Country` · `State` · `Municipality`
+`User` · `Model` · `Kyc` · `Category` · `Country` · `State` · `Municipality`
 
 KYC statuses: `PENDING` · `APPROVED` · `REJECTED` · `REQUIRES_CHANGES`
 

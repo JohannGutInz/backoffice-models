@@ -14,20 +14,20 @@ import { LinkButton } from "@/components/ui/Button";
 import { StatCard } from "@/components/ui/StatCard";
 import { Card, CardHeader } from "@/components/ui/Card";
 import { Table, THead, Th, Tr, Td } from "@/components/ui/Table";
-import { EstadoBadge } from "@/components/ui/Badge";
+import { StatusBadge } from "@/components/ui/Badge";
 import { RevenueBarChart } from "@/components/charts/RevenueBarChart";
 import { StatusDonutChart } from "@/components/charts/StatusDonutChart";
 import { AlertList } from "@/components/dashboard/AlertList";
 import { QuickActions } from "@/components/dashboard/QuickActions";
-import { getDashboardStats, getIngresosPorMes, getUsuarioActual, nombreEvento, nombreModelo } from "@/lib/data";
+import { getDashboardStats, getMonthlyRevenue, getCurrentUser, eventName, modelName } from "@/lib/data";
 import { APP_ROUTE } from "@/lib/routes";
 import { formatCurrency, formatDate, formatLongDate, greetingForHour } from "@/lib/utils";
 
 export default async function DashboardPage() {
-  const [usuario, stats, ingresosMensuales] = await Promise.all([
-    getUsuarioActual(),
+  const [user, stats, monthlyRevenue] = await Promise.all([
+    getCurrentUser(),
     getDashboardStats(),
-    getIngresosPorMes(),
+    getMonthlyRevenue(),
   ]);
 
   const now = new Date();
@@ -37,7 +37,7 @@ export default async function DashboardPage() {
       <div className="mb-6 flex flex-wrap items-start justify-between gap-4">
         <div>
           <h1 className="text-2xl font-semibold tracking-tight text-zinc-900">
-            {greetingForHour(now)}, {usuario.username}
+            {greetingForHour(now)}, {user.username}
           </h1>
           <p className="mt-1 text-sm text-zinc-500">{formatLongDate(now)}</p>
         </div>
@@ -49,35 +49,35 @@ export default async function DashboardPage() {
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-5">
         <StatCard
           title="Bookings activos"
-          value={String(stats.bookingsActivos)}
-          subtitle={`${stats.bookingsConfirmados} confirmados · ${stats.bookingsPendientes} pendientes`}
+          value={String(stats.activeBookings)}
+          subtitle={`${stats.confirmedBookings} confirmados · ${stats.pendingBookings} pendientes`}
           icon={ClipboardList}
           tone="zinc"
         />
         <StatCard
           title="Ingresos del mes"
-          value={formatCurrency(stats.ingresosMesActual)}
+          value={formatCurrency(stats.currentMonthIncome)}
           subtitle="Eventos facturados este mes"
           icon={CircleDollarSign}
           tone="emerald"
         />
         <StatCard
           title="Paquetes"
-          value={String(stats.paquetesPendientes)}
+          value={String(stats.pendingPackages)}
           subtitle="Pendientes / enviados"
           icon={PackageOpen}
           tone="gold"
         />
         <StatCard
           title="Clientes"
-          value={String(stats.clientesTotal)}
+          value={String(stats.totalClients)}
           subtitle="En el catálogo"
           icon={UsersRound}
           tone="sky"
         />
         <StatCard
           title="Solicitudes pendientes"
-          value={String(stats.solicitudesPendientes)}
+          value={String(stats.pendingApplications)}
           subtitle="Esperando moderación"
           icon={UserPlus}
           tone="rose"
@@ -91,19 +91,19 @@ export default async function DashboardPage() {
             subtitle="Últimos 6 meses · bookings facturados"
             action={
               <span className="text-xs text-zinc-400">
-                Total: {formatCurrency(ingresosMensuales.reduce((s, m) => s + m.total, 0))}
+                Total: {formatCurrency(monthlyRevenue.reduce((s, m) => s + m.total, 0))}
               </span>
             }
           />
           <div className="px-2 pb-4">
-            <RevenueBarChart data={ingresosMensuales} />
+            <RevenueBarChart data={monthlyRevenue} />
           </div>
         </Card>
 
         <Card>
-          <CardHeader title="Bookings por estatus" subtitle={`Total: ${stats.bookingsTotal} bookings`} />
+          <CardHeader title="Bookings por estatus" subtitle={`Total: ${stats.totalBookings} bookings`} />
           <div className="px-4 pb-5">
-            <StatusDonutChart data={stats.bookingsPorEstatus} />
+            <StatusDonutChart data={stats.bookingsByStatus} />
           </div>
         </Card>
       </div>
@@ -128,20 +128,20 @@ export default async function DashboardPage() {
               <Th>Fecha</Th>
             </THead>
             <tbody>
-              {stats.ultimosBookings.map((booking) => {
-                const evento = nombreEvento(booking.eventoId);
+              {stats.latestBookings.map((booking) => {
+                const event = eventName(booking.eventId);
                 return (
                   <Tr key={booking.id}>
                     <Td className="font-medium text-gold-700">{booking.id.replace("bkg_", "BK-").toUpperCase()}</Td>
-                    <Td>{nombreModelo(booking.modeloId)}</Td>
+                    <Td>{modelName(booking.modelId)}</Td>
                     <Td>
-                      <span className="block text-zinc-700">{evento}</span>
+                      <span className="block text-zinc-700">{event}</span>
                     </Td>
                     <Td>
-                      <EstadoBadge estado={booking.estado} />
+                      <StatusBadge status={booking.status} />
                     </Td>
-                    <Td className="text-right font-medium text-zinc-900">{formatCurrency(booking.tarifa)}</Td>
-                    <Td className="text-zinc-500">{formatDate(booking.fecha)}</Td>
+                    <Td className="text-right font-medium text-zinc-900">{formatCurrency(booking.rate)}</Td>
+                    <Td className="text-zinc-500">{formatDate(booking.date)}</Td>
                   </Tr>
                 );
               })}
@@ -155,33 +155,33 @@ export default async function DashboardPage() {
               {
                 icon: UserPlus,
                 tone: "rose",
-                title: `${stats.solicitudesPendientes} solicitudes pendientes`,
+                title: `${stats.pendingApplications} solicitudes pendientes`,
                 subtitle: "Esperando moderación",
-                href: APP_ROUTE.app.moderacion.index,
+                href: APP_ROUTE.app.moderation.index,
               },
               {
                 icon: CalendarClock,
                 tone: "amber",
-                title: `${stats.bookingsPendientes} bookings sin confirmar`,
+                title: `${stats.pendingBookings} bookings sin confirmar`,
                 subtitle: "Pendientes de confirmación del modelo",
                 href: APP_ROUTE.app.bookings.index,
               },
               {
                 icon: PackageOpen,
                 tone: "sky",
-                title: `${stats.paquetesBorrador} paquetes sin enviar`,
+                title: `${stats.draftPackages} paquetes sin enviar`,
                 subtitle: "En borrador, listos para el cliente",
-                href: APP_ROUTE.app.paquetes.index,
+                href: APP_ROUTE.app.packages.index,
               },
             ]}
           />
 
           <QuickActions
             items={[
-              { icon: UserRoundPlus, label: "Nuevo modelo", href: APP_ROUTE.app.modelos.index },
-              { icon: Sparkles, label: "Nuevo evento", href: APP_ROUTE.app.eventos.index },
+              { icon: UserRoundPlus, label: "Nuevo modelo", href: APP_ROUTE.app.models.index },
+              { icon: Sparkles, label: "Nuevo evento", href: APP_ROUTE.app.events.index },
               { icon: ClipboardList, label: "Nuevo booking", href: APP_ROUTE.app.bookings.index },
-              { icon: ShieldCheck, label: "Revisar solicitudes", href: APP_ROUTE.app.moderacion.index },
+              { icon: ShieldCheck, label: "Revisar solicitudes", href: APP_ROUTE.app.moderation.index },
             ]}
           />
         </div>

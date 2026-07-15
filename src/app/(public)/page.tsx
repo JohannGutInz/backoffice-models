@@ -42,7 +42,7 @@ export default async function HomePage() {
               className="group flex flex-1 flex-col items-center justify-center gap-3 rounded-2xl border border-white/20 bg-white/5 px-7 py-8 backdrop-blur-sm transition-[border-color,transform] duration-200 hover:-translate-y-0.5 hover:border-gold-500"
             >
               <span className="text-sm font-bold tracking-[0.25em] text-white uppercase transition-colors duration-200 group-hover:text-gold-400">
-                 Contratar talento
+                Contratar talento
               </span>
               <p className="text-base text-zinc-400">
                 Quiero contratar personal para mi evento

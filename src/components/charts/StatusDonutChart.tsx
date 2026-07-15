@@ -1,9 +1,9 @@
 "use client";
 
 import { Cell, Pie, PieChart, ResponsiveContainer, Tooltip } from "recharts";
-import { estadoLabel } from "@/components/ui/Badge";
+import { statusLabel } from "@/components/ui/Badge";
 
-const ESTATUS_COLOR: Record<string, string> = {
+const STATUS_COLOR: Record<string, string> = {
   pendiente: "#c94d81",
   confirmado: "#3f3f46",
   completado: "#059669",
@@ -14,10 +14,10 @@ const ESTATUS_COLOR: Record<string, string> = {
   rechazado: "#fb7185",
 };
 
-export function StatusDonutChart({ data }: { data: { estatus: string; total: number }[] }) {
-  const totalGeneral = data.reduce((sum, d) => sum + d.total, 0);
+export function StatusDonutChart({ data }: { data: { status: string; total: number }[] }) {
+  const total = data.reduce((sum, d) => sum + d.total, 0);
 
-  if (totalGeneral === 0) {
+  if (total === 0) {
     return (
       <div className="flex h-[260px] flex-col items-center justify-center text-sm text-zinc-400">
         Sin registros aún
@@ -32,18 +32,18 @@ export function StatusDonutChart({ data }: { data: { estatus: string; total: num
           <Pie
             data={data}
             dataKey="total"
-            nameKey="estatus"
+            nameKey="status"
             innerRadius={64}
             outerRadius={92}
             paddingAngle={data.length > 1 ? 3 : 0}
             stroke="none"
           >
             {data.map((entry) => (
-              <Cell key={entry.estatus} fill={ESTATUS_COLOR[entry.estatus] ?? "#a1a1aa"} />
+              <Cell key={entry.status} fill={STATUS_COLOR[entry.status] ?? "#a1a1aa"} />
             ))}
           </Pie>
           <Tooltip
-            formatter={(value, _name, item) => [String(value), estadoLabel(item.payload.estatus)]}
+            formatter={(value, _name, item) => [String(value), statusLabel(item.payload.status)]}
             contentStyle={{
               borderRadius: 10,
               border: "1px solid #e4e4e7",
@@ -55,12 +55,12 @@ export function StatusDonutChart({ data }: { data: { estatus: string; total: num
       </ResponsiveContainer>
       <ul className="mt-2 flex flex-wrap justify-center gap-x-5 gap-y-1.5">
         {data.map((entry) => (
-          <li key={entry.estatus} className="flex items-center gap-1.5 text-xs text-zinc-600">
+          <li key={entry.status} className="flex items-center gap-1.5 text-xs text-zinc-600">
             <span
               className="h-2 w-2 rounded-full"
-              style={{ backgroundColor: ESTATUS_COLOR[entry.estatus] ?? "#a1a1aa" }}
+              style={{ backgroundColor: STATUS_COLOR[entry.status] ?? "#a1a1aa" }}
             />
-            {estadoLabel(entry.estatus)}
+            {statusLabel(entry.status)}
           </li>
         ))}
       </ul>

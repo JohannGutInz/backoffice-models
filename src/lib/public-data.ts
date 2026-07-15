@@ -1,163 +1,122 @@
-import { clientes, eventos, AGENCY_ID } from "./mock-data";
+import { clients, events, AGENCY_ID } from "./mock-data";
 import { prisma } from "@/db";
+import { getMainPhotoUrl, getGalleryPhotos, getGalleryVideos } from "./utils";
 
-// Frontera pública. Solo devuelve modelos con KYC aprobado y visibles. Sin datos privados.
+// Public boundary. Only returns models with approved KYC. No private data.
 
 const publicModelInclude = {
   kyc: true,
   categories: { select: { name: true } },
+  activities: { select: { name: true } },
   country: { select: { name: true } },
+  nationality: { select: { demonym: true } },
   city: { select: { name: true } },
-  media: { select: { url: true, type: true } },
+  assets: true,
 } as const;
 
 type RawPublicModel = NonNullable<Awaited<ReturnType<typeof prisma.model.findFirst<{ include: typeof publicModelInclude }>>>>;
 
-export interface ModeloPublico {
+export interface PublicModel {
   id: string;
-  fullName: string;
-  artisticName: string | null;
+  firstName: string;
+  paternalLastName: string;
+  maternalLastName: string | null;
+  mainPhotoUrl: string | null;
+  photoUrls: string[];
+  videoUrls: string[];
   categories: string[];
+  activities: string[];
   genre: string;
   location: string;
-  nationality: string | null;
+  nationality: string;
   height: number | null;
-  weight: number | null;
-  hasVisibleTattoos: boolean | null;
+  currentWeight: number | null;
+  hasVisibleTattoos: boolean;
   shirtSize: string | null;
+  pantsSizeScale: string | null;
   pantsSize: string | null;
-  availableToTravel: boolean;
+  travelAvailability: boolean;
   hasPassport: boolean;
-  hasVisaUS: boolean;
-  media: { url: string; type: string }[];
+  hasVisa: boolean;
+  kycStatus: string;
+  featured: boolean;
 }
 
-function toPublico(m: RawPublicModel): ModeloPublico {
+function toPublicModel(m: RawPublicModel): PublicModel {
   return {
     id: m.id,
-    fullName: [m.firstName, m.lastNameP, m.lastNameM].filter(Boolean).join(" "),
-    artisticName: m.artisticName,
+    firstName: m.firstName,
+    paternalLastName: m.paternalLastName,
+    maternalLastName: m.maternalLastName,
+    mainPhotoUrl: getMainPhotoUrl(m.assets),
+    photoUrls: getGalleryPhotos(m.assets),
+    videoUrls: getGalleryVideos(m.assets),
     categories: m.categories.map((c) => c.name),
+    activities: m.activities.map((a) => a.name),
     genre: m.genre,
     location: `${m.city.name}, ${m.country.name}`,
-    nationality: m.nationality,
+    nationality: m.nationality.demonym,
     height: m.height,
-    weight: m.weight ? Number(m.weight) : null,
+    currentWeight: m.currentWeight,
     hasVisibleTattoos: m.hasVisibleTattoos,
     shirtSize: m.shirtSize,
+    pantsSizeScale: m.pantsSizeScale,
     pantsSize: m.pantsSize,
-    availableToTravel: m.availableToTravel,
+    travelAvailability: m.travelAvailability,
     hasPassport: m.hasPassport,
-    hasVisaUS: m.hasVisaUS,
-    media: m.media.map((med) => ({ url: med.url, type: med.type })),
+    hasVisa: m.hasVisa,
+    kycStatus: m.kyc.status,
+    featured: false,
   };
 }
 
-const visibleApproved = { kyc: { status: "APPROVED" as const }, isVisible: true };
-
-export async function listVitrinaModelos(): Promise<ModeloPublico[]> {
-  const modelos = await prisma.model.findMany({
-    where: visibleApproved,
+export async function listPublicModels(): Promise<PublicModel[]> {
+  const models = await prisma.model.findMany({
+    where: { kyc: { status: "APPROVED" } },
     include: publicModelInclude,
-    orderBy: { lastNameP: "asc" },
+    orderBy: [{ paternalLastName: "asc" }, { firstName: "asc" }],
   });
-  return modelos.map(toPublico);
+  return models.map(toPublicModel);
 }
 
-export async function getVitrinaModelo(id: string): Promise<ModeloPublico | undefined> {
-  const modelo = await prisma.model.findFirst({
-    where: { id, ...visibleApproved },
+export async function getPublicModel(id: string): Promise<PublicModel | undefined> {
+  const model = await prisma.model.findFirst({
+    where: { id, kyc: { status: "APPROVED" } },
     include: publicModelInclude,
   });
-  if (!modelo) return undefined;
-  return toPublico(modelo);
+  if (!model) return undefined;
+  return toPublicModel(model);
 }
 
-export async function listDestacados(limit = 4): Promise<ModeloPublico[]> {
-  const modelos = await prisma.model.findMany({
-    where: visibleApproved,
+export async function listFeaturedModels(limit = 4): Promise<PublicModel[]> {
+  const models = await prisma.model.findMany({
+    where: { kyc: { status: "APPROVED" } },
     include: publicModelInclude,
-    orderBy: { lastNameP: "asc" },
+    orderBy: [{ createdAt: "desc" }],
     take: limit,
   });
-  return modelos.map(toPublico);
+  return models.map(toPublicModel);
 }
 
-// ---------- Paquetes públicos ----------
-
-export async function getPaquetePublico(token: string) {
-  const pkg = await prisma.package.findUnique({
-    where: { publicToken: token },
-    include: {
-      models: {
-        include: {
-          categories: { select: { name: true } },
-          country: { select: { name: true } },
-          city: { select: { name: true } },
-        },
-      },
-    },
-  });
-  if (!pkg) return null;
-  return {
-    id: pkg.id,
-    name: pkg.name,
-    description: pkg.description,
-    status: pkg.status,
-    models: pkg.models.map((m) => ({
-      id: m.id,
-      fullName: [m.firstName, m.lastNameP, m.lastNameM].filter(Boolean).join(" "),
-      artisticName: m.artisticName,
-      categories: m.categories.map((c) => c.name),
-      location: `${m.city.name}, ${m.country.name}`,
-    })),
-  };
-}
-
-// ---------- Portafolio público ----------
-
-export type PortfolioEntryPublico = {
+export interface PortfolioEvent {
   id: string;
-  marca: string;
-  fecha: string;
-  lugar: string;
-  fotos: { url: string; isPortada: boolean }[];
-};
-
-export async function listPortfolioPublico(): Promise<PortfolioEntryPublico[]> {
-  const entries = await prisma.portfolioEntry.findMany({
-    where: { isVisible: true },
-    include: { fotos: { orderBy: { orden: "asc" } } },
-    orderBy: { createdAt: "desc" },
-  });
-  return entries.map((e) => ({
-    id: e.id,
-    marca: e.marca,
-    fecha: e.fecha,
-    lugar: e.lugar,
-    fotos: e.fotos.map((f) => ({ url: f.url, isPortada: f.isPortada })),
-  }));
+  name: string;
+  type: string;
+  venue: string;
+  date: string;
+  clientName: string;
 }
 
-export interface EventoPortafolio {
-  id: string;
-  nombre: string;
-  tipo: string;
-  lugar: string;
-  fecha: string;
-  clienteNombre: string;
-}
-
-export async function listEventosPortafolio(): Promise<EventoPortafolio[]> {
-  return eventos
-    .filter((e) => e.agencyId === AGENCY_ID && e.estado === "finalizado")
-    .sort((a, b) => new Date(b.fechaInicio).getTime() - new Date(a.fechaInicio).getTime())
+export async function listPortfolioEvents(): Promise<PortfolioEvent[]> {
+  return events
+    .filter((e) => e.agencyId === AGENCY_ID && e.status === "finalizado")
+    .sort((a, b) => new Date(b.startDate).getTime() - new Date(a.startDate).getTime())
     .map((e) => ({
       id: e.id,
-      nombre: e.nombre,
-      tipo: e.tipo,
-      lugar: e.lugar,
-      fecha: e.fechaInicio,
-      clienteNombre: clientes.find((c) => c.id === e.clienteId)?.empresa ?? "Cliente de la agencia",
+      name: e.name,
+      type: e.type,
+      venue: e.venue,
+      date: e.startDate,
+      clientName: clients.find((c) => c.id === e.clientId)?.company ?? "Cliente de la agencia",
     }));
 }

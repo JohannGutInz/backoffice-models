@@ -3,13 +3,13 @@
 import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { formatCurrency } from "@/lib/utils";
 
-export function RevenueBarChart({ data }: { data: { mes: string; total: number }[] }) {
+export function RevenueBarChart({ data }: { data: { month: string; total: number }[] }) {
   return (
     <ResponsiveContainer width="100%" height={260}>
       <BarChart data={data} margin={{ top: 4, right: 8, left: 8, bottom: 0 }}>
         <CartesianGrid vertical={false} stroke="#e4e4e7" />
         <XAxis
-          dataKey="mes"
+          dataKey="month"
           axisLine={false}
           tickLine={false}
           tick={{ fill: "#71717a", fontSize: 12 }}

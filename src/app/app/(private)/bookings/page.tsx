@@ -3,9 +3,9 @@ import { PageHeader } from "@/components/ui/PageHeader";
 import { LinkButton } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { Table, THead, Th, Tr, Td } from "@/components/ui/Table";
-import { EstadoBadge } from "@/components/ui/Badge";
+import { StatusBadge } from "@/components/ui/Badge";
 import { StatusTabs } from "@/components/ui/StatusTabs";
-import { listBookings, listEventos, nombreEvento, nombreModelo } from "@/lib/data";
+import { listBookings, listEvents, clientName, eventName, modelName } from "@/lib/data";
 import { APP_ROUTE } from "@/lib/routes";
 import { formatCurrency, formatDate } from "@/lib/utils";
 
@@ -15,20 +15,20 @@ export default async function BookingsPage({
   searchParams: Promise<{ estado?: string }>;
 }) {
   const { estado } = await searchParams;
-  const activo = estado ?? "todas";
-  const [bookings, eventos] = await Promise.all([listBookings(), listEventos()]);
+  const active = estado ?? "todas";
+  const [bookings, events] = await Promise.all([listBookings(), listEvents()]);
 
   const counts: Record<string, number> = {
     todas: bookings.length,
-    pendiente: bookings.filter((b) => b.estado === "pendiente").length,
-    confirmado: bookings.filter((b) => b.estado === "confirmado").length,
-    completado: bookings.filter((b) => b.estado === "completado").length,
-    cancelado: bookings.filter((b) => b.estado === "cancelado").length,
+    pendiente: bookings.filter((b) => b.status === "pendiente").length,
+    confirmado: bookings.filter((b) => b.status === "confirmado").length,
+    completado: bookings.filter((b) => b.status === "completado").length,
+    cancelado: bookings.filter((b) => b.status === "cancelado").length,
   };
 
-  const eventoById = new Map(eventos.map((e) => [e.id, e]));
-  const filtrados = activo === "todas" ? bookings : bookings.filter((b) => b.estado === activo);
-  const ordenados = [...filtrados].sort((a, b) => new Date(b.fecha).getTime() - new Date(a.fecha).getTime());
+  const eventById = new Map(events.map((e) => [e.id, e]));
+  const filtered = active === "todas" ? bookings : bookings.filter((b) => b.status === active);
+  const sorted = [...filtered].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 
   return (
     <div>
@@ -44,7 +44,7 @@ export default async function BookingsPage({
 
       <StatusTabs
         basePath={APP_ROUTE.app.bookings.index}
-        activo={activo}
+        active={active}
         counts={counts}
         tabs={[
           { value: "todas", label: "Todos" },
@@ -67,23 +67,23 @@ export default async function BookingsPage({
             <Th>Estado</Th>
           </THead>
           <tbody>
-            {ordenados.map((booking) => {
-              const evento = eventoById.get(booking.eventoId);
+            {sorted.map((booking) => {
+              const event = eventById.get(booking.eventId);
               return (
                 <Tr key={booking.id}>
                   <Td className="font-medium text-gold-700">{booking.id.replace("bkg_", "BK-").toUpperCase()}</Td>
-                  <Td>{nombreModelo(booking.modeloId)}</Td>
-                  <Td>{nombreEvento(booking.eventoId)}</Td>
-                  <Td className="text-zinc-500">—</Td>
-                  <Td className="text-zinc-500">{formatDate(booking.fecha)}</Td>
-                  <Td className="text-right font-medium text-zinc-900">{formatCurrency(booking.tarifa)}</Td>
+                  <Td>{modelName(booking.modelId)}</Td>
+                  <Td>{eventName(booking.eventId)}</Td>
+                  <Td className="text-zinc-500">{event ? clientName(event.clientId) : "—"}</Td>
+                  <Td className="text-zinc-500">{formatDate(booking.date)}</Td>
+                  <Td className="text-right font-medium text-zinc-900">{formatCurrency(booking.rate)}</Td>
                   <Td>
-                    <EstadoBadge estado={booking.estado} />
+                    <StatusBadge status={booking.status} />
                   </Td>
                 </Tr>
               );
             })}
-            {ordenados.length === 0 && (
+            {sorted.length === 0 && (
               <tr>
                 <td colSpan={7} className="px-5 py-16 text-center text-sm text-zinc-400">
                   No hay bookings en este estado.
