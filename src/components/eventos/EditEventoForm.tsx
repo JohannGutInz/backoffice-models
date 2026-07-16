@@ -15,7 +15,7 @@ export function EditEventoForm({ eventoId, defaultValues }: Props) {
       mode="edit"
       eventoId={eventoId}
       defaultValues={defaultValues}
-      redirectOnSuccess={`${APP_ROUTE.app.eventos.index}/${eventoId}`}
+      redirectOnSuccess={`${APP_ROUTE.app.events.index}/${eventoId}`}
     />
   );
 }

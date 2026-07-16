@@ -96,7 +96,7 @@ export function NuevoModeloForm({ countries, states, municipalities, categories 
     if (result.status === "error") {
       setServerError(result.message);
     } else if (result.modelId) {
-      router.push(`${APP_ROUTE.app.modelos.index}/${result.modelId}`);
+      router.push(`${APP_ROUTE.app.models.index}/${result.modelId}`);
     }
   }
 
@@ -372,7 +372,7 @@ export function NuevoModeloForm({ countries, states, municipalities, categories 
 
       <div className="flex items-center justify-end gap-3 border-t border-zinc-200 pt-6">
         <a
-          href={APP_ROUTE.app.modelos.index}
+          href={APP_ROUTE.app.models.index}
           className="rounded-lg border border-zinc-300 bg-white px-4 py-2.5 text-sm font-medium text-zinc-700 transition-colors hover:bg-zinc-50"
         >
           Cancelar

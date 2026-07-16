@@ -22,19 +22,6 @@ export default async function TalentDetailPage({
   if (!model) notFound();
   if (model.kycStatus !== "APPROVED") redirect("/");
 
-  const hasFisica =
-    modelo.height ||
-    modelo.weight ||
-    modelo.shirtSize ||
-    modelo.pantsSize ||
-    modelo.hasVisibleTattoos !== null;
-
-  const disponibilidadItems = [
-    modelo.availableToTravel && "Disponible para viajar",
-    modelo.hasPassport && "Tiene pasaporte",
-    modelo.hasVisaUS && "Tiene visa para EE. UU.",
-  ].filter(Boolean) as string[];
-
   return (
     <div className="mx-auto max-w-5xl px-6 py-12">
       <Link href="/talentos" className="mb-6 inline-flex items-center gap-1.5 text-sm text-zinc-500 hover:text-zinc-800">

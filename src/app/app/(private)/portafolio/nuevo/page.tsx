@@ -1,10 +1,10 @@
 import { PageHeader } from "@/components/ui/PageHeader";
 import { Card } from "@/components/ui/Card";
 import { PortfolioEntryForm } from "@/components/portafolio/PortfolioEntryForm";
-import { getUsuarioActual } from "@/lib/data";
+import { getCurrentUser } from "@/lib/data";
 
 export default async function NuevoPortafolioPage() {
-  await getUsuarioActual();
+  await getCurrentUser();
   return (
     <div>
       <PageHeader title="Nueva entrada" subtitle="Agrega una campaña o evento al portafolio público." />

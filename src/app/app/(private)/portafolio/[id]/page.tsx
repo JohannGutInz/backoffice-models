@@ -4,11 +4,11 @@ import { ArrowLeft } from "lucide-react";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { Card } from "@/components/ui/Card";
 import { PortfolioEntryForm } from "@/components/portafolio/PortfolioEntryForm";
-import { getPortfolioEntry, getUsuarioActual } from "@/lib/data";
+import { getPortfolioEntry, getCurrentUser } from "@/lib/data";
 import { APP_ROUTE } from "@/lib/routes";
 
 export default async function EditarPortafolioPage({ params }: { params: Promise<{ id: string }> }) {
-  await getUsuarioActual();
+  await getCurrentUser();
   const { id } = await params;
   const entry = await getPortfolioEntry(id);
   if (!entry) notFound();

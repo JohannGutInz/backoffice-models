@@ -1,22 +1,23 @@
-import { Plus } from "lucide-react";
+import Link from "next/link";
+import { Plus, ChevronLeft, ChevronRight } from "lucide-react";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { Card, CardHeader } from "@/components/ui/Card";
 import { StatusBadge } from "@/components/ui/Badge";
 import { MonthGrid } from "@/components/calendar/MonthGrid";
-import { listBookings, eventName, modelName } from "@/lib/data";
+import { listBookings, eventName, modelName, getCurrentUser } from "@/lib/data";
 import { APP_ROUTE } from "@/lib/routes";
-import { toDateKey } from "@/lib/utils";
-import type { SerializedEvento } from "@/lib/calendar-utils";
+import { toDateKey, formatDate, formatMonthYear } from "@/lib/utils";
+import type { Booking } from "@/lib/types";
 
-function parseMonthParam(monthParam: string | undefined, fallback: Date) {
-  if (monthParam && /^\d{4}-\d{2}$/.test(monthParam)) {
-    const [year, month] = monthParam.split("-").map(Number);
+function parseMonthParam(param: string | undefined, fallback: Date) {
+  if (param && /^\d{4}-\d{2}$/.test(param)) {
+    const [year, month] = param.split("-").map(Number);
     return { year, month: month - 1 };
   }
   return { year: fallback.getFullYear(), month: fallback.getMonth() };
 }
 
-function monthParam(year: number, month: number) {
+function toMonthParam(year: number, month: number) {
   const date = new Date(year, month, 1);
   return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
 }
@@ -26,7 +27,7 @@ export default async function CalendarPage({
 }: {
   searchParams: Promise<{ month?: string }>;
 }) {
-  await getUsuarioActual();
+  await getCurrentUser();
   const { month: monthParamValue } = await searchParams;
   const today = new Date();
   const { year, month } = parseMonthParam(monthParamValue, today);
@@ -45,24 +46,11 @@ export default async function CalendarPage({
     .sort((a, b) => a.date.localeCompare(b.date))
     .slice(0, 6);
 
-  const serialized: SerializedEvento[] = eventos.map((e) => ({
-    id: e.id,
-    nombre: e.nombre,
-    startAt: e.startAt.toISOString(),
-    endAt: e.endAt.toISOString(),
-    cubierto: e.cubierto,
-    recurringDays: e.recurringDays,
-    dailyStartTime: e.dailyStartTime,
-    dailyEndTime: e.dailyEndTime,
-    modelo: e.modelo
-      ? {
-          id: e.modelo.id,
-          firstName: e.modelo.firstName,
-          lastNameP: e.modelo.lastNameP,
-          lastNameM: e.modelo.lastNameM,
-        }
-      : null,
-  }));
+  const prevDate = new Date(year, month - 1, 1);
+  const nextDate = new Date(year, month + 1, 1);
+  const prevParam = toMonthParam(prevDate.getFullYear(), prevDate.getMonth());
+  const nextParam = toMonthParam(nextDate.getFullYear(), nextDate.getMonth());
+  const currentParam = toMonthParam(today.getFullYear(), today.getMonth());
 
   return (
     <div>
@@ -70,9 +58,12 @@ export default async function CalendarPage({
         title="Calendario"
         subtitle="Vista mensual de eventos y convocatorias."
         actions={
-          <LinkButton href={APP_ROUTE.app.eventos.nuevo}>
+          <Link
+            href={`${APP_ROUTE.app.events.index}/nuevo`}
+            className="inline-flex items-center gap-1.5 rounded-lg bg-zinc-950 px-3 py-2 text-sm font-medium text-white hover:bg-zinc-800"
+          >
             <Plus className="h-4 w-4" /> Nuevo evento
-          </LinkButton>
+          </Link>
         }
       />
 

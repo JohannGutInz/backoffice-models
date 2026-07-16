@@ -32,8 +32,6 @@ export default async function PortfolioPage() {
             </div>
           ))}
         </div>
-      ) : (
-        <PortfolioSection entries={portafolio} />
       )}
     </div>
   );

@@ -113,16 +113,6 @@ export async function submitRegistrationAction(data: RegistrationActionData): Pr
         kycId: kyc.id,
         userId: user.id,
         categories: { connect: data.categoryIds.map((id) => ({ id })) },
-        artisticName: data.artisticName || null,
-        nationality: data.nationality || null,
-        height: data.height ? parseInt(data.height, 10) : null,
-        weight: data.weight ? parseFloat(data.weight) : null,
-        hasVisibleTattoos: data.hasVisibleTattoos,
-        shirtSize: data.shirtSize || null,
-        pantsSize: data.pantsSize || null,
-        availableToTravel: data.availableToTravel,
-        hasPassport: data.hasPassport,
-        hasVisaUS: data.hasVisaUS,
       },
     });
   });
@@ -423,4 +413,57 @@ export async function updateModelAttributesAction(modelId: string, data: ModelEd
   revalidatePath(APP_ROUTE.app.models.index);
 
   return { status: "success", message: "Modelo actualizado." };
+}
+
+// ---------- Eventos (stub actions — pending full implementation) ----------
+
+export async function crearEventoAction(_data: unknown): Promise<ActionState & { eventoId?: string }> {
+  return { status: "error", message: "Not implemented" };
+}
+
+export async function editarEventoAction(_id: string, _data: unknown): Promise<ActionState> {
+  return { status: "error", message: "Not implemented" };
+}
+
+// ---------- Paquetes (stub actions) ----------
+
+export async function crearPaqueteAction(_data: unknown): Promise<ActionState & { paqueteId?: string }> {
+  return { status: "error", message: "Not implemented" };
+}
+
+export async function agregarModeloAPaqueteAction(_paqueteId: string, _modeloId: string): Promise<void> {}
+
+export async function quitarModeloDelPaqueteAction(_paqueteId: string, _modeloId: string): Promise<void> {}
+
+// ---------- Portafolio (stub actions) ----------
+
+export async function crearPortfolioEntryAction(_data: unknown): Promise<ActionState & { entryId?: string }> {
+  return { status: "error", message: "Not implemented" };
+}
+
+export async function editarPortfolioEntryAction(_id: string, _data: unknown): Promise<ActionState & { entryId?: string }> {
+  return { status: "error", message: "Not implemented" };
+}
+
+export async function eliminarPortfolioEntryAction(_id: string): Promise<void> {}
+
+export async function togglePortfolioVisibilidadAction(_id: string, _visible: boolean): Promise<void> {}
+
+export async function marcarEventoCubiertoAction(
+  _id: string,
+  _cubierto: boolean,
+  _modeloId: string | null,
+): Promise<void> {}
+
+export async function eliminarEventoAction(_id: string): Promise<void> {}
+
+export async function cambiarStatusPaqueteAction(
+  _paqueteId: string,
+  _status: "DRAFT" | "SENT" | "CLOSED",
+): Promise<void> {}
+
+export async function crearModeloAdminAction(
+  _data: unknown,
+): Promise<ActionState & { modelId?: string }> {
+  return { status: "error", message: "Not implemented" };
 }

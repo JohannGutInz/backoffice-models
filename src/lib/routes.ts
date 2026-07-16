@@ -39,6 +39,10 @@ export const APP_ROUTE = {
     catalogs: {
       index: "/app/catalogs"
     },
+    portafolio: {
+      index: "/app/portafolio",
+      nuevo: "/app/portafolio/nuevo",
+    },
     model: {
       profile: "/app/modelo/perfil"
     }

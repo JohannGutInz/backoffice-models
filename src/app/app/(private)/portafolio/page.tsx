@@ -4,13 +4,13 @@ import { PageHeader } from "@/components/ui/PageHeader";
 import { LinkButton } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { Table, THead, Th, Tr, Td } from "@/components/ui/Table";
-import { listPortfolioEntries, getUsuarioActual } from "@/lib/data";
+import { listPortfolioEntries, getCurrentUser } from "@/lib/data";
 import { togglePortfolioVisibilidadAction } from "@/lib/actions";
 import { APP_ROUTE } from "@/lib/routes";
 import { cn } from "@/lib/utils";
 
 export default async function PortafolioPage() {
-  await getUsuarioActual();
+  await getCurrentUser();
   const entries = await listPortfolioEntries();
 
   return (

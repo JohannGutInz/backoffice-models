@@ -5,15 +5,14 @@ import Link from "next/link";
 import { ExternalLink, Trash2, UserPlus } from "lucide-react";
 import { agregarModeloAPaqueteAction, quitarModeloDelPaqueteAction } from "@/lib/actions";
 import { Avatar } from "@/components/ui/Avatar";
-import { modelNombreCompleto } from "@/lib/utils";
+import { formatFullName } from "@/lib/utils";
 import { APP_ROUTE } from "@/lib/routes";
 
 type Modelo = {
   id: string;
   firstName: string;
-  lastNameP: string;
-  lastNameM?: string | null;
-  artisticName?: string | null;
+  paternalLastName: string;
+  maternalLastName?: string | null;
   categories: { name: string }[];
   city: { name: string };
   country: { name: string };
@@ -59,7 +58,7 @@ export function PaqueteModelosManager({ paqueteId, modelosEnPaquete, todosLosMod
             <option value="" disabled>Selecciona un modelo del roster…</option>
             {disponibles.map((m) => (
               <option key={m.id} value={m.id}>
-                {modelNombreCompleto(m)}
+                {formatFullName(m)}
                 {m.categories.length > 0 ? ` — ${m.categories.map((c) => c.name).join(", ")}` : ""}
               </option>
             ))}
@@ -85,19 +84,14 @@ export function PaqueteModelosManager({ paqueteId, modelosEnPaquete, todosLosMod
         <div className="divide-y divide-zinc-100">
           {modelosEnPaquete.map((m) => (
             <div key={m.id} className="flex items-center gap-4 py-3">
-              <Avatar name={modelNombreCompleto(m)} size="md" />
+              <Avatar name={formatFullName(m)} size="md" />
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2">
                   <p className="text-sm font-medium text-zinc-900">
-                    {modelNombreCompleto(m)}
-                    {m.artisticName && (
-                      <span className="ml-2 text-xs font-normal text-zinc-400 italic">
-                        &ldquo;{m.artisticName}&rdquo;
-                      </span>
-                    )}
+                    {formatFullName(m)}
                   </p>
                   <Link
-                    href={`${APP_ROUTE.app.modelos.index}/${m.id}`}
+                    href={`${APP_ROUTE.app.models.index}/${m.id}`}
                     className="text-zinc-300 hover:text-zinc-600 transition-colors"
                     title="Ver perfil del modelo"
                   >

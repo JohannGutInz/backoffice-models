@@ -8,7 +8,7 @@ import { StatusBadge } from "@/components/ui/Badge";
 import { Avatar } from "@/components/ui/Avatar";
 import { listPackages, clientName, modelName } from "@/lib/data";
 import { APP_ROUTE } from "@/lib/routes";
-import { formatDate, modelNombreCompleto } from "@/lib/utils";
+import { formatDate, formatFullName, formatCurrency } from "@/lib/utils";
 
 const STATUS_LABEL: Record<string, string> = {
   DRAFT: "Borrador",
@@ -32,7 +32,7 @@ export default async function PackagesPage() {
         title="Paquetes"
         subtitle="Propuestas de talento para clientes — agrupá modelos y comparte el link."
         actions={
-          <LinkButton href={APP_ROUTE.app.packages.index}>
+          <LinkButton href={`${APP_ROUTE.app.packages.index}/nuevo`}>
             <Plus className="h-4 w-4" /> Nuevo paquete
           </LinkButton>
         }
@@ -54,7 +54,7 @@ export default async function PackagesPage() {
                 <Td>{clientName(pkg.clientId)}</Td>
                 <Td>
                   <Link
-                    href={`${APP_ROUTE.app.paquetes.index}/${pkg.id}`}
+                    href={`${APP_ROUTE.app.packages.index}/${pkg.id}`}
                     className="font-medium text-zinc-900 hover:text-gold-600"
                   >
                     {pkg.name}

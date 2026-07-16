@@ -5,9 +5,9 @@ import { LinkButton } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { Table, THead, Th, Tr, Td } from "@/components/ui/Table";
 import { StatusBadge } from "@/components/ui/Badge";
-import { listEvents, clientName } from "@/lib/data";
+import { listEvents, clientName, getCurrentUser } from "@/lib/data";
 import { APP_ROUTE } from "@/lib/routes";
-import { cn, modelNombreCompleto } from "@/lib/utils";
+import { cn, formatFullName, formatDate } from "@/lib/utils";
 
 function formatRange(startAt: Date, endAt: Date) {
   const sameDay =
@@ -30,7 +30,7 @@ export default async function EventsPage({
 }: {
   searchParams: Promise<{ q?: string }>;
 }) {
-  await getUsuarioActual();
+  await getCurrentUser();
   const { q } = await searchParams;
   const events = await listEvents();
 

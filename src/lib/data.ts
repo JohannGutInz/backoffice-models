@@ -261,3 +261,39 @@ export async function getDashboardStats() {
     draftPackages: pkgs.filter((p) => p.status === "borrador").length,
   };
 }
+
+// ---------- Geography ----------
+
+export async function listGeografia() {
+  const [countries, states, municipalities] = await Promise.all([
+    prisma.country.findMany({ orderBy: { name: "asc" } }),
+    prisma.state.findMany({ orderBy: { name: "asc" } }),
+    prisma.municipality.findMany({ orderBy: { name: "asc" } }),
+  ]);
+  return { countries, states, municipalities };
+}
+
+// ---------- Package by id ----------
+
+export async function getPaquete(id: string): Promise<Package | undefined> {
+  return packages.find((p) => p.id === id && p.agencyId === AGENCY_ID);
+}
+
+// ---------- Portfolio (stub — tables exist but not yet in Prisma schema) ----------
+
+export type PortfolioEntryRecord = {
+  id: string;
+  marca: string;
+  fecha: string;
+  lugar: string;
+  isVisible: boolean;
+  fotos: { url: string; isPortada: boolean; orden: number }[];
+};
+
+export async function listPortfolioEntries(): Promise<PortfolioEntryRecord[]> {
+  return [];
+}
+
+export async function getPortfolioEntry(_id: string): Promise<PortfolioEntryRecord | undefined> {
+  return undefined;
+}

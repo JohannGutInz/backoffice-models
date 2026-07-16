@@ -112,6 +112,17 @@ export interface AgencyEvent {
   endDate: string;
   status: EventStatus;
   bookingIds: string[];
+  notas?: string | null;
+  recurringDays?: number[];
+  dailyStartTime?: string | null;
+  dailyEndTime?: string | null;
+  cubierto?: boolean;
+  modelo?: {
+    id: string;
+    firstName: string;
+    paternalLastName: string;
+    maternalLastName?: string | null;
+  } | null;
 }
 
 export type BookingStatus = "pendiente" | "confirmado" | "completado" | "cancelado";
@@ -138,6 +149,8 @@ export interface Package {
   status: PackageStatus;
   total: number;
   createdAt: string;
+  description?: string | null;
+  publicToken?: string | null;
 }
 
 export interface Income {

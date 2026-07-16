@@ -98,6 +98,18 @@ export async function listFeaturedModels(limit = 4): Promise<PublicModel[]> {
   return models.map(toPublicModel);
 }
 
+export interface PortfolioEntryPublico {
+  id: string;
+  marca: string;
+  fecha: string;
+  lugar: string;
+  fotos: { url: string; isPortada: boolean }[];
+}
+
+export async function listPortfolioEntradas(): Promise<PortfolioEntryPublico[]> {
+  return [];
+}
+
 export interface PortfolioEvent {
   id: string;
   name: string;
@@ -119,4 +131,21 @@ export async function listPortfolioEvents(): Promise<PortfolioEvent[]> {
       date: e.startDate,
       clientName: clients.find((c) => c.id === e.clientId)?.company ?? "Cliente de la agencia",
     }));
+}
+
+// ---------- Package proposal (stub) ----------
+
+export type PaquetePublico = {
+  name: string;
+  models: Array<{
+    id: string;
+    fullName: string;
+    artisticName?: string | null;
+    categories: string[];
+    location: string;
+  }>;
+};
+
+export async function getPaquetePublico(_token: string): Promise<PaquetePublico | null> {
+  return null;
 }

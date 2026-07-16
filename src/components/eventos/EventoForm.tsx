@@ -96,8 +96,8 @@ export function EventoForm({ mode, eventoId, defaultValues, redirectOnSuccess }:
     const dest =
       redirectOnSuccess ??
       (mode === "create" && "eventoId" in result && result.eventoId
-        ? `${APP_ROUTE.app.eventos.index}/${result.eventoId}`
-        : APP_ROUTE.app.eventos.index);
+        ? `${APP_ROUTE.app.events.index}/${result.eventoId}`
+        : APP_ROUTE.app.events.index);
 
     router.push(dest);
   }

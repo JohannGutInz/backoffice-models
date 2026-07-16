@@ -1,10 +1,10 @@
 import { PageHeader } from "@/components/ui/PageHeader";
 import { Card } from "@/components/ui/Card";
 import { NuevoEventoForm } from "@/components/eventos/NuevoEventoForm";
-import { getUsuarioActual } from "@/lib/data";
+import { getCurrentUser } from "@/lib/data";
 
 export default async function NuevoEventoPage() {
-  await getUsuarioActual();
+  await getCurrentUser();
 
   return (
     <div>

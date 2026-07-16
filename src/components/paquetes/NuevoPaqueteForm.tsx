@@ -30,7 +30,7 @@ export function NuevoPaqueteForm() {
     if (result.status === "error") {
       setServerError(result.message);
     } else if (result.paqueteId) {
-      router.push(`${APP_ROUTE.app.paquetes.index}/${result.paqueteId}`);
+      router.push(`${APP_ROUTE.app.packages.index}/${result.paqueteId}`);
     }
   }
 
@@ -67,7 +67,7 @@ export function NuevoPaqueteForm() {
 
       <div className="flex items-center justify-end gap-3 border-t border-zinc-200 pt-5">
         <a
-          href={APP_ROUTE.app.paquetes.index}
+          href={APP_ROUTE.app.packages.index}
           className="rounded-lg border border-zinc-300 bg-white px-4 py-2.5 text-sm font-medium text-zinc-700 hover:bg-zinc-50"
         >
           Cancelar
