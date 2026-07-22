@@ -48,9 +48,10 @@ export default async function PaquetePublicoPage({
       ) : (
         <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
           {paquete.models.map((modelo) => (
-            <div
+            <Link
               key={modelo.id}
-              className="overflow-hidden rounded-2xl border border-zinc-100 bg-white shadow-sm"
+              href={`/talentos/${modelo.id}`}
+              className="group overflow-hidden rounded-2xl border border-zinc-100 bg-white shadow-sm transition-shadow hover:shadow-md"
             >
               {/* Foto */}
               <div className="relative flex h-64 items-center justify-center overflow-hidden bg-gradient-to-br from-zinc-900 via-zinc-950 to-black">
@@ -67,7 +68,7 @@ export default async function PaquetePublicoPage({
 
               {/* Info */}
               <div className="p-4">
-                <p className="font-semibold text-zinc-900">{modelo.fullName}</p>
+                <p className="font-semibold text-zinc-900 transition-colors group-hover:text-gold-700">{modelo.fullName}</p>
                 {modelo.activities.length > 0 && (
                   <p className="mt-1 text-xs font-medium text-gold-700">
                     {modelo.activities.join(" · ")}
@@ -89,7 +90,7 @@ export default async function PaquetePublicoPage({
                   )}
                 </div>
               </div>
-            </div>
+            </Link>
           ))}
         </div>
       )}
