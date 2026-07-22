@@ -10,7 +10,7 @@ import { SESSION_COOKIE, createSessionToken, verifySessionToken } from "./sessio
 import { toDateKey } from "./utils";
 import { emailClientContact } from "./email";
 import { APP_ROUTE } from "./routes";
-import { ownModelProfileSchema, modelEditSchema } from "./schemas";
+import { ownModelProfileSchema, modelEditSchema, registrationActionSchema } from "./schemas";
 import { deleteObject, keyFromObjectUrl } from "./storage";
 import z from "zod";
 import type {
@@ -81,18 +81,26 @@ function randomToken(prefix: string) {
 // ---------- Public self-registration ----------
 
 export async function submitRegistrationAction(data: RegistrationActionData): Promise<ActionState> {
-  const existing = await prisma.user.findUnique({ where: { email: data.email } });
+  const parsed = registrationActionSchema.safeParse(data);
+  if (!parsed.success) {
+    const fields = parsed.error.issues.map((i) => `${i.path.join(".")}: ${i.message}`).join(", ");
+    console.error("[registro] validación fallida:", fields);
+    return { status: "error", message: `Datos inválidos: ${fields}` };
+  }
+  const d = parsed.data;
+
+  const existing = await prisma.user.findUnique({ where: { email: d.email } });
   if (existing) {
     return { status: "error", message: "Ya existe un registro con ese correo electrónico." };
   }
 
-  const hashedPassword = await hashPassword(data.password);
+  const hashedPassword = await hashPassword(d.password);
 
   await prisma.$transaction(async (tx) => {
     const user = await tx.user.create({
       data: {
-        email: data.email,
-        username: `${data.firstName} ${data.paternalLastName}`,
+        email: d.email,
+        username: `${d.firstName} ${d.paternalLastName}`,
         hashedPassword,
         role: UserRole.MODEL,
       },
@@ -100,19 +108,19 @@ export async function submitRegistrationAction(data: RegistrationActionData): Pr
     const kyc = await tx.kyc.create({ data: {} });
     await tx.model.create({
       data: {
-        firstName: data.firstName,
-        paternalLastName: data.paternalLastName,
-        maternalLastName: data.maternalLastName || null,
-        email: data.email,
-        phone: data.phone,
-        birthDate: new Date(data.birthDate),
-        genre: data.gender,
-        countryId: data.countryId,
-        nationalityId: data.nationalityId,
-        cityId: data.cityId,
+        firstName: d.firstName,
+        paternalLastName: d.paternalLastName,
+        maternalLastName: d.maternalLastName || null,
+        email: d.email,
+        phone: d.phone,
+        birthDate: new Date(d.birthDate),
+        genre: d.gender,
+        countryId: d.countryId,
+        nationalityId: d.nationalityId,
+        cityId: d.cityId,
         kycId: kyc.id,
         userId: user.id,
-        categories: { connect: data.categoryIds.map((id) => ({ id })) },
+        categories: { connect: d.categoryIds.map((id) => ({ id })) },
       },
     });
   });
