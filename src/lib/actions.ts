@@ -516,15 +516,41 @@ export async function eliminarConvocatoriaAction(id: string): Promise<void> {
   redirect(APP_ROUTE.app.convocatorias.index);
 }
 
-// ---------- Paquetes (stub actions) ----------
+// ---------- Paquetes (real) ----------
 
-export async function crearPaqueteAction(_data: unknown): Promise<ActionState & { paqueteId?: string }> {
-  return { status: "error", message: "Not implemented" };
+export async function crearPaqueteAction(data: unknown): Promise<ActionState & { paqueteId?: string }> {
+  const parsed = z.object({
+    name: z.string().min(1),
+    description: z.string().optional(),
+  }).safeParse(data);
+  if (!parsed.success) return { status: "error", message: "Datos inválidos." };
+  const pkg = await prisma.package.create({
+    data: {
+      id: crypto.randomUUID(),
+      name: parsed.data.name,
+      description: parsed.data.description,
+      token: crypto.randomUUID(),
+    },
+  });
+  revalidatePath(APP_ROUTE.app.packages.index);
+  return { status: "success", message: "Paquete creado.", paqueteId: pkg.id };
 }
 
-export async function agregarModeloAPaqueteAction(_paqueteId: string, _modeloId: string): Promise<void> {}
+export async function agregarModeloAPaqueteAction(paqueteId: string, modeloId: string): Promise<void> {
+  await prisma.package.update({
+    where: { id: paqueteId },
+    data: { models: { connect: { id: modeloId } } },
+  });
+  revalidatePath(`${APP_ROUTE.app.packages.index}/${paqueteId}`);
+}
 
-export async function quitarModeloDelPaqueteAction(_paqueteId: string, _modeloId: string): Promise<void> {}
+export async function quitarModeloDelPaqueteAction(paqueteId: string, modeloId: string): Promise<void> {
+  await prisma.package.update({
+    where: { id: paqueteId },
+    data: { models: { disconnect: { id: modeloId } } },
+  });
+  revalidatePath(`${APP_ROUTE.app.packages.index}/${paqueteId}`);
+}
 
 // ---------- Portafolio (stub actions) ----------
 
@@ -549,9 +575,54 @@ export async function marcarEventoCubiertoAction(
 export async function eliminarEventoAction(_id: string): Promise<void> {}
 
 export async function cambiarStatusPaqueteAction(
-  _paqueteId: string,
-  _status: "DRAFT" | "SENT" | "CLOSED",
-): Promise<void> {}
+  paqueteId: string,
+  status: "DRAFT" | "SENT" | "CLOSED",
+): Promise<void> {
+  await prisma.package.update({ where: { id: paqueteId }, data: { status } });
+  revalidatePath(`${APP_ROUTE.app.packages.index}/${paqueteId}`);
+  revalidatePath(APP_ROUTE.app.packages.index);
+}
+
+// ---------- Convocatorias: marcar vistas desde el portal modelo ----------
+
+export async function marcarConvocatoriasVistaAction(): Promise<void> {
+  const cookieStore = await cookies();
+  const token = cookieStore.get(SESSION_COOKIE);
+  const session = token ? await verifySessionToken(token.value) : null;
+  if (!session || session.role !== "MODEL") return;
+
+  const model = await prisma.model.findUnique({
+    where: { userId: session.sub },
+    select: { id: true },
+  });
+  if (!model) return;
+
+  const open = await prisma.convocatoria.findMany({
+    where: { status: "OPEN" },
+    select: { id: true },
+  });
+
+  await Promise.allSettled(
+    open.map((conv) =>
+      prisma.convocatoriaVista.upsert({
+        where: {
+          modeloId_convocatoriaId: {
+            modeloId: model.id,
+            convocatoriaId: conv.id,
+          },
+        },
+        create: {
+          id: crypto.randomUUID(),
+          modeloId: model.id,
+          convocatoriaId: conv.id,
+        },
+        update: {},
+      }),
+    ),
+  );
+
+  revalidatePath("/app/modelo/convocatorias");
+}
 
 export async function crearModeloAdminAction(
   _data: unknown,

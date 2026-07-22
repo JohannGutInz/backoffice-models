@@ -31,7 +31,10 @@ export default async function PaquetePublicoPage({
           Propuesta de talento
         </p>
         <h1 className="text-3xl font-light tracking-tight text-zinc-950">{paquete.name}</h1>
-        <p className="mt-2 text-sm text-zinc-500">
+        {paquete.description && (
+          <p className="mt-2 text-sm text-zinc-500">{paquete.description}</p>
+        )}
+        <p className="mt-2 text-sm text-zinc-400">
           {paquete.models.length} {paquete.models.length === 1 ? "modelo seleccionado" : "modelos seleccionados"} para
           esta propuesta.
         </p>
@@ -45,32 +48,48 @@ export default async function PaquetePublicoPage({
       ) : (
         <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
           {paquete.models.map((modelo) => (
-            <Link
+            <div
               key={modelo.id}
-              href={`/talentos/${modelo.id}`}
-              className="group overflow-hidden rounded-2xl border border-zinc-100 bg-white shadow-sm transition-shadow hover:shadow-md"
+              className="overflow-hidden rounded-2xl border border-zinc-100 bg-white shadow-sm"
             >
-              {/* Foto placeholder */}
-              <div className="flex h-52 items-center justify-center bg-gradient-to-br from-zinc-900 via-zinc-950 to-black transition-opacity group-hover:opacity-90">
-                <Avatar name={modelo.fullName} size="xl" />
+              {/* Foto */}
+              <div className="relative flex h-64 items-center justify-center overflow-hidden bg-gradient-to-br from-zinc-900 via-zinc-950 to-black">
+                {modelo.mainPhotoUrl ? (
+                  <img
+                    src={modelo.mainPhotoUrl}
+                    alt={modelo.fullName}
+                    className="h-full w-full object-cover object-top"
+                  />
+                ) : (
+                  <Avatar name={modelo.fullName} size="xl" />
+                )}
               </div>
 
               {/* Info */}
               <div className="p-4">
-                <p className="font-semibold text-zinc-900 group-hover:text-gold-700 transition-colors">{modelo.fullName}</p>
-                {modelo.artisticName && (
-                  <p className="mt-0.5 text-xs italic text-zinc-400">&ldquo;{modelo.artisticName}&rdquo;</p>
-                )}
-                {modelo.categories.length > 0 && (
+                <p className="font-semibold text-zinc-900">{modelo.fullName}</p>
+                {modelo.activities.length > 0 && (
                   <p className="mt-1 text-xs font-medium text-gold-700">
-                    {modelo.categories.join(" · ")}
+                    {modelo.activities.join(" · ")}
                   </p>
                 )}
                 <p className="mt-1 inline-flex items-center gap-1 text-xs text-zinc-400">
                   <MapPin className="h-3 w-3" /> {modelo.location}
                 </p>
+                <div className="mt-2 flex flex-wrap gap-1.5">
+                  {modelo.height && (
+                    <span className="rounded-full bg-zinc-100 px-2 py-0.5 text-[10px] text-zinc-500">
+                      {modelo.height} cm
+                    </span>
+                  )}
+                  {modelo.genre && (
+                    <span className="rounded-full bg-zinc-100 px-2 py-0.5 text-[10px] text-zinc-500">
+                      {modelo.genre}
+                    </span>
+                  )}
+                </div>
               </div>
-            </Link>
+            </div>
           ))}
         </div>
       )}

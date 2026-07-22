@@ -133,21 +133,57 @@ export async function listPortfolioEvents(): Promise<PortfolioEvent[]> {
     }));
 }
 
-// ---------- Package proposal (stub) ----------
+// ---------- Package proposal (real DB) ----------
 
-export type PaquetePublico = {
+export interface PaquetePublicoModel {
+  id: string;
+  fullName: string;
+  mainPhotoUrl: string | null;
+  categories: string[];
+  activities: string[];
+  location: string;
+  height: number | null;
+  currentWeight: number | null;
+  genre: string;
+}
+
+export interface PaquetePublico {
   name: string;
-  models: Array<{
-    id: string;
-    fullName: string;
-    artisticName?: string | null;
-    categories: string[];
-    location: string;
-  }>;
-};
+  description: string | undefined;
+  models: PaquetePublicoModel[];
+}
 
-export async function getPaquetePublico(_token: string): Promise<PaquetePublico | null> {
-  return null;
+export async function getPaquetePublico(token: string): Promise<PaquetePublico | null> {
+  const pkg = await prisma.package.findUnique({
+    where: { token },
+    include: {
+      models: {
+        include: {
+          categories: { select: { name: true } },
+          activities: { select: { name: true } },
+          country: { select: { name: true } },
+          city: { select: { name: true } },
+          assets: true,
+        },
+      },
+    },
+  });
+  if (!pkg) return null;
+  return {
+    name: pkg.name,
+    description: pkg.description ?? undefined,
+    models: pkg.models.map((m) => ({
+      id: m.id,
+      fullName: `${m.firstName} ${m.paternalLastName}`,
+      mainPhotoUrl: getMainPhotoUrl(m.assets),
+      categories: m.categories.map((c) => c.name),
+      activities: m.activities.map((a) => a.name),
+      location: `${m.city.name}, ${m.country.name}`,
+      height: m.height,
+      currentWeight: m.currentWeight,
+      genre: m.genre,
+    })),
+  };
 }
 
 // ---------- Convocatorias públicas ----------
@@ -165,6 +201,7 @@ export async function listPublicConvocatorias() {
       horario: true,
       lugar: true,
       pago: true,
+      whatsappNumber: true,
       publishedAt: true,
     },
   });

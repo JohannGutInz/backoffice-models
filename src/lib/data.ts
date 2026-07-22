@@ -174,10 +174,32 @@ export async function listBookings(): Promise<Booking[]> {
   return bookings.filter((b) => b.agencyId === AGENCY_ID);
 }
 
-// ---------- Packages ----------
+// ---------- Packages (real DB) ----------
 
-export async function listPackages(): Promise<Package[]> {
-  return packages.filter((p) => p.agencyId === AGENCY_ID);
+export type PackageItem = Awaited<ReturnType<typeof listPackages>>[number];
+
+export async function listPackages() {
+  return prisma.package.findMany({
+    include: { models: { select: { id: true } } },
+    orderBy: { createdAt: "desc" },
+  });
+}
+
+export type PackageWithModels = Awaited<ReturnType<typeof getPaquete>>;
+
+const packageModelInclude = {
+  categories: { select: { name: true } },
+  activities: { select: { name: true } },
+  country: { select: { name: true } },
+  city: { select: { name: true } },
+  assets: true,
+} as const;
+
+export async function getPaquete(id: string) {
+  return prisma.package.findUnique({
+    where: { id },
+    include: { models: { include: packageModelInclude } },
+  });
 }
 
 // ---------- Income ----------
@@ -231,7 +253,7 @@ export async function getDashboardStats() {
     .filter((i) => new Date(i.date).getMonth() === currentMonth)
     .reduce((sum, i) => sum + i.amount, 0);
 
-  const pendingPackages = pkgs.filter((p) => p.status === "borrador" || p.status === "enviado");
+  const pendingPackages = pkgs.filter((p) => p.status === "DRAFT" || p.status === "SENT");
   const pendingApplications = pendingKyc;
   const activeModels = mdls;
 
@@ -258,7 +280,7 @@ export async function getDashboardStats() {
     bookingsByStatus,
     totalBookings: bks.length,
     latestBookings,
-    draftPackages: pkgs.filter((p) => p.status === "borrador").length,
+    draftPackages: pkgs.filter((p) => p.status === "DRAFT").length,
   };
 }
 
@@ -273,10 +295,21 @@ export async function listGeografia() {
   return { countries, states, municipalities };
 }
 
-// ---------- Package by id ----------
+// ---------- Model portal: unread convocatoria count ----------
 
-export async function getPaquete(id: string): Promise<Package | undefined> {
-  return packages.find((p) => p.id === id && p.agencyId === AGENCY_ID);
+export async function getModelUnreadConvocatorias(userId: string): Promise<number> {
+  const model = await prisma.model.findUnique({
+    where: { userId },
+    select: { convocatoriaVistas: { select: { convocatoriaId: true } } },
+  });
+  if (!model) return 0;
+  const seenIds = model.convocatoriaVistas.map((v) => v.convocatoriaId);
+  return prisma.convocatoria.count({
+    where: {
+      status: "OPEN",
+      ...(seenIds.length > 0 ? { id: { notIn: seenIds } } : {}),
+    },
+  });
 }
 
 // ---------- Portfolio (stub — tables exist but not yet in Prisma schema) ----------

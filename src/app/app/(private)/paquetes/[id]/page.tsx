@@ -42,10 +42,7 @@ export default async function PaqueteDetallePage({
 
   if (!paquete) notFound();
 
-  const modelosEnPaquete = todosLosModelos.filter((m) => paquete.modelIds.includes(m.id));
-  const publicUrl = paquete.publicToken
-    ? `${process.env.NEXT_PUBLIC_BASE_URL ?? "http://localhost:3000"}/paquetes/${paquete.publicToken}`
-    : null;
+  const publicUrl = `${process.env.NEXT_PUBLIC_BASE_URL ?? "http://localhost:3000"}/paquetes/${paquete.token}`;
   const nextStatus = NEXT_STATUS[paquete.status];
 
   return (
@@ -72,16 +69,14 @@ export default async function PaqueteDetallePage({
         </div>
 
         <div className="flex flex-wrap gap-2">
-          {publicUrl && <CopyLinkButton url={publicUrl} />}
-          {publicUrl && (
-            <Link
-              href={`/paquetes/${paquete.publicToken}`}
-              target="_blank"
-              className="inline-flex items-center gap-2 rounded-lg border border-zinc-300 bg-white px-4 py-2.5 text-sm font-medium text-zinc-700 hover:bg-zinc-50"
-            >
-              <ExternalLink className="h-4 w-4" /> Ver público
-            </Link>
-          )}
+          <CopyLinkButton url={publicUrl} />
+          <Link
+            href={`/paquetes/${paquete.token}`}
+            target="_blank"
+            className="inline-flex items-center gap-2 rounded-lg border border-zinc-300 bg-white px-4 py-2.5 text-sm font-medium text-zinc-700 hover:bg-zinc-50"
+          >
+            <ExternalLink className="h-4 w-4" /> Ver público
+          </Link>
           {nextStatus && (
             <form>
               <button
@@ -96,27 +91,23 @@ export default async function PaqueteDetallePage({
       </div>
 
       <Card>
-        <CardHeader
-          title={`Modelos en este paquete (${modelosEnPaquete.length})`}
-        />
+        <CardHeader title={`Modelos en este paquete (${paquete.models.length})`} />
         <div className="px-5 pb-5">
           <PaqueteModelosManager
             paqueteId={paquete.id}
-            modelosEnPaquete={modelosEnPaquete}
+            modelosEnPaquete={paquete.models}
             todosLosModelos={todosLosModelos}
           />
         </div>
       </Card>
 
-      {publicUrl && (
-        <div className="mt-6 rounded-xl border border-zinc-200 bg-zinc-50 px-5 py-4">
-          <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-zinc-500">Link público del paquete</p>
-          <p className="font-mono text-sm text-zinc-700 break-all">{publicUrl}</p>
-          <p className="mt-1 text-xs text-zinc-400">
-            Cualquier persona con este link puede ver los modelos de esta propuesta.
-          </p>
-        </div>
-      )}
+      <div className="mt-6 rounded-xl border border-zinc-200 bg-zinc-50 px-5 py-4">
+        <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-zinc-500">Link público del paquete</p>
+        <p className="font-mono text-sm text-zinc-700 break-all">{publicUrl}</p>
+        <p className="mt-1 text-xs text-zinc-400">
+          Cualquier persona con este link puede ver los modelos de esta propuesta.
+        </p>
+      </div>
     </div>
   );
 }
