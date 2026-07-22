@@ -117,6 +117,12 @@ enum PackageStatus {
   CLOSED
 }
 
+enum ConvocatoriaStatus {
+  DRAFT
+  OPEN
+  CLOSED
+}
+
 enum MediaType {
   PHOTO_CASUAL
   PHOTO_BOOK
@@ -161,7 +167,8 @@ model Model {
   hasPassport        Boolean         @default(false) @map("has_passport")
   hasVisa            Boolean         @default(false) @map("has_visa")
 
-  assets Asset[]
+  assets             Asset[]
+  convocatoriaVistas ConvocatoriaVista[]
 
   kycId String @unique @map("kyc_id")
   kyc   Kyc    @relation(fields: [kycId], references: [id])
@@ -202,4 +209,40 @@ model Asset {
 
   @@unique([modelId, type, position])
   @@map("assets")
+}
+
+model Convocatoria {
+  id             String             @id @default(uuid())
+  titulo         String
+  ciudad         String
+  tipo           String
+  fechaEvento    DateTime           @map("fecha_evento") @db.Date
+  horario        String
+  lugar          String
+  funciones      String
+  pago           String
+  perfil         String
+  cuerpo         String             @default("")
+  whatsappNumber String             @map("whatsapp_number")
+  status         ConvocatoriaStatus @default(DRAFT)
+  publishedAt    DateTime?          @map("published_at")
+  createdAt      DateTime           @default(now()) @map("created_at")
+  updatedAt      DateTime           @updatedAt @map("updated_at")
+
+  vistas ConvocatoriaVista[]
+
+  @@map("convocatorias")
+}
+
+model ConvocatoriaVista {
+  id             String   @id @default(uuid())
+  modeloId       String   @map("modelo_id")
+  convocatoriaId String   @map("convocatoria_id")
+  vistoAt        DateTime @default(now()) @map("visto_at")
+
+  modelo       Model        @relation(fields: [modeloId], references: [id], onDelete: Cascade)
+  convocatoria Convocatoria @relation(fields: [convocatoriaId], references: [id], onDelete: Cascade)
+
+  @@unique([modeloId, convocatoriaId])
+  @@map("convocatoria_vistas")
 }
