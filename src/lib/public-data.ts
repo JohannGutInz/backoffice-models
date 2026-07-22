@@ -149,3 +149,29 @@ export type PaquetePublico = {
 export async function getPaquetePublico(_token: string): Promise<PaquetePublico | null> {
   return null;
 }
+
+// ---------- Convocatorias públicas ----------
+
+export async function listPublicConvocatorias() {
+  return prisma.convocatoria.findMany({
+    where: { status: "OPEN" },
+    orderBy: { fechaEvento: "asc" },
+    select: {
+      id: true,
+      titulo: true,
+      ciudad: true,
+      tipo: true,
+      fechaEvento: true,
+      horario: true,
+      lugar: true,
+      pago: true,
+      publishedAt: true,
+    },
+  });
+}
+
+export async function getPublicConvocatoria(id: string) {
+  return prisma.convocatoria.findFirst({
+    where: { id, status: "OPEN" },
+  });
+}

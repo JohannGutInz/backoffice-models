@@ -82,6 +82,23 @@ export async function emailApplicationDecision(application: RegistrationApplicat
   return sendEmail({ to: application.email, subject: copy.subject, html: layout(copy.subject, copy.html) });
 }
 
+export async function emailConvocatoriaPublicada(
+  model: { email: string; firstName: string },
+  conv: { titulo: string; ciudad: string; fechaEvento: Date; id: string },
+) {
+  const fecha = conv.fechaEvento.toLocaleDateString("es-MX", { day: "numeric", month: "long", year: "numeric" });
+  return sendEmail({
+    to: model.email,
+    subject: `Nueva convocatoria: ${conv.titulo}`,
+    html: layout(
+      `¡Hay una nueva convocatoria para ti, ${model.firstName}!`,
+      `<p><strong>${conv.titulo}</strong> — ${conv.ciudad}</p>
+       <p>Fecha del evento: ${fecha}</p>
+       <p><a href="${SITE_URL}/convocatorias/${conv.id}">Ver detalles y postularte</a></p>`,
+    ),
+  });
+}
+
 export async function emailClientContact(data: { name: string; company: string; email: string; message: string }) {
   return sendEmail({
     to: STAFF_INBOX,

@@ -8,9 +8,10 @@ import { prisma } from "@/db";
 import { siteSettings, models, registrationApplications } from "./mock-data";
 import { SESSION_COOKIE, createSessionToken, verifySessionToken } from "./session";
 import { toDateKey } from "./utils";
-import { emailClientContact } from "./email";
+import { emailClientContact, emailConvocatoriaPublicada } from "./email";
 import { APP_ROUTE } from "./routes";
-import { ownModelProfileSchema, modelEditSchema, registrationActionSchema } from "./schemas";
+import { ownModelProfileSchema, modelEditSchema, registrationActionSchema, convocatoriaSchema } from "./schemas";
+import type { ConvocatoriaFormData } from "./schemas";
 import { deleteObject, keyFromObjectUrl } from "./storage";
 import z from "zod";
 import type {
@@ -431,6 +432,88 @@ export async function crearEventoAction(_data: unknown): Promise<ActionState & {
 
 export async function editarEventoAction(_id: string, _data: unknown): Promise<ActionState> {
   return { status: "error", message: "Not implemented" };
+}
+
+// ---------- Convocatorias ----------
+
+export async function crearConvocatoriaAction(data: ConvocatoriaFormData): Promise<ActionState & { id?: string }> {
+  const parsed = convocatoriaSchema.safeParse(data);
+  if (!parsed.success) {
+    return { status: "error", message: "Datos inválidos." };
+  }
+  const d = parsed.data;
+  const conv = await prisma.convocatoria.create({
+    data: {
+      id: crypto.randomUUID(),
+      titulo: d.titulo,
+      ciudad: d.ciudad,
+      tipo: d.tipo,
+      fechaEvento: new Date(d.fechaEvento),
+      horario: d.horario,
+      lugar: d.lugar,
+      funciones: d.funciones,
+      pago: d.pago,
+      perfil: d.perfil,
+      cuerpo: d.cuerpo,
+      whatsappNumber: d.whatsappNumber,
+    },
+  });
+  revalidatePath(APP_ROUTE.app.convocatorias.index);
+  return { status: "success", message: "Convocatoria creada.", id: conv.id };
+}
+
+export async function editarConvocatoriaAction(id: string, data: ConvocatoriaFormData): Promise<ActionState> {
+  const parsed = convocatoriaSchema.safeParse(data);
+  if (!parsed.success) {
+    return { status: "error", message: "Datos inválidos." };
+  }
+  const d = parsed.data;
+  await prisma.convocatoria.update({
+    where: { id },
+    data: {
+      titulo: d.titulo,
+      ciudad: d.ciudad,
+      tipo: d.tipo,
+      fechaEvento: new Date(d.fechaEvento),
+      horario: d.horario,
+      lugar: d.lugar,
+      funciones: d.funciones,
+      pago: d.pago,
+      perfil: d.perfil,
+      cuerpo: d.cuerpo,
+      whatsappNumber: d.whatsappNumber,
+    },
+  });
+  revalidatePath(APP_ROUTE.app.convocatorias.index);
+  revalidatePath(APP_ROUTE.app.convocatorias.detail(id));
+  return { status: "success", message: "Convocatoria actualizada." };
+}
+
+export async function publicarConvocatoriaAction(id: string): Promise<void> {
+  const conv = await prisma.convocatoria.update({
+    where: { id },
+    data: { status: "OPEN", publishedAt: new Date() },
+  });
+  revalidatePath(APP_ROUTE.app.convocatorias.index);
+  revalidatePath(APP_ROUTE.app.convocatorias.detail(id));
+
+  const approvedModels = await prisma.model.findMany({
+    where: { kyc: { status: "APPROVED" } },
+    select: { email: true, firstName: true },
+  });
+  await Promise.allSettled(approvedModels.map((m) => emailConvocatoriaPublicada(m, conv)));
+}
+
+export async function cerrarConvocatoriaAction(id: string): Promise<void> {
+  await prisma.convocatoria.update({ where: { id }, data: { status: "CLOSED" } });
+  revalidatePath(APP_ROUTE.app.convocatorias.index);
+  revalidatePath(APP_ROUTE.app.convocatorias.detail(id));
+}
+
+export async function eliminarConvocatoriaAction(id: string): Promise<void> {
+  await prisma.convocatoria.delete({ where: { id } });
+  revalidatePath(APP_ROUTE.app.convocatorias.index);
+  redirect(APP_ROUTE.app.convocatorias.index);
 }
 
 // ---------- Paquetes (stub actions) ----------

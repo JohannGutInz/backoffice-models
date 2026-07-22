@@ -297,3 +297,17 @@ export async function listPortfolioEntries(): Promise<PortfolioEntryRecord[]> {
 export async function getPortfolioEntry(_id: string): Promise<PortfolioEntryRecord | undefined> {
   return undefined;
 }
+
+// ---------- Convocatorias ----------
+
+export type ConvocatoriaItem = Awaited<ReturnType<typeof listConvocatorias>>[number];
+
+export async function listConvocatorias() {
+  return prisma.convocatoria.findMany({
+    orderBy: { createdAt: "desc" },
+  });
+}
+
+export async function getConvocatoria(id: string) {
+  return prisma.convocatoria.findUnique({ where: { id } });
+}

@@ -161,3 +161,19 @@ export const nuevoModeloAdminFormSchema = z.object({
 });
 
 export type NuevoModeloAdminFormData = z.infer<typeof nuevoModeloAdminFormSchema>;
+
+export const convocatoriaSchema = z.object({
+  titulo: z.string().min(1, "El título es obligatorio."),
+  ciudad: z.string().min(1, "La ciudad es obligatoria."),
+  tipo: z.string().min(1, "El tipo es obligatorio."),
+  fechaEvento: z.string().min(1, "La fecha del evento es obligatoria."),
+  horario: z.string().min(1, "El horario es obligatorio."),
+  lugar: z.string().min(1, "El lugar es obligatorio."),
+  funciones: z.string().min(1, "Las funciones son obligatorias."),
+  pago: z.string().min(1, "El pago es obligatorio."),
+  perfil: z.string().min(1, "El perfil requerido es obligatorio."),
+  cuerpo: z.string(),
+  whatsappNumber: z.string().min(1, "El número de WhatsApp es obligatorio."),
+});
+
+export type ConvocatoriaFormData = z.infer<typeof convocatoriaSchema>;

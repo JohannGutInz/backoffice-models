@@ -45,12 +45,22 @@ export const APP_ROUTE = {
     },
     model: {
       profile: "/app/modelo/perfil"
-    }
+    },
+    convocatorias: {
+      index: "/app/convocatorias",
+      nueva: "/app/convocatorias/nueva",
+      detail: (id: string) => `/app/convocatorias/${id}`,
+      edit: (id: string) => `/app/convocatorias/${id}/editar`,
+    },
   },
   registration: {
     index: "/registro"
   },
   contact: {
     index: "/contacto"
-  }
+  },
+  convocatorias: {
+    index: "/convocatorias",
+    detail: (id: string) => `/convocatorias/${id}`,
+  },
 };
