@@ -14,6 +14,7 @@ import {
   XCircle,
 } from "lucide-react";
 import { getModelKyc } from "@/lib/data";
+import { signAssetUrls } from "@/lib/storage";
 import { moderateKycAction } from "@/lib/actions";
 import { Avatar } from "@/components/ui/Avatar";
 import { Button } from "@/components/ui/Button";
@@ -48,6 +49,8 @@ export default async function ModerationDetailPage({
   const model = await getModelKyc(id);
 
   if (!model) notFound();
+
+  model.assets = await signAssetUrls(model.assets);
 
   const { kyc } = model;
   const age = calculateAge(model.birthDate);

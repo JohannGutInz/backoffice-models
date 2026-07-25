@@ -3,6 +3,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { ArrowLeft, Mail, MapPin, Phone, User, Pencil } from "lucide-react";
 import { getModel } from "@/lib/data";
+import { signAssetUrls } from "@/lib/storage";
 import { Avatar } from "@/components/ui/Avatar";
 import { Card, CardHeader } from "@/components/ui/Card";
 import { Field, FieldGrid } from "@/components/ui/Field";
@@ -52,6 +53,8 @@ export default async function ModelDetailPage({
   const model = await getModel(id);
 
   if (!model) notFound();
+
+  model.assets = await signAssetUrls(model.assets);
 
   const mainPhotoUrl = getMainPhotoUrl(model.assets);
   const photoUrls = getGalleryPhotos(model.assets);

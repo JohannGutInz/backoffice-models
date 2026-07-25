@@ -36,7 +36,11 @@ export function VideoUpload({ value, onChange, label = "Video", className, model
       const presignData = await presignRes.json();
       if (!presignRes.ok) throw new Error(presignData.error ?? "Error al obtener URL");
 
-      const { uploadUrl, objectUrl } = presignData as { uploadUrl: string; objectUrl: string };
+      const { url, fields, objectUrl } = presignData as {
+        url: string;
+        fields: Record<string, string>;
+        objectUrl: string;
+      };
 
       await new Promise<void>((resolve, reject) => {
         const xhr = new XMLHttpRequest();
@@ -45,9 +49,11 @@ export function VideoUpload({ value, onChange, label = "Video", className, model
         };
         xhr.onload = () => (xhr.status >= 200 && xhr.status < 300 ? resolve() : reject(new Error(`Upload failed: ${xhr.status}`)));
         xhr.onerror = () => reject(new Error("Error de red"));
-        xhr.open("PUT", uploadUrl);
-        xhr.setRequestHeader("Content-Type", file.type);
-        xhr.send(file);
+        const formData = new FormData();
+        for (const [key, value] of Object.entries(fields)) formData.append(key, value);
+        formData.append("file", file);
+        xhr.open("POST", url);
+        xhr.send(formData);
       });
 
       onChange(objectUrl);

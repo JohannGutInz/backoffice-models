@@ -1,6 +1,7 @@
 import { clients, events, AGENCY_ID } from "./mock-data";
 import { prisma } from "@/db";
 import { getMainPhotoUrl, getGalleryPhotos, getGalleryVideos } from "./utils";
+import { signAssetUrls } from "./storage";
 
 // Public boundary. Only returns models with approved KYC. No private data.
 
@@ -42,15 +43,16 @@ export interface PublicModel {
   featured: boolean;
 }
 
-function toPublicModel(m: RawPublicModel): PublicModel {
+async function toPublicModel(m: RawPublicModel): Promise<PublicModel> {
+  const assets = await signAssetUrls(m.assets);
   return {
     id: m.id,
     firstName: m.firstName,
     paternalLastName: m.paternalLastName,
     maternalLastName: m.maternalLastName,
-    mainPhotoUrl: getMainPhotoUrl(m.assets),
-    photoUrls: getGalleryPhotos(m.assets),
-    videoUrls: getGalleryVideos(m.assets),
+    mainPhotoUrl: getMainPhotoUrl(assets),
+    photoUrls: getGalleryPhotos(assets),
+    videoUrls: getGalleryVideos(assets),
     categories: m.categories.map((c) => c.name),
     activities: m.activities.map((a) => a.name),
     genre: m.genre,
@@ -76,7 +78,7 @@ export async function listPublicModels(): Promise<PublicModel[]> {
     include: publicModelInclude,
     orderBy: [{ paternalLastName: "asc" }, { firstName: "asc" }],
   });
-  return models.map(toPublicModel);
+  return Promise.all(models.map(toPublicModel));
 }
 
 export async function getPublicModel(id: string): Promise<PublicModel | undefined> {
@@ -95,7 +97,7 @@ export async function listFeaturedModels(limit = 4): Promise<PublicModel[]> {
     orderBy: [{ createdAt: "desc" }],
     take: limit,
   });
-  return models.map(toPublicModel);
+  return Promise.all(models.map(toPublicModel));
 }
 
 export interface PortfolioEntryPublico {
@@ -172,17 +174,19 @@ export async function getPaquetePublico(token: string): Promise<PaquetePublico |
   return {
     name: pkg.name,
     description: pkg.description ?? undefined,
-    models: pkg.models.map((m) => ({
-      id: m.id,
-      fullName: `${m.firstName} ${m.paternalLastName}`,
-      mainPhotoUrl: getMainPhotoUrl(m.assets),
-      categories: m.categories.map((c) => c.name),
-      activities: m.activities.map((a) => a.name),
-      location: `${m.city.name}, ${m.country.name}`,
-      height: m.height,
-      currentWeight: m.currentWeight,
-      genre: m.genre,
-    })),
+    models: await Promise.all(
+      pkg.models.map(async (m) => ({
+        id: m.id,
+        fullName: `${m.firstName} ${m.paternalLastName}`,
+        mainPhotoUrl: getMainPhotoUrl(await signAssetUrls(m.assets)),
+        categories: m.categories.map((c) => c.name),
+        activities: m.activities.map((a) => a.name),
+        location: `${m.city.name}, ${m.country.name}`,
+        height: m.height,
+        currentWeight: m.currentWeight,
+        genre: m.genre,
+      })),
+    ),
   };
 }
 

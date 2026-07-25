@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { randomUUID } from "crypto";
 import { SESSION_COOKIE, verifySessionToken } from "@/lib/session";
-import { getPresignedVideoUploadUrl } from "@/lib/storage";
+import { getPresignedVideoUploadPost, getSignedDownloadUrl } from "@/lib/storage";
 import { prisma } from "@/db";
 
 const ALLOWED_TYPES = new Set(["video/mp4", "video/quicktime", "video/x-msvideo", "video/webm"]);
@@ -47,8 +47,11 @@ export async function POST(request: NextRequest) {
     : `media/videos/${randomUUID()}.${ext}`;
 
   try {
-    const result = await getPresignedVideoUploadUrl(key, contentType);
-    return NextResponse.json(result);
+    const [post, objectUrl] = await Promise.all([
+      getPresignedVideoUploadPost(key, contentType, MAX_BYTES),
+      getSignedDownloadUrl(key),
+    ]);
+    return NextResponse.json({ ...post, objectUrl });
   } catch (err) {
     console.error("[upload/video-presign]", err);
     return NextResponse.json({ error: "Error al generar URL de carga" }, { status: 500 });

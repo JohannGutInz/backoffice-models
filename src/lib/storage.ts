@@ -5,6 +5,7 @@ import {
   GetObjectCommand,
 } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
+import { createPresignedPost } from "@aws-sdk/s3-presigned-post";
 import sharp from "sharp";
 
 function getS3Client() {
@@ -23,12 +24,6 @@ function getBucket() {
   const bucket = process.env.STORAGE_BUCKET;
   if (!bucket) throw new Error("STORAGE_BUCKET is not configured");
   return bucket;
-}
-
-function getPublicUrl() {
-  const url = process.env.STORAGE_PUBLIC_URL;
-  if (!url) throw new Error("STORAGE_PUBLIC_URL is not configured");
-  return url;
 }
 
 export async function uploadImage(
@@ -53,26 +48,28 @@ export async function uploadImage(
     }),
   );
 
-  return `${getPublicUrl()}/${getBucket()}/${key}`;
+  return getSignedDownloadUrl(key);
 }
 
-export async function getPresignedVideoUploadUrl(
+export async function getPresignedVideoUploadPost(
   key: string,
   contentType: string,
-): Promise<{ uploadUrl: string; objectUrl: string }> {
+  maxBytes: number,
+): Promise<{ url: string; fields: Record<string, string> }> {
   const s3 = getS3Client();
-  const bucket = getBucket();
 
-  const uploadUrl = await getSignedUrl(
-    s3,
-    new PutObjectCommand({ Bucket: bucket, Key: key, ContentType: contentType }),
-    { expiresIn: 3600 },
-  );
-
-  return {
-    uploadUrl,
-    objectUrl: `${getPublicUrl()}/${bucket}/${key}`,
-  };
+  return createPresignedPost(s3, {
+    Bucket: getBucket(),
+    Key: key,
+    Conditions: [
+      ["content-length-range", 0, maxBytes],
+      ["eq", "$Content-Type", contentType],
+    ],
+    Fields: {
+      "Content-Type": contentType,
+    },
+    Expires: 3600,
+  });
 }
 
 export async function deleteObject(key: string): Promise<void> {
@@ -80,9 +77,16 @@ export async function deleteObject(key: string): Promise<void> {
   await s3.send(new DeleteObjectCommand({ Bucket: getBucket(), Key: key }));
 }
 
+// Signed GET URLs carry the key as their path, a bare query string as signature —
+// so this also recovers the key from a URL this module signed earlier.
 export function keyFromObjectUrl(url: string): string | null {
-  const prefix = `${getPublicUrl()}/${getBucket()}/`;
-  return url.startsWith(prefix) ? url.slice(prefix.length) : null;
+  try {
+    const { pathname } = new URL(url);
+    const prefix = `/${getBucket()}/`;
+    return pathname.startsWith(prefix) ? decodeURIComponent(pathname.slice(prefix.length)) : null;
+  } catch {
+    return null;
+  }
 }
 
 export async function getSignedDownloadUrl(key: string, expiresIn = 3600): Promise<string> {
@@ -92,4 +96,8 @@ export async function getSignedDownloadUrl(key: string, expiresIn = 3600): Promi
     new GetObjectCommand({ Bucket: getBucket(), Key: key }),
     { expiresIn },
   );
+}
+
+export async function signAssetUrls<T extends { url: string }>(assets: T[]): Promise<T[]> {
+  return Promise.all(assets.map(async (asset) => ({ ...asset, url: await getSignedDownloadUrl(asset.url) })));
 }
