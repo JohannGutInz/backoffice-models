@@ -287,20 +287,21 @@ export async function submitContactAction(data: ContactData): Promise<ActionStat
 
 // ---------- Model portal (self-service) ----------
 
-async function deleteRemovedAssets(oldUrls: string[], newUrls: string[]) {
-  const removed = oldUrls.filter((url) => !newUrls.includes(url));
+async function deleteRemovedAssets(oldKeys: string[], newKeys: string[]) {
+  const removed = oldKeys.filter((key) => !newKeys.includes(key));
   await Promise.all(
-    removed.map(async (url) => {
-      const key = keyFromObjectUrl(url);
-      if (!key) {
-        console.warn("[deleteRemovedAssets] URL did not match bucket prefix, skipped delete", url);
-        return;
-      }
-      await deleteObject(key).catch((err) => {
+    removed.map((key) =>
+      deleteObject(key).catch((err) => {
         console.error("[deleteRemovedAssets] failed to delete", key, err);
-      });
-    }),
+      }),
+    ),
   );
+}
+
+// Assets submitted from the client are signed GET URLs (bucket is private);
+// convert back to bare S3 keys before persisting or diffing.
+function toAssetKey(urlOrKey: string): string {
+  return keyFromObjectUrl(urlOrKey) ?? urlOrKey;
 }
 
 function assetRows(modelId: string, type: AssetType, urls: string[]) {
@@ -321,9 +322,9 @@ export async function updateOwnModelProfileAction(data: OwnModelProfileData): Pr
     redirect(APP_ROUTE.app.login.index);
   }
 
-  const newMainPhoto = result.data.mainPhotoUrl || null;
-  const newPhotos = result.data.photoUrls;
-  const newVideos = result.data.videoUrls;
+  const newMainPhoto = result.data.mainPhotoUrl ? toAssetKey(result.data.mainPhotoUrl) : null;
+  const newPhotos = result.data.photoUrls.map(toAssetKey);
+  const newVideos = result.data.videoUrls.map(toAssetKey);
 
   const currentModel = await prisma.model.findUnique({
     where: { userId: session.sub },

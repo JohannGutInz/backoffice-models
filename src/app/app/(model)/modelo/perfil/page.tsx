@@ -1,6 +1,7 @@
 import { AlertTriangle, XCircle } from "lucide-react";
 import { ModelProfileForm } from "@/components/models/ModelProfileForm";
 import { getOwnModel, getCurrentUser, listActivities } from "@/lib/data";
+import { signAssetUrls } from "@/lib/storage";
 import { notFound } from "next/navigation";
 
 export default async function ModelProfilePage() {
@@ -8,6 +9,8 @@ export default async function ModelProfilePage() {
   const [model, activities] = await Promise.all([getOwnModel(user.id), listActivities()]);
 
   if (!model) notFound();
+
+  model.assets = await signAssetUrls(model.assets);
 
   return (
     <div className="mx-auto max-w-2xl space-y-4">
