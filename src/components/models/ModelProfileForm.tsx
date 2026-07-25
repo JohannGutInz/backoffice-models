@@ -9,8 +9,8 @@ import { Select } from "@/components/ui/Select";
 import { Checkbox } from "@/components/ui/Checkbox";
 import { MultiSelectPicker } from "@/components/ui/MultiSelectPicker";
 import { Button } from "@/components/ui/Button";
-import { GalleryImageUpload } from "@/components/models/GalleryImageUpload";
-import { GalleryVideoUpload } from "@/components/models/GalleryVideoUpload";
+import { GalleryImageUpload, type GalleryImageUploadHandle } from "@/components/models/GalleryImageUpload";
+import { GalleryVideoUpload, type GalleryVideoUploadHandle } from "@/components/models/GalleryVideoUpload";
 import { updateOwnModelProfileAction } from "@/lib/actions";
 import { ownModelProfileSchema, type OwnModelProfileData } from "@/lib/schemas";
 import type { OwnModelWithKyc } from "@/lib/data";
@@ -45,6 +45,8 @@ export function ModelProfileForm({
   const [photoRemoved, setPhotoRemoved] = useState(false);
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
   const avatarInputRef = useRef<HTMLInputElement>(null);
+  const photoGalleryRef = useRef<GalleryImageUploadHandle>(null);
+  const videoGalleryRef = useRef<GalleryVideoUploadHandle>(null);
 
   const mainPhotoUrl = getMainPhotoUrl(model.assets);
 
@@ -138,7 +140,25 @@ export function ModelProfileForm({
       newMainPhotoUrl = "";
     }
 
-    const result = await updateOwnModelProfileAction({ ...data, mainPhotoUrl: newMainPhotoUrl });
+    let resolvedPhotoUrls = data.photoUrls;
+    let resolvedVideoUrls = data.videoUrls;
+
+    try {
+      [resolvedPhotoUrls, resolvedVideoUrls] = await Promise.all([
+        photoGalleryRef.current?.resolvePending(data.photoUrls) ?? Promise.resolve(data.photoUrls),
+        videoGalleryRef.current?.resolvePending(data.videoUrls) ?? Promise.resolve(data.videoUrls),
+      ]);
+    } catch (err) {
+      setMessage(err instanceof Error ? err.message : "Error al subir archivos.");
+      return;
+    }
+
+    const result = await updateOwnModelProfileAction({
+      ...data,
+      mainPhotoUrl: newMainPhotoUrl,
+      photoUrls: resolvedPhotoUrls,
+      videoUrls: resolvedVideoUrls,
+    });
     setMessage(result.message);
   }
 
@@ -231,6 +251,7 @@ export function ModelProfileForm({
             control={control}
             render={() => (
               <GalleryImageUpload
+                ref={photoGalleryRef}
                 value={photoUrls}
                 onChange={(urls) => setValue("photoUrls", urls, { shouldValidate: true })}
                 max={MAX_PHOTOS}
@@ -251,6 +272,7 @@ export function ModelProfileForm({
             control={control}
             render={() => (
               <GalleryVideoUpload
+                ref={videoGalleryRef}
                 value={videoUrls}
                 onChange={(urls) => setValue("videoUrls", urls, { shouldValidate: true })}
                 max={MAX_VIDEOS}
