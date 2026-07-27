@@ -75,20 +75,22 @@ const modelInclude = {
   country: true,
   city: { include: { state: true } },
   assets: true,
+  media: true,
 } as const;
 
 export type ModelWithRelations = Awaited<ReturnType<typeof listModels>>[number];
 
 export async function listModels() {
   return prisma.model.findMany({
+    where: { kyc: { status: "APPROVED" } },
     include: modelInclude,
     orderBy: [{ paternalLastName: "asc" }, { firstName: "asc" }],
   });
 }
 
 export async function getModel(id: string) {
-  return prisma.model.findUnique({
-    where: { id },
+  return prisma.model.findFirst({
+    where: { id, kyc: { status: "APPROVED" } },
     include: modelInclude,
   });
 }
@@ -115,6 +117,7 @@ const kycModelInclude = {
   country: true,
   city: { include: { state: true } },
   assets: true,
+  media: true,
 } as const;
 
 export type ModelWithKyc = Awaited<ReturnType<typeof listModelsKyc>>[number];
@@ -180,7 +183,7 @@ export type PackageItem = Awaited<ReturnType<typeof listPackages>>[number];
 
 export async function listPackages() {
   return prisma.package.findMany({
-    include: { models: { select: { id: true } } },
+    include: { models: { select: { id: true, categories: { select: { id: true, name: true } } } } },
     orderBy: { createdAt: "desc" },
   });
 }
@@ -221,7 +224,7 @@ export async function getSiteSettings() {
 // ---------- Catalogs (categories) ----------
 
 export async function listCategories() {
-  return prisma.category.findMany({ orderBy: { name: "asc" } });
+  return prisma.category.findMany({ where: { enabled: true }, orderBy: { name: "asc" } });
 }
 
 // ---------- Catalogs (activities) ----------

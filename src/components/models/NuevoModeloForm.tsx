@@ -300,17 +300,17 @@ export function NuevoModeloForm({ countries, states, municipalities, categories 
         </div>
       </section>
 
-      {/* Actividades */}
+      {/* Categorías */}
       {categories.length > 0 && (
         <section>
-          <SectionTitle>Actividades</SectionTitle>
+          <SectionTitle>Categorías</SectionTitle>
           <div className="flex gap-2">
             <select
               value={categoryPickerId}
               onChange={(e) => setCategoryPickerId(e.target.value)}
               className="flex-1 rounded-lg border border-zinc-300 bg-white py-2.5 px-3 text-sm outline-none focus:border-gold-500"
             >
-              <option value="" disabled>Selecciona una actividad…</option>
+              <option value="" disabled>Selecciona una categoría…</option>
               {categories
                 .filter((c) => !categoryIds.includes(c.id))
                 .map((c) => (

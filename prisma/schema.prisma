@@ -166,8 +166,10 @@ model Model {
   travelAvailability Boolean         @default(false) @map("travel_availability")
   hasPassport        Boolean         @default(false) @map("has_passport")
   hasVisa            Boolean         @default(false) @map("has_visa")
+  hiddenFromCatalog  Boolean         @default(false) @map("hidden_from_catalog")
 
   assets             Asset[]
+  media              ModelMedia[]
   convocatoriaVistas ConvocatoriaVista[]
   packages           Package[]
 
@@ -210,6 +212,20 @@ model Asset {
 
   @@unique([modelId, type, position])
   @@map("assets")
+}
+
+model ModelMedia {
+  id        String    @id @default(uuid())
+  url       String
+  type      MediaType
+  position  Int       @default(0)
+  createdAt DateTime  @default(now()) @map("created_at")
+
+  modelId String @map("model_id")
+  model   Model  @relation(fields: [modelId], references: [id], onDelete: Cascade)
+
+  @@unique([modelId, type, position])
+  @@map("model_media")
 }
 
 model Convocatoria {

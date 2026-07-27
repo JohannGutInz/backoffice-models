@@ -1,16 +1,17 @@
 import { AlertTriangle, XCircle } from "lucide-react";
 import { ModelProfileForm } from "@/components/models/ModelProfileForm";
-import { getOwnModel, getCurrentUser, listActivities } from "@/lib/data";
+import { getOwnModel, getCurrentUser, listCategories } from "@/lib/data";
 import { signAssetUrls } from "@/lib/storage";
 import { notFound } from "next/navigation";
 
 export default async function ModelProfilePage() {
   const user = await getCurrentUser();
-  const [model, activities] = await Promise.all([getOwnModel(user.id), listActivities()]);
+  const [model, categories] = await Promise.all([getOwnModel(user.id), listCategories()]);
 
   if (!model) notFound();
 
   model.assets = await signAssetUrls(model.assets);
+  model.media = await signAssetUrls(model.media);
 
   return (
     <div className="mx-auto max-w-2xl space-y-4">
@@ -34,7 +35,7 @@ export default async function ModelProfilePage() {
         </div>
       )}
 
-      <ModelProfileForm model={model} activities={activities} />
+      <ModelProfileForm model={model} categories={categories} />
     </div>
   );
 }

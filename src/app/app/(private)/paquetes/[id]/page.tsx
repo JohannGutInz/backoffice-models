@@ -5,6 +5,7 @@ import { getPaquete, getCurrentUser, listModels } from "@/lib/data";
 import { cambiarStatusPaqueteAction } from "@/lib/actions";
 import { Card, CardHeader } from "@/components/ui/Card";
 import { PaqueteModelosManager } from "@/components/paquetes/PaqueteModelosManager";
+import { PaqueteNameEditor } from "@/components/paquetes/PaqueteNameEditor";
 import { CopyLinkButton } from "@/components/paquetes/CopyLinkButton";
 import { APP_ROUTE } from "@/lib/routes";
 import { formatDate } from "@/lib/utils";
@@ -57,7 +58,7 @@ export default async function PaqueteDetallePage({
       <div className="mb-6 flex flex-wrap items-start justify-between gap-4">
         <div>
           <div className="flex items-center gap-3">
-            <h1 className="text-2xl font-semibold tracking-tight text-zinc-900">{paquete.name}</h1>
+            <PaqueteNameEditor paqueteId={paquete.id} name={paquete.name} />
             <span className={`rounded-full px-2.5 py-1 text-xs font-medium ${STATUS_CLASS[paquete.status] ?? ""}`}>
               {STATUS_LABEL[paquete.status] ?? paquete.status}
             </span>

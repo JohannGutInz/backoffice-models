@@ -107,22 +107,6 @@ export default async function TalentDetailPage({
             </div>
           </dl>
 
-          {model.activities.length > 0 && (
-            <div className="mt-6">
-              <p className="text-xs text-zinc-400">Actividades</p>
-              <div className="mt-2 flex flex-wrap gap-2">
-                {model.activities.map((activity) => (
-                  <span
-                    key={activity}
-                    className="rounded-full bg-zinc-100 px-3 py-1 text-xs font-medium text-zinc-700"
-                  >
-                    {activity}
-                  </span>
-                ))}
-              </div>
-            </div>
-          )}
-
           <Link
             href={`/contacto?modelo=${encodeURIComponent(formatFullName(model))}`}
             className="mt-8 inline-flex items-center gap-1.5 rounded-full bg-zinc-950 px-5 py-2.5 text-sm font-medium text-white transition-colors hover:bg-gold-600"

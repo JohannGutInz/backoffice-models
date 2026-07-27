@@ -22,7 +22,17 @@ import { Card, CardHeader } from "@/components/ui/Card";
 import { Field, FieldGrid } from "@/components/ui/Field";
 import { Textarea } from "@/components/ui/Textarea";
 import { StatusBadge } from "@/components/ui/Badge";
-import { addDays, formatDate, formatFullName, getMainPhotoUrl, getGalleryPhotos, getGalleryVideos } from "@/lib/utils";
+import {
+  addDays,
+  formatDate,
+  formatFullName,
+  getMainPhotoUrl,
+  getGalleryVideos,
+  getCasualPhotos,
+  getBookPhotos,
+  getEventPhotos,
+  getCampaignVideoLinks,
+} from "@/lib/utils";
 import { APP_ROUTE } from "@/lib/routes";
 
 const GENRE_LABEL: Record<string, string> = {
@@ -51,6 +61,7 @@ export default async function ModerationDetailPage({
   if (!model) notFound();
 
   model.assets = await signAssetUrls(model.assets);
+  model.media = await signAssetUrls(model.media);
 
   const { kyc } = model;
   const age = calculateAge(model.birthDate);
@@ -58,8 +69,11 @@ export default async function ModerationDetailPage({
   const canReview = kyc.status !== "APPROVED" && kyc.status !== "REJECTED";
 
   const mainPhotoUrl = getMainPhotoUrl(model.assets);
-  const photoUrls = getGalleryPhotos(model.assets);
-  const videoUrls = getGalleryVideos(model.assets);
+  const presentationVideoUrl = getGalleryVideos(model.assets)[0] ?? null;
+  const casualPhotos = getCasualPhotos(model.media);
+  const bookPhotos = getBookPhotos(model.media);
+  const eventPhotos = getEventPhotos(model.media);
+  const campaignVideoLinks = getCampaignVideoLinks(model.media);
 
   return (
     <div>
@@ -141,24 +155,72 @@ export default async function ModerationDetailPage({
             </Card>
           )}
 
-          {(photoUrls.length > 0 || videoUrls.length > 0) && (
+          {casualPhotos.length > 0 && (
             <Card>
-              <CardHeader title="Book" subtitle="Fotos y videos que el modelo cargó a su perfil." />
+              <CardHeader title="Fotos caseras" />
+              <div className="grid grid-cols-3 gap-3 px-5 pb-5 sm:grid-cols-4">
+                {casualPhotos.map((url) => (
+                  <div key={url} className="relative aspect-square overflow-hidden rounded-lg border border-zinc-200">
+                    <Image src={url} alt="Foto casera" fill className="object-cover" unoptimized />
+                  </div>
+                ))}
+              </div>
+            </Card>
+          )}
+
+          {bookPhotos.length > 0 && (
+            <Card>
+              <CardHeader title="Fotos de book" />
+              <div className="grid grid-cols-3 gap-3 px-5 pb-5 sm:grid-cols-4">
+                {bookPhotos.map((url) => (
+                  <div key={url} className="relative aspect-square overflow-hidden rounded-lg border border-zinc-200">
+                    <Image src={url} alt="Foto de book" fill className="object-cover" unoptimized />
+                  </div>
+                ))}
+              </div>
+            </Card>
+          )}
+
+          {eventPhotos.length > 0 && (
+            <Card>
+              <CardHeader title="Fotos de eventos" />
+              <div className="grid grid-cols-3 gap-3 px-5 pb-5 sm:grid-cols-4">
+                {eventPhotos.map((url) => (
+                  <div key={url} className="relative aspect-square overflow-hidden rounded-lg border border-zinc-200">
+                    <Image src={url} alt="Foto de evento" fill className="object-cover" unoptimized />
+                  </div>
+                ))}
+              </div>
+            </Card>
+          )}
+
+          {(presentationVideoUrl || campaignVideoLinks.length > 0) && (
+            <Card>
+              <CardHeader title="Video" />
               <div className="space-y-4 px-5 pb-5">
-                {photoUrls.length > 0 && (
-                  <div className="grid grid-cols-3 gap-3 sm:grid-cols-4">
-                    {photoUrls.map((url) => (
-                      <div key={url} className="relative aspect-square overflow-hidden rounded-lg border border-zinc-200">
-                        <Image src={url} alt="Foto del book" fill className="object-cover" unoptimized />
-                      </div>
-                    ))}
+                {presentationVideoUrl && (
+                  <div>
+                    <p className="mb-2 text-xs font-medium text-zinc-400">Video de presentación</p>
+                    <video src={presentationVideoUrl} controls className="w-full rounded-lg" />
                   </div>
                 )}
-                {videoUrls.length > 0 && (
-                  <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                    {videoUrls.map((url) => (
-                      <video key={url} src={url} controls className="w-full rounded-lg" />
-                    ))}
+                {campaignVideoLinks.length > 0 && (
+                  <div>
+                    <p className="mb-2 text-xs font-medium text-zinc-400">Links a videos de campañas</p>
+                    <ul className="space-y-1.5">
+                      {campaignVideoLinks.map((url) => (
+                        <li key={url}>
+                          <a
+                            href={url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="truncate text-sm text-gold-700 underline hover:text-gold-600"
+                          >
+                            {url}
+                          </a>
+                        </li>
+                      ))}
+                    </ul>
                   </div>
                 )}
               </div>

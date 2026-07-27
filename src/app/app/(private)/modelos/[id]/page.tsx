@@ -1,15 +1,25 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
-import { ArrowLeft, Mail, MapPin, Phone, User, Pencil } from "lucide-react";
+import { ArrowLeft, Mail, MapPin, MessageCircle, Phone, User, Pencil } from "lucide-react";
 import { getModel } from "@/lib/data";
 import { signAssetUrls } from "@/lib/storage";
+import { ModelVisibilityToggle } from "@/components/models/ModelVisibilityToggle";
 import { Avatar } from "@/components/ui/Avatar";
 import { Card, CardHeader } from "@/components/ui/Card";
 import { Field, FieldGrid } from "@/components/ui/Field";
 import { LinkButton } from "@/components/ui/Button";
 import { APP_ROUTE } from "@/lib/routes";
-import { formatDate, formatFullName, getMainPhotoUrl, getGalleryPhotos, getGalleryVideos } from "@/lib/utils";
+import {
+  formatDate,
+  formatFullName,
+  getMainPhotoUrl,
+  getGalleryVideos,
+  getCasualPhotos,
+  getBookPhotos,
+  getEventPhotos,
+  getCampaignVideoLinks,
+} from "@/lib/utils";
 
 const GENRE_LABEL: Record<string, string> = {
   MALE: "Masculino",
@@ -55,10 +65,14 @@ export default async function ModelDetailPage({
   if (!model) notFound();
 
   model.assets = await signAssetUrls(model.assets);
+  model.media = await signAssetUrls(model.media);
 
   const mainPhotoUrl = getMainPhotoUrl(model.assets);
-  const photoUrls = getGalleryPhotos(model.assets);
-  const videoUrls = getGalleryVideos(model.assets);
+  const presentationVideoUrl = getGalleryVideos(model.assets)[0] ?? null;
+  const casualPhotos = getCasualPhotos(model.media);
+  const bookPhotos = getBookPhotos(model.media);
+  const eventPhotos = getEventPhotos(model.media);
+  const campaignVideoLinks = getCampaignVideoLinks(model.media);
 
   return (
     <div>
@@ -79,9 +93,12 @@ export default async function ModelDetailPage({
             <Avatar name={formatFullName(model)} size="lg" />
           )}
           <div>
-            <h1 className="text-2xl font-semibold tracking-tight text-zinc-900">
-              {formatFullName(model)}
-            </h1>
+            <div className="flex items-center gap-3">
+              <h1 className="text-2xl font-semibold tracking-tight text-zinc-900">
+                {formatFullName(model)}
+              </h1>
+              <ModelVisibilityToggle modelId={model.id} hiddenFromCatalog={model.hiddenFromCatalog} />
+            </div>
             <div className="mt-1 flex items-center gap-2 text-sm text-zinc-500">
               <span className="rounded-full bg-zinc-100 px-2 py-0.5 text-xs font-medium text-zinc-600">
                 {GENRE_LABEL[model.genre] ?? model.genre}
@@ -161,30 +178,91 @@ export default async function ModelDetailPage({
                       <Phone className="h-3 w-3" /> Teléfono
                     </span>
                   }
-                  value={model.phone}
+                  value={
+                    <span className="inline-flex items-center gap-2">
+                      {model.phone}
+                      <a
+                        href={`https://wa.me/${model.phone.replace(/\D/g, "")}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        title="Contactar por WhatsApp"
+                        className="inline-flex items-center justify-center rounded-full p-1 text-emerald-600 hover:bg-emerald-50"
+                      >
+                        <MessageCircle className="h-4 w-4" />
+                      </a>
+                    </span>
+                  }
                 />
               </FieldGrid>
             </div>
           </Card>
 
-          {(photoUrls.length > 0 || videoUrls.length > 0) && (
+          {casualPhotos.length > 0 && (
             <Card>
-              <CardHeader title="Book" />
+              <CardHeader title="Fotos caseras" />
+              <div className="grid grid-cols-3 gap-3 px-5 pb-5 sm:grid-cols-4">
+                {casualPhotos.map((url) => (
+                  <div key={url} className="relative aspect-square overflow-hidden rounded-lg border border-zinc-200">
+                    <Image src={url} alt="Foto casera" fill className="object-cover" unoptimized />
+                  </div>
+                ))}
+              </div>
+            </Card>
+          )}
+
+          {bookPhotos.length > 0 && (
+            <Card>
+              <CardHeader title="Fotos de book" />
+              <div className="grid grid-cols-3 gap-3 px-5 pb-5 sm:grid-cols-4">
+                {bookPhotos.map((url) => (
+                  <div key={url} className="relative aspect-square overflow-hidden rounded-lg border border-zinc-200">
+                    <Image src={url} alt="Foto de book" fill className="object-cover" unoptimized />
+                  </div>
+                ))}
+              </div>
+            </Card>
+          )}
+
+          {eventPhotos.length > 0 && (
+            <Card>
+              <CardHeader title="Fotos de eventos" />
+              <div className="grid grid-cols-3 gap-3 px-5 pb-5 sm:grid-cols-4">
+                {eventPhotos.map((url) => (
+                  <div key={url} className="relative aspect-square overflow-hidden rounded-lg border border-zinc-200">
+                    <Image src={url} alt="Foto de evento" fill className="object-cover" unoptimized />
+                  </div>
+                ))}
+              </div>
+            </Card>
+          )}
+
+          {(presentationVideoUrl || campaignVideoLinks.length > 0) && (
+            <Card>
+              <CardHeader title="Video" />
               <div className="space-y-4 px-5 pb-5">
-                {photoUrls.length > 0 && (
-                  <div className="grid grid-cols-3 gap-3 sm:grid-cols-4">
-                    {photoUrls.map((url) => (
-                      <div key={url} className="relative aspect-square overflow-hidden rounded-lg border border-zinc-200">
-                        <Image src={url} alt="Foto del book" fill className="object-cover" unoptimized />
-                      </div>
-                    ))}
+                {presentationVideoUrl && (
+                  <div>
+                    <p className="mb-2 text-xs font-medium text-zinc-400">Video de presentación</p>
+                    <video src={presentationVideoUrl} controls className="w-full rounded-lg" />
                   </div>
                 )}
-                {videoUrls.length > 0 && (
-                  <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                    {videoUrls.map((url) => (
-                      <video key={url} src={url} controls className="w-full rounded-lg" />
-                    ))}
+                {campaignVideoLinks.length > 0 && (
+                  <div>
+                    <p className="mb-2 text-xs font-medium text-zinc-400">Links a videos de campañas</p>
+                    <ul className="space-y-1.5">
+                      {campaignVideoLinks.map((url) => (
+                        <li key={url}>
+                          <a
+                            href={url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="truncate text-sm text-gold-700 underline hover:text-gold-600"
+                          >
+                            {url}
+                          </a>
+                        </li>
+                      ))}
+                    </ul>
                   </div>
                 )}
               </div>
@@ -230,24 +308,6 @@ export default async function ModelDetailPage({
                       className="rounded-full bg-zinc-100 px-3 py-1 text-sm font-medium text-zinc-700"
                     >
                       {cat.name}
-                    </span>
-                  ))}
-                </div>
-              </div>
-            </Card>
-          )}
-
-          {model.activities.length > 0 && (
-            <Card>
-              <CardHeader title="Actividades" />
-              <div className="px-5 pb-5">
-                <div className="flex flex-wrap gap-2">
-                  {model.activities.map((act) => (
-                    <span
-                      key={act.id}
-                      className="rounded-full bg-zinc-100 px-3 py-1 text-sm font-medium text-zinc-700"
-                    >
-                      {act.name}
                     </span>
                   ))}
                 </div>

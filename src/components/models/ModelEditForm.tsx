@@ -1,17 +1,28 @@
 "use client";
 
+import { useRef, useState } from "react";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { Camera, User } from "lucide-react";
 import { Card, CardHeader } from "@/components/ui/Card";
 import { Input } from "@/components/ui/Input";
 import { Select } from "@/components/ui/Select";
 import { Checkbox } from "@/components/ui/Checkbox";
 import { MultiSelectPicker } from "@/components/ui/MultiSelectPicker";
 import { Button } from "@/components/ui/Button";
+import { ModelMediaFields, type ModelMediaFieldsHandle } from "@/components/models/ModelMediaFields";
 import { updateModelAttributesAction } from "@/lib/actions";
 import { modelEditSchema, type ModelEditData } from "@/lib/schemas";
 import { APP_ROUTE } from "@/lib/routes";
 import type { ModelWithRelations } from "@/lib/data";
+import {
+  getMainPhotoUrl,
+  getGalleryVideos,
+  getCasualPhotos,
+  getBookPhotos,
+  getEventPhotos,
+  getCampaignVideoLinks,
+} from "@/lib/utils";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { PantsSizeScale, ShirtSize } from "@/generated/prisma/enums";
@@ -24,14 +35,19 @@ interface Option {
 export function ModelEditForm({
   model,
   categories,
-  activities,
 }: {
   model: ModelWithRelations;
   categories: Option[];
-  activities: Option[];
 }) {
   const router = useRouter();
   const [serverError, setServerError] = useState<string | null>(null);
+  const [pendingPhoto, setPendingPhoto] = useState<File | null>(null);
+  const [photoRemoved, setPhotoRemoved] = useState(false);
+  const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
+  const avatarInputRef = useRef<HTMLInputElement>(null);
+  const mediaFieldsRef = useRef<ModelMediaFieldsHandle>(null);
+
+  const mainPhotoUrl = getMainPhotoUrl(model.assets);
 
   const {
     register,
@@ -47,6 +63,12 @@ export function ModelEditForm({
       paternalLastName: model.paternalLastName,
       maternalLastName: model.maternalLastName ?? "",
       phone: model.phone,
+      mainPhotoUrl: mainPhotoUrl ?? "",
+      casualPhotoUrls: getCasualPhotos(model.media),
+      bookPhotoUrls: getBookPhotos(model.media),
+      eventPhotoUrls: getEventPhotos(model.media),
+      presentationVideoUrl: getGalleryVideos(model.assets)[0] ?? "",
+      campaignVideoLinks: getCampaignVideoLinks(model.media),
       height: model.height ?? undefined,
       currentWeight: model.currentWeight ?? undefined,
       hasVisibleTattoos: model.hasVisibleTattoos,
@@ -57,16 +79,76 @@ export function ModelEditForm({
       hasPassport: model.hasPassport,
       hasVisa: model.hasVisa,
       categoryIds: model.categories.map((c) => c.id),
-      activityIds: model.activities.map((a) => a.id),
+      hiddenFromCatalog: model.hiddenFromCatalog,
     },
   });
 
   const categoryIds = watch("categoryIds");
-  const activityIds = watch("activityIds");
+  const casualPhotoUrls = watch("casualPhotoUrls");
+  const bookPhotoUrls = watch("bookPhotoUrls");
+  const eventPhotoUrls = watch("eventPhotoUrls");
+  const presentationVideoUrl = watch("presentationVideoUrl");
+  const campaignVideoLinks = watch("campaignVideoLinks");
+
+  function handleAvatarChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (avatarPreview) URL.revokeObjectURL(avatarPreview);
+    setAvatarPreview(URL.createObjectURL(file));
+    setPendingPhoto(file);
+    setPhotoRemoved(false);
+    e.target.value = "";
+  }
+
+  function handleAvatarRemove() {
+    if (avatarPreview) URL.revokeObjectURL(avatarPreview);
+    setAvatarPreview(null);
+    setPendingPhoto(null);
+    setPhotoRemoved(true);
+  }
+
+  const displayAvatar = avatarPreview ?? (photoRemoved ? null : mainPhotoUrl);
 
   async function onSubmit(data: ModelEditData) {
     setServerError(null);
-    const result = await updateModelAttributesAction(model.id, data);
+
+    let newMainPhotoUrl = mainPhotoUrl ?? "";
+
+    if (pendingPhoto) {
+      const formData = new FormData();
+      formData.append("file", pendingPhoto);
+      formData.append("modelId", model.id);
+
+      const res = await fetch("/api/upload/image", { method: "POST", body: formData });
+      const uploadResult = await res.json();
+      if (!res.ok) {
+        setServerError(uploadResult.error ?? "Error al subir la imagen.");
+        return;
+      }
+      newMainPhotoUrl = uploadResult.url;
+    } else if (photoRemoved) {
+      newMainPhotoUrl = "";
+    }
+
+    let resolvedMedia = {
+      casualPhotoUrls: data.casualPhotoUrls,
+      bookPhotoUrls: data.bookPhotoUrls,
+      eventPhotoUrls: data.eventPhotoUrls,
+      presentationVideoUrl: data.presentationVideoUrl,
+    };
+
+    try {
+      resolvedMedia = (await mediaFieldsRef.current?.resolvePending()) ?? resolvedMedia;
+    } catch (err) {
+      setServerError(err instanceof Error ? err.message : "Error al subir archivos.");
+      return;
+    }
+
+    const result = await updateModelAttributesAction(model.id, {
+      ...data,
+      mainPhotoUrl: newMainPhotoUrl,
+      ...resolvedMedia,
+    });
     if (result.status === "error") {
       setServerError(result.message);
       return;
@@ -77,7 +159,77 @@ export function ModelEditForm({
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
       <Card>
-        <CardHeader title="Identidad" />
+        <CardHeader title="Foto de perfil" />
+        <div className="flex items-center gap-4 px-5 pb-5">
+          <div className="group relative">
+            <button
+              type="button"
+              onClick={() => avatarInputRef.current?.click()}
+              className="relative h-20 w-20 overflow-hidden rounded-full border border-zinc-200 bg-zinc-100"
+            >
+              {displayAvatar ? (
+                <Image src={displayAvatar} alt="Foto de perfil" fill className="object-cover" unoptimized />
+              ) : (
+                <div className="flex h-full w-full items-center justify-center">
+                  <User className="h-8 w-8 text-zinc-400" />
+                </div>
+              )}
+              <div className="absolute inset-0 flex items-center justify-center rounded-full bg-zinc-950/40 opacity-0 transition-opacity group-hover:opacity-100">
+                <Camera className="h-5 w-5 text-white" />
+              </div>
+            </button>
+            <input
+              ref={avatarInputRef}
+              type="file"
+              accept="image/jpeg,image/png,image/webp"
+              className="hidden"
+              onChange={handleAvatarChange}
+            />
+          </div>
+          {displayAvatar && (
+            <button
+              type="button"
+              onClick={handleAvatarRemove}
+              className="text-xs text-zinc-400 underline hover:text-rose-500"
+            >
+              Eliminar foto
+            </button>
+          )}
+        </div>
+      </Card>
+
+      <ModelMediaFields
+        ref={mediaFieldsRef}
+        modelId={model.id}
+        casualPhotos={{
+          value: casualPhotoUrls,
+          onChange: (urls) => setValue("casualPhotoUrls", urls, { shouldValidate: true }),
+          error: errors.casualPhotoUrls?.message,
+        }}
+        bookPhotos={{
+          value: bookPhotoUrls,
+          onChange: (urls) => setValue("bookPhotoUrls", urls, { shouldValidate: true }),
+          error: errors.bookPhotoUrls?.message,
+        }}
+        eventPhotos={{
+          value: eventPhotoUrls,
+          onChange: (urls) => setValue("eventPhotoUrls", urls, { shouldValidate: true }),
+          error: errors.eventPhotoUrls?.message,
+        }}
+        presentationVideo={{
+          value: presentationVideoUrl ?? "",
+          onChange: (url) => setValue("presentationVideoUrl", url, { shouldValidate: true }),
+          error: errors.presentationVideoUrl?.message,
+        }}
+        campaignLinks={{
+          value: campaignVideoLinks,
+          onChange: (urls) => setValue("campaignVideoLinks", urls, { shouldValidate: true }),
+          error: errors.campaignVideoLinks?.message,
+        }}
+      />
+
+      <Card>
+        <CardHeader title="Datos de contacto" />
         <div className="grid grid-cols-1 gap-4 px-5 pb-5 sm:grid-cols-2">
           <Input label="Nombre(s)" {...register("firstName")} error={errors.firstName?.message} />
           <Input
@@ -137,7 +289,7 @@ export function ModelEditForm({
       </Card>
 
       <Card>
-        <CardHeader title="Logística" />
+        <CardHeader title="Disponibilidad" />
         <div className="space-y-3 px-5 pb-5">
           <Checkbox label="Disponibilidad para viajar" {...register("travelAvailability")} />
           <Checkbox label="¿Cuenta con pasaporte?" {...register("hasPassport")} />
@@ -146,8 +298,8 @@ export function ModelEditForm({
       </Card>
 
       <Card>
-        <CardHeader title="Categorías y actividades" />
-        <div className="space-y-4 px-5 pb-5">
+        <CardHeader title="Categorías" />
+        <div className="px-5 pb-5">
           <Controller
             name="categoryIds"
             control={control}
@@ -162,19 +314,15 @@ export function ModelEditForm({
               />
             )}
           />
-          <Controller
-            name="activityIds"
-            control={control}
-            render={() => (
-              <MultiSelectPicker
-                label="Actividades"
-                hint="(mínimo 1)"
-                options={activities}
-                selectedIds={activityIds}
-                onChange={(ids) => setValue("activityIds", ids)}
-                error={errors.activityIds?.message}
-              />
-            )}
+        </div>
+      </Card>
+
+      <Card>
+        <CardHeader title="Visibilidad" />
+        <div className="px-5 pb-5">
+          <Checkbox
+            label="Ocultar este perfil del catálogo público de modelos"
+            {...register("hiddenFromCatalog")}
           />
         </div>
       </Card>

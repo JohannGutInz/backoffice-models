@@ -1,7 +1,8 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
-import { getModel, listCategories, listActivities } from "@/lib/data";
+import { getModel, listCategories } from "@/lib/data";
+import { signAssetUrls } from "@/lib/storage";
 import { ModelEditForm } from "@/components/models/ModelEditForm";
 import { APP_ROUTE } from "@/lib/routes";
 import { formatFullName } from "@/lib/utils";
@@ -12,13 +13,15 @@ export default async function ModelEditPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const [model, categories, activities] = await Promise.all([
+  const [model, categories] = await Promise.all([
     getModel(id),
     listCategories(),
-    listActivities(),
   ]);
 
   if (!model) notFound();
+
+  model.assets = await signAssetUrls(model.assets);
+  model.media = await signAssetUrls(model.media);
 
   return (
     <div>
@@ -32,7 +35,7 @@ export default async function ModelEditPage({
       <h1 className="mb-6 text-2xl font-semibold tracking-tight text-zinc-900">Editar modelo</h1>
 
       <div className="max-w-2xl">
-        <ModelEditForm model={model} categories={categories} activities={activities} />
+        <ModelEditForm model={model} categories={categories} />
       </div>
     </div>
   );

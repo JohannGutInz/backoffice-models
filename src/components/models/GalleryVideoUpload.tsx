@@ -6,7 +6,7 @@ interface GalleryVideoUploadProps {
   value: string[];
   onChange: (urls: string[]) => void;
   max: number;
-  modelId: string;
+  modelId?: string;
   label?: string;
 }
 
@@ -26,7 +26,12 @@ export const GalleryVideoUpload = forwardRef<GalleryVideoUploadHandle, GalleryVi
       const presignRes = await fetch("/api/upload/video-presign", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ filename: file.name, contentType: file.type, sizeBytes: file.size, modelId }),
+        body: JSON.stringify({
+          filename: file.name,
+          contentType: file.type,
+          sizeBytes: file.size,
+          ...(modelId && { modelId }),
+        }),
       });
       const presignData = await presignRes.json();
       if (!presignRes.ok) throw new Error(presignData.error ?? "Error al obtener URL de carga.");

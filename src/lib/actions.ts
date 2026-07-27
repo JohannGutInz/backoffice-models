@@ -24,8 +24,14 @@ import type {
   OwnModelProfileData,
   ModelEditData,
 } from "./schemas";
-import { UserRole, AssetType } from "@/generated/prisma/enums";
-import { getMainPhotoUrl, getGalleryPhotos, getGalleryVideos } from "./utils";
+import { UserRole, AssetType, MediaType } from "@/generated/prisma/enums";
+import {
+  getMainPhotoUrl,
+  getGalleryVideos,
+  getCasualPhotos,
+  getBookPhotos,
+  getEventPhotos,
+} from "./utils";
 
 export interface ActionState {
   status: "idle" | "success" | "error";
@@ -66,7 +72,7 @@ export async function loginAction(data: LoginData): Promise<ActionState> {
     maxAge: 60 * 60 * 8,
   });
 
-  redirect(user.role === "MODEL" ? APP_ROUTE.app.model.profile : APP_ROUTE.app.dashboard.index);
+  redirect(user.role === "MODEL" ? APP_ROUTE.app.model.profile : APP_ROUTE.app.models.index);
 }
 
 export async function logoutAction() {
@@ -107,7 +113,7 @@ export async function submitRegistrationAction(data: RegistrationActionData): Pr
       },
     });
     const kyc = await tx.kyc.create({ data: {} });
-    await tx.model.create({
+    const model = await tx.model.create({
       data: {
         firstName: d.firstName,
         paternalLastName: d.paternalLastName,
@@ -121,8 +127,34 @@ export async function submitRegistrationAction(data: RegistrationActionData): Pr
         cityId: d.cityId,
         kycId: kyc.id,
         userId: user.id,
+        height: d.height,
+        currentWeight: d.currentWeight,
+        hasVisibleTattoos: d.hasVisibleTattoos,
+        shirtSize: d.shirtSize,
+        pantsSizeScale: d.pantsSizeScale,
+        pantsSize: d.pantsSize,
+        travelAvailability: d.travelAvailability,
+        hasPassport: d.hasPassport,
+        hasVisa: d.hasVisa,
         categories: { connect: d.categoryIds.map((id) => ({ id })) },
       },
+    });
+
+    const mainPhoto = d.mainPhotoUrl ? toAssetKey(d.mainPhotoUrl) : null;
+    const presentationVideo = d.presentationVideoUrl ? toAssetKey(d.presentationVideoUrl) : null;
+    await tx.asset.createMany({
+      data: [
+        ...assetRows(model.id, AssetType.MAIN_PHOTO, mainPhoto ? [mainPhoto] : []),
+        ...assetRows(model.id, AssetType.VIDEO, presentationVideo ? [presentationVideo] : []),
+      ],
+    });
+    await tx.modelMedia.createMany({
+      data: [
+        ...mediaRows(model.id, MediaType.PHOTO_CASUAL, d.casualPhotoUrls.map(toAssetKey)),
+        ...mediaRows(model.id, MediaType.PHOTO_BOOK, d.bookPhotoUrls.map(toAssetKey)),
+        ...mediaRows(model.id, MediaType.PHOTO_EVENT, d.eventPhotoUrls.map(toAssetKey)),
+        ...mediaRows(model.id, MediaType.VIDEO_LINK, d.campaignVideoLinks),
+      ],
     });
   });
 
@@ -308,6 +340,10 @@ function assetRows(modelId: string, type: AssetType, urls: string[]) {
   return urls.map((url, position) => ({ modelId, type, url, position }));
 }
 
+function mediaRows(modelId: string, type: MediaType, urls: string[]) {
+  return urls.map((url, position) => ({ modelId, type, url, position }));
+}
+
 export async function updateOwnModelProfileAction(data: OwnModelProfileData): Promise<ActionState> {
   const result = ownModelProfileSchema.safeParse(data);
   if (!result.success) {
@@ -323,18 +359,23 @@ export async function updateOwnModelProfileAction(data: OwnModelProfileData): Pr
   }
 
   const newMainPhoto = result.data.mainPhotoUrl ? toAssetKey(result.data.mainPhotoUrl) : null;
-  const newPhotos = result.data.photoUrls.map(toAssetKey);
-  const newVideos = result.data.videoUrls.map(toAssetKey);
+  const newPresentationVideo = result.data.presentationVideoUrl ? toAssetKey(result.data.presentationVideoUrl) : null;
+  const newCasualPhotos = result.data.casualPhotoUrls.map(toAssetKey);
+  const newBookPhotos = result.data.bookPhotoUrls.map(toAssetKey);
+  const newEventPhotos = result.data.eventPhotoUrls.map(toAssetKey);
+  const newCampaignLinks = result.data.campaignVideoLinks;
 
   const currentModel = await prisma.model.findUnique({
     where: { userId: session.sub },
-    select: { id: true, kycId: true, kyc: { select: { status: true } }, assets: true },
+    select: { id: true, kycId: true, kyc: { select: { status: true } }, assets: true, media: true },
   });
   if (!currentModel) redirect(APP_ROUTE.app.login.index);
 
   const currentMainPhoto = getMainPhotoUrl(currentModel.assets);
-  const currentPhotos = getGalleryPhotos(currentModel.assets);
-  const currentVideos = getGalleryVideos(currentModel.assets);
+  const currentPresentationVideo = getGalleryVideos(currentModel.assets)[0] ?? null;
+  const currentCasualPhotos = getCasualPhotos(currentModel.media);
+  const currentBookPhotos = getBookPhotos(currentModel.media);
+  const currentEventPhotos = getEventPhotos(currentModel.media);
 
   await prisma.$transaction([
     prisma.model.update({
@@ -353,15 +394,23 @@ export async function updateOwnModelProfileAction(data: OwnModelProfileData): Pr
         travelAvailability: result.data.travelAvailability,
         hasPassport: result.data.hasPassport,
         hasVisa: result.data.hasVisa,
-        activities: { set: result.data.activityIds.map((id) => ({ id })) },
+        categories: { set: result.data.categoryIds.map((id) => ({ id })) },
       },
     }),
     prisma.asset.deleteMany({ where: { modelId: currentModel.id } }),
     prisma.asset.createMany({
       data: [
         ...assetRows(currentModel.id, AssetType.MAIN_PHOTO, newMainPhoto ? [newMainPhoto] : []),
-        ...assetRows(currentModel.id, AssetType.PHOTO, newPhotos),
-        ...assetRows(currentModel.id, AssetType.VIDEO, newVideos),
+        ...assetRows(currentModel.id, AssetType.VIDEO, newPresentationVideo ? [newPresentationVideo] : []),
+      ],
+    }),
+    prisma.modelMedia.deleteMany({ where: { modelId: currentModel.id } }),
+    prisma.modelMedia.createMany({
+      data: [
+        ...mediaRows(currentModel.id, MediaType.PHOTO_CASUAL, newCasualPhotos),
+        ...mediaRows(currentModel.id, MediaType.PHOTO_BOOK, newBookPhotos),
+        ...mediaRows(currentModel.id, MediaType.PHOTO_EVENT, newEventPhotos),
+        ...mediaRows(currentModel.id, MediaType.VIDEO_LINK, newCampaignLinks),
       ],
     }),
   ]);
@@ -374,8 +423,13 @@ export async function updateOwnModelProfileAction(data: OwnModelProfileData): Pr
   }
 
   await deleteRemovedAssets(currentMainPhoto ? [currentMainPhoto] : [], newMainPhoto ? [newMainPhoto] : []);
-  await deleteRemovedAssets(currentPhotos, newPhotos);
-  await deleteRemovedAssets(currentVideos, newVideos);
+  await deleteRemovedAssets(
+    currentPresentationVideo ? [currentPresentationVideo] : [],
+    newPresentationVideo ? [newPresentationVideo] : [],
+  );
+  await deleteRemovedAssets(currentCasualPhotos, newCasualPhotos);
+  await deleteRemovedAssets(currentBookPhotos, newBookPhotos);
+  await deleteRemovedAssets(currentEventPhotos, newEventPhotos);
 
   revalidatePath(APP_ROUTE.app.model.profile);
   revalidatePath("/app/moderacion");
@@ -398,31 +452,91 @@ export async function updateModelAttributesAction(modelId: string, data: ModelEd
     return { status: "error", message: "Datos inválidos." };
   }
 
-  await prisma.model.update({
+  const newMainPhoto = result.data.mainPhotoUrl ? toAssetKey(result.data.mainPhotoUrl) : null;
+  const newPresentationVideo = result.data.presentationVideoUrl ? toAssetKey(result.data.presentationVideoUrl) : null;
+  const newCasualPhotos = result.data.casualPhotoUrls.map(toAssetKey);
+  const newBookPhotos = result.data.bookPhotoUrls.map(toAssetKey);
+  const newEventPhotos = result.data.eventPhotoUrls.map(toAssetKey);
+  const newCampaignLinks = result.data.campaignVideoLinks;
+
+  const currentModel = await prisma.model.findUnique({
     where: { id: modelId },
-    data: {
-      firstName: result.data.firstName,
-      paternalLastName: result.data.paternalLastName,
-      maternalLastName: result.data.maternalLastName || null,
-      phone: result.data.phone,
-      height: result.data.height,
-      currentWeight: result.data.currentWeight,
-      hasVisibleTattoos: result.data.hasVisibleTattoos,
-      shirtSize: result.data.shirtSize,
-      pantsSizeScale: result.data.pantsSizeScale,
-      pantsSize: result.data.pantsSize,
-      travelAvailability: result.data.travelAvailability,
-      hasPassport: result.data.hasPassport,
-      hasVisa: result.data.hasVisa,
-      categories: { set: result.data.categoryIds.map((id) => ({ id })) },
-      activities: { set: result.data.activityIds.map((id) => ({ id })) },
-    },
+    select: { assets: true, media: true },
   });
+  if (!currentModel) {
+    return { status: "error", message: "Modelo no encontrado." };
+  }
+
+  const currentMainPhoto = getMainPhotoUrl(currentModel.assets);
+  const currentPresentationVideo = getGalleryVideos(currentModel.assets)[0] ?? null;
+  const currentCasualPhotos = getCasualPhotos(currentModel.media);
+  const currentBookPhotos = getBookPhotos(currentModel.media);
+  const currentEventPhotos = getEventPhotos(currentModel.media);
+
+  await prisma.$transaction([
+    prisma.model.update({
+      where: { id: modelId },
+      data: {
+        firstName: result.data.firstName,
+        paternalLastName: result.data.paternalLastName,
+        maternalLastName: result.data.maternalLastName || null,
+        phone: result.data.phone,
+        height: result.data.height,
+        currentWeight: result.data.currentWeight,
+        hasVisibleTattoos: result.data.hasVisibleTattoos,
+        shirtSize: result.data.shirtSize,
+        pantsSizeScale: result.data.pantsSizeScale,
+        pantsSize: result.data.pantsSize,
+        travelAvailability: result.data.travelAvailability,
+        hasPassport: result.data.hasPassport,
+        hasVisa: result.data.hasVisa,
+        hiddenFromCatalog: result.data.hiddenFromCatalog,
+        categories: { set: result.data.categoryIds.map((id) => ({ id })) },
+      },
+    }),
+    prisma.asset.deleteMany({ where: { modelId } }),
+    prisma.asset.createMany({
+      data: [
+        ...assetRows(modelId, AssetType.MAIN_PHOTO, newMainPhoto ? [newMainPhoto] : []),
+        ...assetRows(modelId, AssetType.VIDEO, newPresentationVideo ? [newPresentationVideo] : []),
+      ],
+    }),
+    prisma.modelMedia.deleteMany({ where: { modelId } }),
+    prisma.modelMedia.createMany({
+      data: [
+        ...mediaRows(modelId, MediaType.PHOTO_CASUAL, newCasualPhotos),
+        ...mediaRows(modelId, MediaType.PHOTO_BOOK, newBookPhotos),
+        ...mediaRows(modelId, MediaType.PHOTO_EVENT, newEventPhotos),
+        ...mediaRows(modelId, MediaType.VIDEO_LINK, newCampaignLinks),
+      ],
+    }),
+  ]);
+
+  await deleteRemovedAssets(currentMainPhoto ? [currentMainPhoto] : [], newMainPhoto ? [newMainPhoto] : []);
+  await deleteRemovedAssets(
+    currentPresentationVideo ? [currentPresentationVideo] : [],
+    newPresentationVideo ? [newPresentationVideo] : [],
+  );
+  await deleteRemovedAssets(currentCasualPhotos, newCasualPhotos);
+  await deleteRemovedAssets(currentBookPhotos, newBookPhotos);
+  await deleteRemovedAssets(currentEventPhotos, newEventPhotos);
 
   revalidatePath(`${APP_ROUTE.app.models.index}/${modelId}`);
   revalidatePath(APP_ROUTE.app.models.index);
 
   return { status: "success", message: "Modelo actualizado." };
+}
+
+export async function toggleModelVisibilityAction(modelId: string, hiddenFromCatalog: boolean): Promise<ActionState> {
+  await prisma.model.update({
+    where: { id: modelId },
+    data: { hiddenFromCatalog },
+  });
+
+  revalidatePath(`${APP_ROUTE.app.models.index}/${modelId}`);
+  revalidatePath(APP_ROUTE.app.models.index);
+
+  return { status: "success", message: hiddenFromCatalog ? "Perfil ocultado del catálogo." : "Perfil visible en el catálogo." };
 }
 
 // ---------- Eventos (stub actions — pending full implementation) ----------
@@ -574,6 +688,18 @@ export async function marcarEventoCubiertoAction(
 ): Promise<void> {}
 
 export async function eliminarEventoAction(_id: string): Promise<void> {}
+
+export async function renombrarPaqueteAction(paqueteId: string, data: unknown): Promise<ActionState> {
+  const parsed = z.object({
+    name: z.string().min(1, "El nombre del paquete es obligatorio."),
+  }).safeParse(data);
+  if (!parsed.success) return { status: "error", message: "El nombre del paquete es obligatorio." };
+
+  await prisma.package.update({ where: { id: paqueteId }, data: { name: parsed.data.name } });
+  revalidatePath(`${APP_ROUTE.app.packages.index}/${paqueteId}`);
+  revalidatePath(APP_ROUTE.app.packages.index);
+  return { status: "success", message: "Nombre actualizado." };
+}
 
 export async function cambiarStatusPaqueteAction(
   paqueteId: string,

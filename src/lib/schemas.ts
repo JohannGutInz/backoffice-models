@@ -30,6 +30,33 @@ export const resendApplicationSchema = z.object({
   phone: z.string().min(1, "El teléfono es obligatorio."),
 });
 
+export const modelAttributesSchema = z.object({
+  height: z.number({ error: "La estatura es obligatoria." }).int().positive(),
+  currentWeight: z.number({ error: "El peso es obligatorio." }).int().positive(),
+  hasVisibleTattoos: z.boolean(),
+  shirtSize: z.enum(["XS", "S", "M", "L", "XL", "XXL"], { error: "Selecciona una talla de camisa." }),
+  pantsSizeScale: z.enum(["MEN", "WOMEN"], { error: "Selecciona una escala de talla de pantalón." }),
+  pantsSize: z.string().min(1, "La talla de pantalón es obligatoria."),
+  travelAvailability: z.boolean(),
+  hasPassport: z.boolean(),
+  hasVisa: z.boolean(),
+  categoryIds: z.array(z.string()).min(1, "Selecciona al menos una categoría."),
+});
+
+// Media fields shared by every place a model's gallery gets edited: the public
+// registration form, the model's own profile portal, and the staff edit form.
+export const modelMediaSchema = z.object({
+  mainPhotoUrl: z.string().optional(),
+  casualPhotoUrls: z.array(z.string()).max(5, "Máximo 5 fotos caseras."),
+  bookPhotoUrls: z.array(z.string()).max(5, "Máximo 5 fotos de book."),
+  eventPhotoUrls: z.array(z.string()).max(8, "Máximo 8 fotos de eventos."),
+  presentationVideoUrl: z.string().optional(),
+  campaignVideoLinks: z.array(z.string().min(1)).max(5, "Máximo 5 links de campañas."),
+});
+
+// The public registration form collects the full profile up front — same attributes,
+// availability, categories, and media the staff edit form manages — so a submission
+// is moderation-ready immediately instead of waiting on a later profile-completion step.
 export const registrationFormSchema = z.object({
   firstName: z.string().min(1, "El nombre es obligatorio."),
   paternalLastName: z.string().min(1, "El apellido paterno es obligatorio."),
@@ -45,46 +72,29 @@ export const registrationFormSchema = z.object({
   nationalityId: z.string().min(1, "Selecciona una nacionalidad."),
   stateId: z.string().min(1, "Selecciona un estado."),
   cityId: z.string().min(1, "Selecciona una ciudad."),
-  categoryIds: z.array(z.string()).min(1, "Selecciona al menos una categoría."),
   password: z.string().min(8, "La contraseña debe tener al menos 8 caracteres."),
   captchaAnswer: z.number({ error: "Ingresa la respuesta de verificación." }),
-});
+}).merge(modelMediaSchema).merge(modelAttributesSchema);
 
 export const registrationActionSchema = registrationFormSchema.omit({
   stateId: true,
   captchaAnswer: true,
 });
 
-export const modelAttributesSchema = z.object({
-  height: z.number({ error: "La estatura es obligatoria." }).int().positive(),
-  currentWeight: z.number({ error: "El peso es obligatorio." }).int().positive(),
-  hasVisibleTattoos: z.boolean(),
-  shirtSize: z.enum(["XS", "S", "M", "L", "XL", "XXL"], { error: "Selecciona una talla de camisa." }),
-  pantsSizeScale: z.enum(["MEN", "WOMEN"], { error: "Selecciona una escala de talla de pantalón." }),
-  pantsSize: z.string().min(1, "La talla de pantalón es obligatoria."),
-  travelAvailability: z.boolean(),
-  hasPassport: z.boolean(),
-  hasVisa: z.boolean(),
-  activityIds: z.array(z.string()).min(1, "Selecciona al menos una actividad."),
+// Shared by the model's own profile portal and the staff edit form — both present
+// the same profile fields; staff additionally get admin-only controls like visibility.
+export const modelProfileFieldsSchema = z.object({
+  firstName: z.string().min(1, "El nombre es obligatorio."),
+  paternalLastName: z.string().min(1, "El apellido paterno es obligatorio."),
+  maternalLastName: z.string().optional(),
+  phone: z.string().min(1, "El teléfono es obligatorio."),
+}).merge(modelMediaSchema).merge(modelAttributesSchema);
+
+export const ownModelProfileSchema = modelProfileFieldsSchema;
+
+export const modelEditSchema = modelProfileFieldsSchema.extend({
+  hiddenFromCatalog: z.boolean(),
 });
-
-export const ownModelProfileSchema = z.object({
-  firstName: z.string().min(1, "El nombre es obligatorio."),
-  paternalLastName: z.string().min(1, "El apellido paterno es obligatorio."),
-  maternalLastName: z.string().optional(),
-  phone: z.string().min(1, "El teléfono es obligatorio."),
-  mainPhotoUrl: z.string().optional(),
-  photoUrls: z.array(z.string()).max(5, "Máximo 5 fotos en el book."),
-  videoUrls: z.array(z.string()).max(3, "Máximo 3 videos."),
-}).merge(modelAttributesSchema);
-
-export const modelEditSchema = z.object({
-  firstName: z.string().min(1, "El nombre es obligatorio."),
-  paternalLastName: z.string().min(1, "El apellido paterno es obligatorio."),
-  maternalLastName: z.string().optional(),
-  phone: z.string().min(1, "El teléfono es obligatorio."),
-  categoryIds: z.array(z.string()).min(1, "Selecciona al menos una categoría."),
-}).merge(modelAttributesSchema);
 
 export type LoginData = z.infer<typeof loginSchema>;
 export type ContactData = z.infer<typeof contactSchema>;

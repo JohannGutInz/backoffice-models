@@ -19,6 +19,7 @@ export function ModelsGrid({ models }: { models: ModelWithRelations[] }) {
   const [query, setQuery] = useState("");
   const [gender, setGender] = useState("todos");
   const [categoryId, setCategoryId] = useState("todas");
+  const [visibility, setVisibility] = useState("todos");
 
   const allCategories = useMemo(() => {
     const map = new Map<string, string>();
@@ -37,9 +38,13 @@ export function ModelsGrid({ models }: { models: ModelWithRelations[] }) {
       const matchGender = gender === "todos" || m.genre === gender;
       const matchCategory =
         categoryId === "todas" || m.categories.some((c) => c.id === categoryId);
-      return matchQuery && matchGender && matchCategory;
+      const matchVisibility =
+        visibility === "todos" ||
+        (visibility === "activos" && !m.hiddenFromCatalog) ||
+        (visibility === "ocultos" && m.hiddenFromCatalog);
+      return matchQuery && matchGender && matchCategory && matchVisibility;
     });
-  }, [models, query, gender, categoryId]);
+  }, [models, query, gender, categoryId, visibility]);
 
   return (
     <div>
@@ -64,6 +69,11 @@ export function ModelsGrid({ models }: { models: ModelWithRelations[] }) {
               {name}
             </option>
           ))}
+        </Select>
+        <Select value={visibility} onChange={(e) => setVisibility(e.target.value)} className="text-zinc-600">
+          <option value="todos">Activos y ocultos</option>
+          <option value="activos">Solo activos</option>
+          <option value="ocultos">Solo ocultos</option>
         </Select>
         <span className="ml-auto text-xs text-zinc-400">
           {filtered.length} de {models.length} modelos
@@ -90,6 +100,13 @@ export function ModelsGrid({ models }: { models: ModelWithRelations[] }) {
                   {GENRE_LABEL[model.genre] ?? model.genre}
                 </span>
               </div>
+              <span
+                className={`mt-2 inline-flex w-fit items-center rounded-full px-2 py-0.5 text-xs font-medium ${
+                  model.hiddenFromCatalog ? "bg-zinc-100 text-zinc-500" : "bg-emerald-50 text-emerald-700"
+                }`}
+              >
+                {model.hiddenFromCatalog ? "Oculto" : "Visible"}
+              </span>
               <div className="mt-3 flex items-center gap-1 text-xs text-zinc-500">
                 <MapPin className="h-3.5 w-3.5 shrink-0" />
                 <span className="truncate">

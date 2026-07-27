@@ -1,6 +1,6 @@
 import { clients, events, AGENCY_ID } from "./mock-data";
 import { prisma } from "@/db";
-import { getMainPhotoUrl, getGalleryPhotos, getGalleryVideos } from "./utils";
+import { getMainPhotoUrl, getGalleryVideos, getBookPhotos } from "./utils";
 import { signAssetUrls } from "./storage";
 
 // Public boundary. Only returns models with approved KYC. No private data.
@@ -13,6 +13,7 @@ const publicModelInclude = {
   nationality: { select: { demonym: true } },
   city: { select: { name: true } },
   assets: true,
+  media: true,
 } as const;
 
 type RawPublicModel = NonNullable<Awaited<ReturnType<typeof prisma.model.findFirst<{ include: typeof publicModelInclude }>>>>;
@@ -44,14 +45,14 @@ export interface PublicModel {
 }
 
 async function toPublicModel(m: RawPublicModel): Promise<PublicModel> {
-  const assets = await signAssetUrls(m.assets);
+  const [assets, media] = await Promise.all([signAssetUrls(m.assets), signAssetUrls(m.media)]);
   return {
     id: m.id,
     firstName: m.firstName,
     paternalLastName: m.paternalLastName,
     maternalLastName: m.maternalLastName,
     mainPhotoUrl: getMainPhotoUrl(assets),
-    photoUrls: getGalleryPhotos(assets),
+    photoUrls: getBookPhotos(media),
     videoUrls: getGalleryVideos(assets),
     categories: m.categories.map((c) => c.name),
     activities: m.activities.map((a) => a.name),
@@ -74,7 +75,7 @@ async function toPublicModel(m: RawPublicModel): Promise<PublicModel> {
 
 export async function listPublicModels(): Promise<PublicModel[]> {
   const models = await prisma.model.findMany({
-    where: { kyc: { status: "APPROVED" } },
+    where: { kyc: { status: "APPROVED" }, hiddenFromCatalog: false },
     include: publicModelInclude,
     orderBy: [{ paternalLastName: "asc" }, { firstName: "asc" }],
   });
@@ -83,7 +84,7 @@ export async function listPublicModels(): Promise<PublicModel[]> {
 
 export async function getPublicModel(id: string): Promise<PublicModel | undefined> {
   const model = await prisma.model.findFirst({
-    where: { id, kyc: { status: "APPROVED" } },
+    where: { id, kyc: { status: "APPROVED" }, hiddenFromCatalog: false },
     include: publicModelInclude,
   });
   if (!model) return undefined;
@@ -92,7 +93,7 @@ export async function getPublicModel(id: string): Promise<PublicModel | undefine
 
 export async function listFeaturedModels(limit = 4): Promise<PublicModel[]> {
   const models = await prisma.model.findMany({
-    where: { kyc: { status: "APPROVED" } },
+    where: { kyc: { status: "APPROVED" }, hiddenFromCatalog: false },
     include: publicModelInclude,
     orderBy: [{ createdAt: "desc" }],
     take: limit,

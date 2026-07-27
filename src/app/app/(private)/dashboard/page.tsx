@@ -114,7 +114,7 @@ export default async function DashboardPage() {
             title="Últimos bookings"
             action={
               <a href={APP_ROUTE.app.bookings.index} className="text-xs font-medium text-gold-700 hover:text-gold-600">
-                Ver todos →
+                Ver todos
               </a>
             }
           />

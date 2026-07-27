@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import { Pencil } from "lucide-react";
+import { ArrowLeft, Pencil } from "lucide-react";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { Card } from "@/components/ui/Card";
 import { Field, FieldGrid } from "@/components/ui/Field";
@@ -32,6 +32,13 @@ export default async function ConvocatoriaDetailPage({ params }: { params: Promi
 
   return (
     <div className="max-w-3xl space-y-6">
+      <Link
+        href={APP_ROUTE.app.convocatorias.index}
+        className="inline-flex items-center gap-1.5 text-sm text-zinc-500 hover:text-zinc-800"
+      >
+        <ArrowLeft className="h-4 w-4" /> Volver a Convocatorias
+      </Link>
+
       <PageHeader
         title={conv.titulo}
         subtitle={`${conv.tipo} · ${conv.ciudad}`}

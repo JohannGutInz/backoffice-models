@@ -7,7 +7,7 @@ interface GalleryImageUploadProps {
   value: string[];
   onChange: (urls: string[]) => void;
   max: number;
-  modelId: string;
+  modelId?: string;
   label?: string;
 }
 
@@ -30,7 +30,7 @@ export const GalleryImageUpload = forwardRef<GalleryImageUploadHandle, GalleryIm
 
             const formData = new FormData();
             formData.append("file", file);
-            formData.append("modelId", modelId);
+            if (modelId) formData.append("modelId", modelId);
 
             const res = await fetch("/api/upload/image", { method: "POST", body: formData });
             const uploadResult = await res.json();

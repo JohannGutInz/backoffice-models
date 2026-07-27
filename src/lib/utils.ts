@@ -83,7 +83,7 @@ export function isProfileComplete(model: {
   shirtSize: string | null;
   pantsSizeScale: string | null;
   pantsSize: string | null;
-  activities: unknown[];
+  categories: unknown[];
 }): boolean {
   return (
     model.height !== null &&
@@ -91,7 +91,7 @@ export function isProfileComplete(model: {
     model.shirtSize !== null &&
     model.pantsSizeScale !== null &&
     model.pantsSize !== null &&
-    model.activities.length > 0
+    model.categories.length > 0
   );
 }
 
@@ -117,6 +117,35 @@ export function getGalleryVideos(assets: AssetShape[]): string[] {
     .filter((a) => a.type === "VIDEO")
     .sort((a, b) => a.position - b.position)
     .map((a) => a.url);
+}
+
+interface MediaShape {
+  type: string;
+  url: string;
+  position: number;
+}
+
+function getMediaUrls(media: MediaShape[], type: string): string[] {
+  return media
+    .filter((m) => m.type === type)
+    .sort((a, b) => a.position - b.position)
+    .map((m) => m.url);
+}
+
+export function getCasualPhotos(media: MediaShape[]): string[] {
+  return getMediaUrls(media, "PHOTO_CASUAL");
+}
+
+export function getBookPhotos(media: MediaShape[]): string[] {
+  return getMediaUrls(media, "PHOTO_BOOK");
+}
+
+export function getEventPhotos(media: MediaShape[]): string[] {
+  return getMediaUrls(media, "PHOTO_EVENT");
+}
+
+export function getCampaignVideoLinks(media: MediaShape[]): string[] {
+  return getMediaUrls(media, "VIDEO_LINK");
 }
 
 export function calculateAge(birthDateIso: string): number {

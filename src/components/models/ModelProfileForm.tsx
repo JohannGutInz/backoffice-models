@@ -9,17 +9,20 @@ import { Select } from "@/components/ui/Select";
 import { Checkbox } from "@/components/ui/Checkbox";
 import { MultiSelectPicker } from "@/components/ui/MultiSelectPicker";
 import { Button } from "@/components/ui/Button";
-import { GalleryImageUpload, type GalleryImageUploadHandle } from "@/components/models/GalleryImageUpload";
-import { GalleryVideoUpload, type GalleryVideoUploadHandle } from "@/components/models/GalleryVideoUpload";
+import { ModelMediaFields, type ModelMediaFieldsHandle } from "@/components/models/ModelMediaFields";
 import { updateOwnModelProfileAction } from "@/lib/actions";
 import { ownModelProfileSchema, type OwnModelProfileData } from "@/lib/schemas";
 import type { OwnModelWithKyc } from "@/lib/data";
-import { getMainPhotoUrl, getGalleryPhotos, getGalleryVideos } from "@/lib/utils";
+import {
+  getMainPhotoUrl,
+  getGalleryVideos,
+  getCasualPhotos,
+  getBookPhotos,
+  getEventPhotos,
+  getCampaignVideoLinks,
+} from "@/lib/utils";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-
-const MAX_PHOTOS = 5;
-const MAX_VIDEOS = 3;
 
 const KYC_BADGE: Record<string, { label: string; className: string }> = {
   PENDING: { label: "En revisión", className: "bg-amber-50 text-amber-700 border-amber-200" },
@@ -28,25 +31,24 @@ const KYC_BADGE: Record<string, { label: string; className: string }> = {
   REQUIRES_CHANGES: { label: "Requiere cambios", className: "bg-gold-50 text-gold-700 border-gold-200" },
 };
 
-interface Activity {
+interface Category {
   id: string;
   name: string;
 }
 
 export function ModelProfileForm({
   model,
-  activities,
+  categories,
 }: {
   model: NonNullable<OwnModelWithKyc>;
-  activities: Activity[];
+  categories: Category[];
 }) {
   const [message, setMessage] = useState<string | null>(null);
   const [pendingPhoto, setPendingPhoto] = useState<File | null>(null);
   const [photoRemoved, setPhotoRemoved] = useState(false);
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
   const avatarInputRef = useRef<HTMLInputElement>(null);
-  const photoGalleryRef = useRef<GalleryImageUploadHandle>(null);
-  const videoGalleryRef = useRef<GalleryVideoUploadHandle>(null);
+  const mediaFieldsRef = useRef<ModelMediaFieldsHandle>(null);
 
   const mainPhotoUrl = getMainPhotoUrl(model.assets);
 
@@ -71,8 +73,11 @@ export function ModelProfileForm({
       maternalLastName: model.maternalLastName ?? "",
       phone: model.phone,
       mainPhotoUrl: mainPhotoUrl ?? "",
-      photoUrls: getGalleryPhotos(model.assets),
-      videoUrls: getGalleryVideos(model.assets),
+      casualPhotoUrls: getCasualPhotos(model.media),
+      bookPhotoUrls: getBookPhotos(model.media),
+      eventPhotoUrls: getEventPhotos(model.media),
+      presentationVideoUrl: getGalleryVideos(model.assets)[0] ?? "",
+      campaignVideoLinks: getCampaignVideoLinks(model.media),
       height: model.height ?? undefined,
       currentWeight: model.currentWeight ?? undefined,
       hasVisibleTattoos: model.hasVisibleTattoos,
@@ -82,15 +87,18 @@ export function ModelProfileForm({
       travelAvailability: model.travelAvailability,
       hasPassport: model.hasPassport,
       hasVisa: model.hasVisa,
-      activityIds: model.activities.map((a) => a.id),
+      categoryIds: model.categories.map((c) => c.id),
     },
   });
 
   const firstName = watch("firstName");
   const paternalLastName = watch("paternalLastName");
-  const activityIds = watch("activityIds");
-  const photoUrls = watch("photoUrls");
-  const videoUrls = watch("videoUrls");
+  const categoryIds = watch("categoryIds");
+  const casualPhotoUrls = watch("casualPhotoUrls");
+  const bookPhotoUrls = watch("bookPhotoUrls");
+  const eventPhotoUrls = watch("eventPhotoUrls");
+  const presentationVideoUrl = watch("presentationVideoUrl");
+  const campaignVideoLinks = watch("campaignVideoLinks");
 
   function handleAvatarChange(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
@@ -140,14 +148,15 @@ export function ModelProfileForm({
       newMainPhotoUrl = "";
     }
 
-    let resolvedPhotoUrls = data.photoUrls;
-    let resolvedVideoUrls = data.videoUrls;
+    let resolvedMedia = {
+      casualPhotoUrls: data.casualPhotoUrls,
+      bookPhotoUrls: data.bookPhotoUrls,
+      eventPhotoUrls: data.eventPhotoUrls,
+      presentationVideoUrl: data.presentationVideoUrl,
+    };
 
     try {
-      [resolvedPhotoUrls, resolvedVideoUrls] = await Promise.all([
-        photoGalleryRef.current?.resolvePending(data.photoUrls) ?? Promise.resolve(data.photoUrls),
-        videoGalleryRef.current?.resolvePending(data.videoUrls) ?? Promise.resolve(data.videoUrls),
-      ]);
+      resolvedMedia = (await mediaFieldsRef.current?.resolvePending()) ?? resolvedMedia;
     } catch (err) {
       setMessage(err instanceof Error ? err.message : "Error al subir archivos.");
       return;
@@ -156,8 +165,7 @@ export function ModelProfileForm({
     const result = await updateOwnModelProfileAction({
       ...data,
       mainPhotoUrl: newMainPhotoUrl,
-      photoUrls: resolvedPhotoUrls,
-      videoUrls: resolvedVideoUrls,
+      ...resolvedMedia,
     });
     setMessage(result.message);
   }
@@ -242,47 +250,35 @@ export function ModelProfileForm({
         </div>
       </div>
 
-      {/* ── Book ── */}
-      <Card>
-        <CardHeader title="Book" subtitle="Hasta 5 fotos para tu portfolio público." />
-        <div className="px-5 pb-5">
-          <Controller
-            name="photoUrls"
-            control={control}
-            render={() => (
-              <GalleryImageUpload
-                ref={photoGalleryRef}
-                value={photoUrls}
-                onChange={(urls) => setValue("photoUrls", urls, { shouldValidate: true })}
-                max={MAX_PHOTOS}
-                modelId={model.id}
-              />
-            )}
-          />
-          {errors.photoUrls && <p className="mt-1.5 text-xs text-red-500">{errors.photoUrls.message}</p>}
-        </div>
-      </Card>
-
-      {/* ── Videos ── */}
-      <Card>
-        <CardHeader title="Videos" subtitle="Hasta 3 videos para tu portfolio." />
-        <div className="px-5 pb-5">
-          <Controller
-            name="videoUrls"
-            control={control}
-            render={() => (
-              <GalleryVideoUpload
-                ref={videoGalleryRef}
-                value={videoUrls}
-                onChange={(urls) => setValue("videoUrls", urls, { shouldValidate: true })}
-                max={MAX_VIDEOS}
-                modelId={model.id}
-              />
-            )}
-          />
-          {errors.videoUrls && <p className="mt-1.5 text-xs text-red-500">{errors.videoUrls.message}</p>}
-        </div>
-      </Card>
+      <ModelMediaFields
+        ref={mediaFieldsRef}
+        modelId={model.id}
+        casualPhotos={{
+          value: casualPhotoUrls,
+          onChange: (urls) => setValue("casualPhotoUrls", urls, { shouldValidate: true }),
+          error: errors.casualPhotoUrls?.message,
+        }}
+        bookPhotos={{
+          value: bookPhotoUrls,
+          onChange: (urls) => setValue("bookPhotoUrls", urls, { shouldValidate: true }),
+          error: errors.bookPhotoUrls?.message,
+        }}
+        eventPhotos={{
+          value: eventPhotoUrls,
+          onChange: (urls) => setValue("eventPhotoUrls", urls, { shouldValidate: true }),
+          error: errors.eventPhotoUrls?.message,
+        }}
+        presentationVideo={{
+          value: presentationVideoUrl ?? "",
+          onChange: (url) => setValue("presentationVideoUrl", url, { shouldValidate: true }),
+          error: errors.presentationVideoUrl?.message,
+        }}
+        campaignLinks={{
+          value: campaignVideoLinks,
+          onChange: (urls) => setValue("campaignVideoLinks", urls, { shouldValidate: true }),
+          error: errors.campaignVideoLinks?.message,
+        }}
+      />
 
       {/* ── Datos de contacto ── */}
       <Card>
@@ -353,21 +349,21 @@ export function ModelProfileForm({
         </div>
       </Card>
 
-      {/* ── Actividades ── */}
+      {/* ── Categorías ── */}
       <Card>
-        <CardHeader title="Actividades" />
+        <CardHeader title="Categorías" />
         <div className="px-5 pb-5">
           <Controller
-            name="activityIds"
+            name="categoryIds"
             control={control}
             render={() => (
               <MultiSelectPicker
-                label="Actividades"
+                label="Categorías"
                 hint="(mínimo 1)"
-                options={activities}
-                selectedIds={activityIds}
-                onChange={(ids) => setValue("activityIds", ids)}
-                error={errors.activityIds?.message}
+                options={categories}
+                selectedIds={categoryIds}
+                onChange={(ids) => setValue("categoryIds", ids)}
+                error={errors.categoryIds?.message}
               />
             )}
           />
