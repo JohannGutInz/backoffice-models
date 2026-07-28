@@ -178,7 +178,7 @@ export default async function DashboardPage() {
 
           <QuickActions
             items={[
-              { icon: UserRoundPlus, label: "Nuevo modelo", href: APP_ROUTE.app.models.index },
+              { icon: UserRoundPlus, label: "Nuevo modelo", href: APP_ROUTE.app.models.new },
               { icon: Sparkles, label: "Nuevo evento", href: APP_ROUTE.app.events.index },
               { icon: ClipboardList, label: "Nuevo booking", href: APP_ROUTE.app.bookings.index },
               { icon: ShieldCheck, label: "Revisar solicitudes", href: APP_ROUTE.app.moderation.index },

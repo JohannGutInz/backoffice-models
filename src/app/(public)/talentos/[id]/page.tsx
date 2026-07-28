@@ -4,6 +4,8 @@ import Image from "next/image";
 import { ArrowLeft, ArrowRight, MapPin } from "lucide-react";
 import { getPublicModel } from "@/lib/public-data";
 import { Avatar } from "@/components/ui/Avatar";
+import { BookGallery } from "@/components/public/BookGallery";
+import { VideoEmbed } from "@/components/public/VideoEmbed";
 import { formatFullName } from "@/lib/utils";
 
 const GENRE_LABEL: Record<string, string> = {
@@ -22,119 +24,183 @@ export default async function TalentDetailPage({
   if (!model) notFound();
   if (model.kycStatus !== "APPROVED") redirect("/");
 
+  const name = formatFullName(model);
+
   return (
     <div className="mx-auto max-w-5xl px-6 py-12">
-      <Link href="/talentos" className="mb-6 inline-flex items-center gap-1.5 text-sm text-zinc-500 hover:text-zinc-800">
+      <Link
+        href="/talentos"
+        className="mb-8 inline-flex items-center gap-1.5 text-sm font-medium text-zinc-500 transition-colors hover:text-zinc-900"
+      >
         <ArrowLeft className="h-4 w-4" /> Volver a Talentos
       </Link>
 
       {/* Hero */}
       <div className="grid grid-cols-1 gap-10 lg:grid-cols-3">
+        {/* Main photo */}
         <div className="lg:col-span-1">
-          <div className="relative flex aspect-[3/4] items-center justify-center overflow-hidden rounded-2xl bg-gradient-to-br from-zinc-900 via-zinc-950 to-black">
+          <div className="relative flex aspect-[3/4] items-center justify-center overflow-hidden rounded-2xl bg-gradient-to-br from-zinc-900 via-zinc-950 to-black shadow-xl">
             {model.mainPhotoUrl ? (
-              <Image src={model.mainPhotoUrl} alt={formatFullName(model)} fill className="object-cover" unoptimized />
+              <Image
+                src={model.mainPhotoUrl}
+                alt={name}
+                fill
+                className="object-cover"
+                unoptimized
+                priority
+              />
             ) : (
-              <Avatar name={formatFullName(model)} size="xl" />
+              <Avatar name={name} size="xl" />
             )}
           </div>
         </div>
 
+        {/* Info */}
         <div className="lg:col-span-2">
           {model.categories.length > 0 && (
-            <p className="text-xs font-medium tracking-wide text-gold-700 uppercase">
+            <p className="text-xs font-semibold tracking-[0.2em] text-gold-600 uppercase">
               {model.categories.join(" · ")}
             </p>
           )}
-          <h1 className="mt-1 text-3xl font-light tracking-tight text-zinc-950">{formatFullName(model)}</h1>
+          <h1 className="mt-2 text-3xl font-light tracking-tight text-zinc-950 break-words sm:text-4xl">{name}</h1>
 
-          <div className="mt-3 flex flex-wrap items-center gap-3 text-sm text-zinc-500">
+          <div className="mt-3 flex flex-wrap items-center gap-2.5 text-sm text-zinc-500">
             <span>{GENRE_LABEL[model.genre] ?? model.genre}</span>
             {model.location && (
               <>
-                <span>·</span>
+                <span className="text-zinc-300">·</span>
                 <span className="inline-flex items-center gap-1">
                   <MapPin className="h-3.5 w-3.5" /> {model.location}
                 </span>
               </>
             )}
-            <span>·</span>
+            <span className="text-zinc-300">·</span>
             <span>{model.nationality}</span>
           </div>
 
-          <dl className="mt-8 grid grid-cols-2 gap-x-6 gap-y-4 border-t border-zinc-100 pt-6 sm:grid-cols-3">
+          {/* Stats grid */}
+          <dl className="mt-8 grid grid-cols-2 gap-x-6 gap-y-5 border-t border-zinc-100 pt-6 sm:grid-cols-3">
             {model.height && (
               <div>
-                <dt className="text-xs text-zinc-400">Estatura</dt>
-                <dd className="text-sm text-zinc-800">{model.height} cm</dd>
+                <dt className="text-xs font-medium text-zinc-500">Estatura</dt>
+                <dd className="mt-0.5 text-sm font-semibold text-zinc-800">{model.height} cm</dd>
               </div>
             )}
             {model.currentWeight && (
               <div>
-                <dt className="text-xs text-zinc-400">Peso</dt>
-                <dd className="text-sm text-zinc-800">{model.currentWeight} kg</dd>
+                <dt className="text-xs font-medium text-zinc-500">Peso</dt>
+                <dd className="mt-0.5 text-sm font-semibold text-zinc-800">{model.currentWeight} kg</dd>
               </div>
             )}
             {model.shirtSize && (
               <div>
-                <dt className="text-xs text-zinc-400">Talla de camisa</dt>
-                <dd className="text-sm text-zinc-800">{model.shirtSize}</dd>
+                <dt className="text-xs font-medium text-zinc-500">Talla de camisa</dt>
+                <dd className="mt-0.5 text-sm font-semibold text-zinc-800">{model.shirtSize}</dd>
               </div>
             )}
             {model.pantsSize && (
               <div>
-                <dt className="text-xs text-zinc-400">Talla de pantalón</dt>
-                <dd className="text-sm text-zinc-800">
-                  {model.pantsSize} {model.pantsSizeScale && `(${model.pantsSizeScale === "MEN" ? "Hombre" : "Mujer"})`}
+                <dt className="text-xs font-medium text-zinc-500">Talla de pantalón</dt>
+                <dd className="mt-0.5 text-sm font-semibold text-zinc-800">
+                  {model.pantsSize}{" "}
+                  {model.pantsSizeScale && (
+                    <span className="font-normal text-zinc-500">
+                      ({model.pantsSizeScale === "MEN" ? "Hombre" : "Mujer"})
+                    </span>
+                  )}
                 </dd>
               </div>
             )}
             <div>
-              <dt className="text-xs text-zinc-400">Tatuajes visibles</dt>
-              <dd className="text-sm text-zinc-800">{model.hasVisibleTattoos ? "Sí" : "No"}</dd>
+              <dt className="text-xs font-medium text-zinc-500">Tatuajes visibles</dt>
+              <dd className="mt-0.5 text-sm font-semibold text-zinc-800">{model.hasVisibleTattoos ? "Sí" : "No"}</dd>
             </div>
             <div>
-              <dt className="text-xs text-zinc-400">Disponibilidad para viajar</dt>
-              <dd className="text-sm text-zinc-800">{model.travelAvailability ? "Sí" : "No"}</dd>
+              <dt className="text-xs font-medium text-zinc-500">Disponibilidad para viajar</dt>
+              <dd className="mt-0.5 text-sm font-semibold text-zinc-800">{model.travelAvailability ? "Sí" : "No"}</dd>
             </div>
             <div>
-              <dt className="text-xs text-zinc-400">Pasaporte</dt>
-              <dd className="text-sm text-zinc-800">{model.hasPassport ? "Sí" : "No"}</dd>
+              <dt className="text-xs font-medium text-zinc-500">Pasaporte</dt>
+              <dd className="mt-0.5 text-sm font-semibold text-zinc-800">{model.hasPassport ? "Sí" : "No"}</dd>
             </div>
             <div>
-              <dt className="text-xs text-zinc-400">Visa</dt>
-              <dd className="text-sm text-zinc-800">{model.hasVisa ? "Sí" : "No"}</dd>
+              <dt className="text-xs font-medium text-zinc-500">Visa</dt>
+              <dd className="mt-0.5 text-sm font-semibold text-zinc-800">{model.hasVisa ? "Sí" : "No"}</dd>
             </div>
           </dl>
 
+          {/* CTA */}
           <Link
-            href={`/contacto?modelo=${encodeURIComponent(formatFullName(model))}`}
-            className="mt-8 inline-flex items-center gap-1.5 rounded-full bg-zinc-950 px-5 py-2.5 text-sm font-medium text-white transition-colors hover:bg-gold-600"
+            href={`/contacto?modelo=${encodeURIComponent(name)}`}
+            className="mt-8 inline-flex items-center gap-2 rounded-full bg-zinc-950 px-6 py-3 text-sm font-semibold text-white transition-colors hover:bg-gold-600"
           >
-            Contactar a la agencia sobre {model.firstName} <ArrowRight className="h-4 w-4" />
+            Contactar a la agencia sobre {model.firstName}
+            <ArrowRight className="h-4 w-4" />
           </Link>
         </div>
       </div>
 
+      {/* Book photos */}
       {model.photoUrls.length > 0 && (
         <div className="mt-16 border-t border-zinc-100 pt-10">
-          <h2 className="mb-4 text-sm font-semibold text-zinc-900">Book</h2>
-          <div className="grid grid-cols-3 gap-3 sm:grid-cols-4">
-            {model.photoUrls.map((url) => (
-              <div key={url} className="relative aspect-square overflow-hidden rounded-lg">
-                <Image src={url} alt={formatFullName(model)} fill className="object-cover" unoptimized />
+          <h2 className="mb-5 text-xs font-semibold tracking-[0.2em] text-zinc-500 uppercase">
+            Book fotográfico
+          </h2>
+          <BookGallery photoUrls={model.photoUrls} modelName={name} />
+        </div>
+      )}
+
+      {/* Casual photos */}
+      {model.casualPhotoUrls.length > 0 && (
+        <div className="mt-16 border-t border-zinc-100 pt-10">
+          <h2 className="mb-5 text-xs font-semibold tracking-[0.2em] text-zinc-500 uppercase">
+            Fotos casuales
+          </h2>
+          <BookGallery photoUrls={model.casualPhotoUrls} modelName={name} />
+        </div>
+      )}
+
+      {/* Event photos */}
+      {model.eventPhotoUrls.length > 0 && (
+        <div className="mt-16 border-t border-zinc-100 pt-10">
+          <h2 className="mb-5 text-xs font-semibold tracking-[0.2em] text-zinc-500 uppercase">
+            En eventos
+          </h2>
+          <BookGallery photoUrls={model.eventPhotoUrls} modelName={name} />
+        </div>
+      )}
+
+      {/* Presentation video — full width, maximized */}
+      {model.videoUrls.length > 0 && (
+        <div className="mt-16 border-t border-zinc-100 pt-10">
+          <h2 className="mb-5 text-xs font-semibold tracking-[0.2em] text-zinc-500 uppercase">
+            Video de presentación
+          </h2>
+          <div className="space-y-5">
+            {model.videoUrls.map((url, i) => (
+              <div key={url} className="overflow-hidden rounded-2xl bg-zinc-900 shadow-lg">
+                <video
+                  src={url}
+                  controls
+                  aria-label={`Video de presentación ${i + 1} de ${name}`}
+                  className="w-full"
+                  style={{ maxHeight: "70vh" }}
+                />
               </div>
             ))}
           </div>
         </div>
       )}
 
-      {model.videoUrls.length > 0 && (
+      {/* Campaign video links — YouTube / Vimeo embeds */}
+      {model.campaignVideoLinks.length > 0 && (
         <div className="mt-16 border-t border-zinc-100 pt-10">
-          <h2 className="mb-4 text-sm font-semibold text-zinc-900">Videos</h2>
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            {model.videoUrls.map((url) => (
-              <video key={url} src={url} controls className="w-full rounded-lg" />
+          <h2 className="mb-5 text-xs font-semibold tracking-[0.2em] text-zinc-500 uppercase">
+            Videos de campañas
+          </h2>
+          <div className={model.campaignVideoLinks.length === 1 ? "w-full" : "grid grid-cols-1 gap-5 sm:grid-cols-2"}>
+            {model.campaignVideoLinks.map((url, i) => (
+              <VideoEmbed key={url} url={url} label={`Video de campaña ${i + 1} de ${name}`} />
             ))}
           </div>
         </div>

@@ -10,6 +10,7 @@ import { Checkbox } from "@/components/ui/Checkbox";
 import { MultiSelectPicker } from "@/components/ui/MultiSelectPicker";
 import { Button } from "@/components/ui/Button";
 import { ModelMediaFields, type ModelMediaFieldsHandle } from "@/components/models/ModelMediaFields";
+import { ImageCropModal } from "@/components/models/ImageCropModal";
 import { updateOwnModelProfileAction } from "@/lib/actions";
 import { ownModelProfileSchema, type OwnModelProfileData } from "@/lib/schemas";
 import type { OwnModelWithKyc } from "@/lib/data";
@@ -47,7 +48,10 @@ export function ModelProfileForm({
   const [pendingPhoto, setPendingPhoto] = useState<File | null>(null);
   const [photoRemoved, setPhotoRemoved] = useState(false);
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
+  const [avatarCropSrc, setAvatarCropSrc] = useState<string | null>(null);
+  const [confirmApprovedSave, setConfirmApprovedSave] = useState<OwnModelProfileData | null>(null);
   const avatarInputRef = useRef<HTMLInputElement>(null);
+  const avatarRawFile = useRef<File | null>(null);
   const mediaFieldsRef = useRef<ModelMediaFieldsHandle>(null);
 
   const mainPhotoUrl = getMainPhotoUrl(model.assets);
@@ -103,11 +107,25 @@ export function ModelProfileForm({
   function handleAvatarChange(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file) return;
-    if (avatarPreview) URL.revokeObjectURL(avatarPreview);
-    setAvatarPreview(URL.createObjectURL(file));
-    setPendingPhoto(file);
-    setPhotoRemoved(false);
+    avatarRawFile.current = file;
+    const src = URL.createObjectURL(file);
+    setAvatarCropSrc(src);
     e.target.value = "";
+  }
+
+  function handleAvatarCropConfirm(blob: Blob, previewUrl: string) {
+    if (avatarCropSrc) URL.revokeObjectURL(avatarCropSrc);
+    if (avatarPreview) URL.revokeObjectURL(avatarPreview);
+    setAvatarCropSrc(null);
+    setAvatarPreview(previewUrl);
+    setPendingPhoto(new File([blob], avatarRawFile.current?.name ?? "photo.webp", { type: "image/webp" }));
+    setPhotoRemoved(false);
+  }
+
+  function handleAvatarCropCancel() {
+    if (avatarCropSrc) URL.revokeObjectURL(avatarCropSrc);
+    setAvatarCropSrc(null);
+    avatarRawFile.current = null;
   }
 
   function handleAvatarRemove() {
@@ -120,13 +138,7 @@ export function ModelProfileForm({
   const displayAvatar = avatarPreview ?? (photoRemoved ? null : mainPhotoUrl);
   const kycBadge = KYC_BADGE[model.kyc.status] ?? KYC_BADGE.PENDING;
 
-  async function onSubmit(data: OwnModelProfileData) {
-    if (model.kyc.status === "APPROVED") {
-      const confirmed = window.confirm(
-        "Tu KYC ya está aprobado. Si guardas estos cambios, tu perfil deberá aprobarse de nuevo. ¿Deseas continuar?",
-      );
-      if (!confirmed) return;
-    }
+  async function doSave(data: OwnModelProfileData) {
 
     setMessage(null);
 
@@ -168,10 +180,50 @@ export function ModelProfileForm({
       ...resolvedMedia,
     });
     setMessage(result.message);
+    setConfirmApprovedSave(null);
+  }
+
+  async function onSubmit(data: OwnModelProfileData) {
+    if (model.kyc.status === "APPROVED") {
+      setConfirmApprovedSave(data);
+      return;
+    }
+    await doSave(data);
   }
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
+    <>
+    {/* Approve-then-save confirmation modal */}
+    {confirmApprovedSave && (
+      <div className="fixed inset-0 z-50 flex items-center justify-center bg-zinc-950/60 px-4 backdrop-blur-sm">
+        <div className="w-full max-w-sm rounded-2xl bg-white p-6 shadow-xl">
+          <p className="font-semibold text-zinc-900">¿Guardar cambios?</p>
+          <p className="mt-2 text-sm text-zinc-500">
+            Tu perfil ya está aprobado. Si guardas estos cambios, deberá aprobarse de nuevo por la agencia.
+          </p>
+          <div className="mt-5 flex justify-end gap-3">
+            <Button type="button" variant="ghost" onClick={() => setConfirmApprovedSave(null)}>
+              Cancelar
+            </Button>
+            <Button type="button" onClick={() => doSave(confirmApprovedSave)}>
+              Sí, guardar
+            </Button>
+          </div>
+        </div>
+      </div>
+    )}
+
+    {/* Avatar crop modal */}
+    {avatarCropSrc && (
+      <ImageCropModal
+        src={avatarCropSrc}
+        aspect={1}
+        onConfirm={handleAvatarCropConfirm}
+        onCancel={handleAvatarCropCancel}
+      />
+    )}
+
+    <form id="model-profile-form" onSubmit={handleSubmit(onSubmit)} className="space-y-5 pb-20 sm:pb-0">
       {/* ── Profile hero ── */}
       <div className="overflow-hidden rounded-2xl border border-zinc-200 bg-white shadow-sm">
         {/* Cover */}
@@ -376,11 +428,24 @@ export function ModelProfileForm({
         </p>
       )}
 
-      <div className="flex justify-end pb-4">
+      <div className="hidden justify-end pb-4 sm:flex">
         <Button type="submit" disabled={isSubmitting}>
           {isSubmitting ? "Guardando…" : "Guardar cambios"}
         </Button>
       </div>
     </form>
+
+    {/* Floating save bar — mobile only, always visible */}
+    <div className="fixed bottom-0 left-0 right-0 z-20 border-t border-zinc-200 bg-white/95 px-4 py-3 backdrop-blur-sm sm:hidden">
+      <button
+        type="submit"
+        form="model-profile-form"
+        disabled={isSubmitting}
+        className="w-full rounded-xl bg-zinc-950 py-3.5 text-sm font-semibold text-white transition-colors hover:bg-gold-600 disabled:pointer-events-none disabled:opacity-50"
+      >
+        {isSubmitting ? "Guardando…" : "Guardar cambios"}
+      </button>
+    </div>
+    </>
   );
 }

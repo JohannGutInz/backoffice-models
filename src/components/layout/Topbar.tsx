@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { Bell, ChevronDown, LogOut, Settings, UserRound } from "lucide-react";
+import { Bell, ChevronDown, LogOut, Menu, Settings, UserRound } from "lucide-react";
 import { Avatar } from "@/components/ui/Avatar";
 import { Button } from "@/components/ui/Button";
 import { logoutAction } from "@/lib/actions";
@@ -19,14 +19,25 @@ const ROLE_LABEL: Record<UserRole, string> = {
 export function Topbar({
   user,
   notificationCount,
+  onMenuClick,
 }: {
   user: UserW;
   notificationCount: number;
+  onMenuClick: () => void;
 }) {
   const [menuOpen, setMenuOpen] = useState(false);
 
   return (
     <header className="flex h-16 items-center justify-end gap-4 border-b border-zinc-200 bg-white px-6 lg:px-8">
+      <Button
+        variant="ghost"
+        onClick={onMenuClick}
+        className="mr-auto h-9 w-9 p-0 text-zinc-500 hover:text-zinc-700 lg:hidden"
+        aria-label="Abrir menú"
+      >
+        <Menu className="h-[18px] w-[18px]" strokeWidth={1.75} />
+      </Button>
+
       <Button variant="ghost" className="relative h-9 w-9 p-0 text-zinc-500 hover:text-zinc-700" aria-label="Notificaciones">
         <Bell className="h-[18px] w-[18px]" strokeWidth={1.75} />
         {notificationCount > 0 && (

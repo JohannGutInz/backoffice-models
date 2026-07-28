@@ -1,6 +1,6 @@
 import { clients, events, AGENCY_ID } from "./mock-data";
 import { prisma } from "@/db";
-import { getMainPhotoUrl, getGalleryVideos, getBookPhotos } from "./utils";
+import { getMainPhotoUrl, getGalleryVideos, getBookPhotos, getCasualPhotos, getEventPhotos, getCampaignVideoLinks } from "./utils";
 import { signAssetUrls } from "./storage";
 
 // Public boundary. Only returns models with approved KYC. No private data.
@@ -25,6 +25,8 @@ export interface PublicModel {
   maternalLastName: string | null;
   mainPhotoUrl: string | null;
   photoUrls: string[];
+  casualPhotoUrls: string[];
+  eventPhotoUrls: string[];
   videoUrls: string[];
   categories: string[];
   activities: string[];
@@ -42,6 +44,7 @@ export interface PublicModel {
   hasVisa: boolean;
   kycStatus: string;
   featured: boolean;
+  campaignVideoLinks: string[];
 }
 
 async function toPublicModel(m: RawPublicModel): Promise<PublicModel> {
@@ -53,6 +56,8 @@ async function toPublicModel(m: RawPublicModel): Promise<PublicModel> {
     maternalLastName: m.maternalLastName,
     mainPhotoUrl: getMainPhotoUrl(assets),
     photoUrls: getBookPhotos(media),
+    casualPhotoUrls: getCasualPhotos(media),
+    eventPhotoUrls: getEventPhotos(media),
     videoUrls: getGalleryVideos(assets),
     categories: m.categories.map((c) => c.name),
     activities: m.activities.map((a) => a.name),
@@ -70,6 +75,7 @@ async function toPublicModel(m: RawPublicModel): Promise<PublicModel> {
     hasVisa: m.hasVisa,
     kycStatus: m.kyc.status,
     featured: false,
+    campaignVideoLinks: getCampaignVideoLinks(media),
   };
 }
 

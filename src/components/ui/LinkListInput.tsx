@@ -39,7 +39,7 @@ export function LinkListInput({
       </label>
 
       {value.length < max && (
-        <div className="flex gap-2">
+        <div className="flex flex-col gap-2 sm:flex-row">
           <div className="relative flex-1">
             <Link2 className="pointer-events-none absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-zinc-400" />
             <input
@@ -55,7 +55,13 @@ export function LinkListInput({
               className="w-full rounded-lg border border-zinc-300 bg-white py-2.5 pr-3 pl-9 text-sm text-zinc-900 outline-none focus:border-gold-500 focus:ring-1 focus:ring-gold-500"
             />
           </div>
-          <Button type="button" variant="secondary" disabled={!draft.trim()} onClick={addLink}>
+          <Button
+            type="button"
+            variant="secondary"
+            disabled={!draft.trim()}
+            onClick={addLink}
+            className="w-full min-h-[44px] sm:w-auto"
+          >
             + Agregar
           </Button>
         </div>

@@ -15,7 +15,7 @@ export function ModelPortalNav({ unreadCount }: { unreadCount: number }) {
 
   return (
     <nav className="border-b border-zinc-200 bg-white px-4 lg:px-8">
-      <div className="mx-auto flex max-w-2xl gap-1">
+      <div className="mx-auto flex max-w-2xl">
         {tabs.map(({ href, label, Icon, badge }) => {
           const active = pathname.startsWith(href);
           return (
@@ -23,7 +23,7 @@ export function ModelPortalNav({ unreadCount }: { unreadCount: number }) {
               key={href}
               href={href}
               className={cn(
-                "relative flex items-center gap-2 px-1 py-3.5 text-sm font-medium transition-colors",
+                "relative flex flex-1 items-center justify-center gap-2 px-3 py-3.5 text-sm font-medium transition-colors sm:flex-none sm:justify-start",
                 "after:absolute after:bottom-0 after:left-0 after:right-0 after:h-0.5 after:rounded-full after:transition-[background]",
                 active
                   ? "text-zinc-950 after:bg-gold-500"

@@ -1,4 +1,4 @@
-import { forwardRef } from "react";
+import { forwardRef, useId } from "react";
 import { cn } from "@/lib/utils";
 
 type SelectProps = React.SelectHTMLAttributes<HTMLSelectElement> & {
@@ -11,15 +11,17 @@ export const Select = forwardRef<HTMLSelectElement, SelectProps>(function Select
   { label, error, placeholder, id, className, children, ...props },
   ref,
 ) {
+  const generatedId = useId();
+  const selectId = id ?? generatedId;
   return (
     <div>
       {label && (
-        <label htmlFor={id} className="mb-1.5 block text-sm font-medium text-zinc-700">
+        <label htmlFor={selectId} className="mb-1.5 block text-sm font-medium text-zinc-700">
           {label}
         </label>
       )}
       <select
-        id={id}
+        id={selectId}
         ref={ref}
         className={cn(
           "w-full rounded-lg border border-zinc-300 bg-white py-2.5 px-3 text-sm text-zinc-900 outline-none focus:border-gold-500 focus:ring-1 focus:ring-gold-500 disabled:cursor-not-allowed disabled:bg-zinc-50 disabled:text-zinc-400",

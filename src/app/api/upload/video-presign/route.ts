@@ -11,9 +11,7 @@ const MAX_BYTES = 500 * 1024 * 1024;
 export async function POST(request: NextRequest) {
   const cookieStore = await cookies();
   const token = cookieStore.get(SESSION_COOKIE);
-  if (!token) return NextResponse.json({ error: "No autorizado" }, { status: 401 });
-  const session = await verifySessionToken(token.value);
-  if (!session) return NextResponse.json({ error: "No autorizado" }, { status: 401 });
+  const session = token ? await verifySessionToken(token.value) : null;
 
   let body: { filename?: string; contentType?: string; sizeBytes?: number; modelId?: string };
   try {
@@ -33,13 +31,14 @@ export async function POST(request: NextRequest) {
   }
 
   let modelId: string | null = null;
-  if (session.role === "MODEL") {
+  if (session?.role === "MODEL") {
     const model = await prisma.model.findUnique({ where: { userId: session.sub }, select: { id: true } });
     if (!model) return NextResponse.json({ error: "No autorizado" }, { status: 403 });
     modelId = model.id;
-  } else if (typeof body.modelId === "string" && body.modelId) {
+  } else if (session && typeof body.modelId === "string" && body.modelId) {
     modelId = body.modelId;
   }
+  // Sin sesión: registro público, el video queda en media/videos/ hasta que exista el modelo.
 
   const ext = filename?.split(".").pop() ?? "mp4";
   const key = modelId

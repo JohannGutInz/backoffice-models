@@ -153,7 +153,7 @@ export async function submitRegistrationAction(data: RegistrationActionData): Pr
         ...mediaRows(model.id, MediaType.PHOTO_CASUAL, d.casualPhotoUrls.map(toAssetKey)),
         ...mediaRows(model.id, MediaType.PHOTO_BOOK, d.bookPhotoUrls.map(toAssetKey)),
         ...mediaRows(model.id, MediaType.PHOTO_EVENT, d.eventPhotoUrls.map(toAssetKey)),
-        ...mediaRows(model.id, MediaType.VIDEO_LINK, d.campaignVideoLinks),
+        ...mediaRows(model.id, MediaType.VIDEO_LINK, d.campaignVideoLinks.map(toAssetKey)),
       ],
     });
   });
@@ -363,7 +363,7 @@ export async function updateOwnModelProfileAction(data: OwnModelProfileData): Pr
   const newCasualPhotos = result.data.casualPhotoUrls.map(toAssetKey);
   const newBookPhotos = result.data.bookPhotoUrls.map(toAssetKey);
   const newEventPhotos = result.data.eventPhotoUrls.map(toAssetKey);
-  const newCampaignLinks = result.data.campaignVideoLinks;
+  const newCampaignLinks = result.data.campaignVideoLinks.map(toAssetKey);
 
   const currentModel = await prisma.model.findUnique({
     where: { userId: session.sub },
@@ -457,7 +457,7 @@ export async function updateModelAttributesAction(modelId: string, data: ModelEd
   const newCasualPhotos = result.data.casualPhotoUrls.map(toAssetKey);
   const newBookPhotos = result.data.bookPhotoUrls.map(toAssetKey);
   const newEventPhotos = result.data.eventPhotoUrls.map(toAssetKey);
-  const newCampaignLinks = result.data.campaignVideoLinks;
+  const newCampaignLinks = result.data.campaignVideoLinks.map(toAssetKey);
 
   const currentModel = await prisma.model.findUnique({
     where: { id: modelId },

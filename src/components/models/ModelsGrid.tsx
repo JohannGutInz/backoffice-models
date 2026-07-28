@@ -2,13 +2,14 @@
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { MapPin, Search } from "lucide-react";
 import type { ModelWithRelations } from "@/lib/data";
 import { Avatar } from "@/components/ui/Avatar";
 import { Input } from "@/components/ui/Input";
 import { Select } from "@/components/ui/Select";
 import { APP_ROUTE } from "@/lib/routes";
-import { formatDate, formatFullName } from "@/lib/utils";
+import { formatDate, formatFullName, getMainPhotoUrl } from "@/lib/utils";
 
 const GENRE_LABEL: Record<string, string> = {
   MALE: "Masculino",
@@ -48,8 +49,8 @@ export function ModelsGrid({ models }: { models: ModelWithRelations[] }) {
 
   return (
     <div>
-      <div className="mb-5 flex flex-wrap items-center gap-3">
-        <div className="flex-1 sm:max-w-xs">
+      <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
+        <div className="w-full sm:max-w-xs sm:flex-1">
           <Input
             value={query}
             onChange={(e) => setQuery(e.target.value)}
@@ -57,12 +58,12 @@ export function ModelsGrid({ models }: { models: ModelWithRelations[] }) {
             icon={<Search />}
           />
         </div>
-        <Select value={gender} onChange={(e) => setGender(e.target.value)} className="text-zinc-600">
+        <Select value={gender} onChange={(e) => setGender(e.target.value)} className="w-full text-zinc-600 sm:w-auto">
           <option value="todos">Todos los géneros</option>
           <option value="MALE">Masculino</option>
           <option value="FEMALE">Femenino</option>
         </Select>
-        <Select value={categoryId} onChange={(e) => setCategoryId(e.target.value)} className="text-zinc-600">
+        <Select value={categoryId} onChange={(e) => setCategoryId(e.target.value)} className="w-full text-zinc-600 sm:w-auto">
           <option value="todas">Todas las categorías</option>
           {allCategories.map(([id, name]) => (
             <option key={id} value={id}>
@@ -70,12 +71,12 @@ export function ModelsGrid({ models }: { models: ModelWithRelations[] }) {
             </option>
           ))}
         </Select>
-        <Select value={visibility} onChange={(e) => setVisibility(e.target.value)} className="text-zinc-600">
+        <Select value={visibility} onChange={(e) => setVisibility(e.target.value)} className="w-full text-zinc-600 sm:w-auto">
           <option value="todos">Activos y ocultos</option>
           <option value="activos">Solo activos</option>
           <option value="ocultos">Solo ocultos</option>
         </Select>
-        <span className="ml-auto text-xs text-zinc-400">
+        <span className="text-xs text-zinc-400 sm:ml-auto">
           {filtered.length} de {models.length} modelos
         </span>
       </div>
@@ -87,8 +88,18 @@ export function ModelsGrid({ models }: { models: ModelWithRelations[] }) {
             href={`${APP_ROUTE.app.models.index}/${model.id}`}
             className="group overflow-hidden rounded-xl border border-zinc-200 bg-white transition-shadow hover:shadow-md"
           >
-            <div className="relative flex h-40 items-center justify-center bg-gradient-to-br from-zinc-900 via-zinc-950 to-black">
-              <Avatar name={formatFullName(model)} size="xl" />
+            <div className="relative flex h-40 items-center justify-center overflow-hidden bg-gradient-to-br from-zinc-900 via-zinc-950 to-black">
+              {getMainPhotoUrl(model.assets) ? (
+                <Image
+                  src={getMainPhotoUrl(model.assets)!}
+                  alt={formatFullName(model)}
+                  fill
+                  className="object-cover transition-transform duration-300 group-hover:scale-105"
+                  unoptimized
+                />
+              ) : (
+                <Avatar name={formatFullName(model)} size="xl" />
+              )}
             </div>
             <div className="p-4">
               <div className="flex items-start justify-between gap-2">

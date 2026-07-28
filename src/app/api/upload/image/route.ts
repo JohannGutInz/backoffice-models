@@ -11,9 +11,7 @@ const MAX_BYTES = 10 * 1024 * 1024;
 export async function POST(request: NextRequest) {
   const cookieStore = await cookies();
   const token = cookieStore.get(SESSION_COOKIE);
-  if (!token) return NextResponse.json({ error: "No autorizado" }, { status: 401 });
-  const session = await verifySessionToken(token.value);
-  if (!session) return NextResponse.json({ error: "No autorizado" }, { status: 401 });
+  const session = token ? await verifySessionToken(token.value) : null;
 
   let formData: FormData;
   try {
@@ -36,14 +34,15 @@ export async function POST(request: NextRequest) {
   }
 
   let modelId: string | null = null;
-  if (session.role === "MODEL") {
+  if (session?.role === "MODEL") {
     const model = await prisma.model.findUnique({ where: { userId: session.sub }, select: { id: true } });
     if (!model) return NextResponse.json({ error: "No autorizado" }, { status: 403 });
     modelId = model.id;
-  } else {
+  } else if (session) {
     const requestedModelId = formData.get("modelId");
     if (typeof requestedModelId === "string" && requestedModelId) modelId = requestedModelId;
   }
+  // Sin sesión: registro público, la foto queda en media/images/ hasta que exista el modelo.
 
   const buffer = Buffer.from(await file.arrayBuffer());
   const key = modelId

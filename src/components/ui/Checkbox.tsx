@@ -1,4 +1,4 @@
-import { forwardRef } from "react";
+import { forwardRef, useId } from "react";
 import { cn } from "@/lib/utils";
 
 type CheckboxProps = React.InputHTMLAttributes<HTMLInputElement> & {
@@ -9,10 +9,12 @@ export const Checkbox = forwardRef<HTMLInputElement, CheckboxProps>(function Che
   { label, className, id, ...props },
   ref,
 ) {
+  const generatedId = useId();
+  const checkboxId = id ?? generatedId;
   return (
-    <label htmlFor={id} className="flex items-center gap-2 text-zinc-600">
+    <label htmlFor={checkboxId} className="flex items-center gap-2 text-zinc-600">
       <input
-        id={id}
+        id={checkboxId}
         ref={ref}
         type="checkbox"
         className={cn("rounded border-zinc-300 text-gold-600 focus:ring-gold-500", className)}

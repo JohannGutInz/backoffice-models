@@ -23,6 +23,7 @@ export const APP_ROUTE = {
     },
     models: {
       index: "/app/modelos",
+      new: "/app/modelos/nuevo",
       edit: {
         id: (id: string) => `/app/modelos/${id}/editar`
       },

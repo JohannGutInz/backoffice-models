@@ -99,5 +99,21 @@ export async function getSignedDownloadUrl(key: string, expiresIn = 3600): Promi
 }
 
 export async function signAssetUrls<T extends { url: string }>(assets: T[]): Promise<T[]> {
-  return Promise.all(assets.map(async (asset) => ({ ...asset, url: await getSignedDownloadUrl(asset.url) })));
+  return Promise.all(
+    assets.map(async (asset) => {
+      // Recover any external URL that was incorrectly wrapped in an S3 signed URL
+      // (e.g. a YouTube link that got passed through getSignedDownloadUrl by mistake)
+      const recoveredKey = keyFromObjectUrl(asset.url);
+      if (recoveredKey && (recoveredKey.startsWith("http://") || recoveredKey.startsWith("https://"))) {
+        return { ...asset, url: recoveredKey };
+      }
+
+      // External URLs are not S3 keys — return as-is
+      if (asset.url.startsWith("http://") || asset.url.startsWith("https://")) {
+        return asset;
+      }
+
+      return { ...asset, url: await getSignedDownloadUrl(asset.url) };
+    }),
+  );
 }

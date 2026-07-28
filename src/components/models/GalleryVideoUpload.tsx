@@ -125,7 +125,7 @@ export const GalleryVideoUpload = forwardRef<GalleryVideoUploadHandle, GalleryVi
               <button
                 type="button"
                 onClick={() => handleRemove(url)}
-                className="mt-1.5 text-xs text-zinc-400 underline hover:text-red-500"
+                className="mt-2 inline-flex min-h-[44px] items-center text-xs text-zinc-400 underline hover:text-red-500"
               >
                 Eliminar video
               </button>
@@ -133,13 +133,15 @@ export const GalleryVideoUpload = forwardRef<GalleryVideoUploadHandle, GalleryVi
           ))}
 
           {value.length < max && (
-            <div
-              onClick={() => !uploading && inputRef.current?.click()}
-              className="relative flex cursor-pointer flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed border-zinc-200 bg-zinc-50 p-6 text-center transition hover:border-zinc-400 hover:bg-zinc-100"
+            <button
+              type="button"
+              disabled={uploading}
+              onClick={() => inputRef.current?.click()}
+              className="relative flex w-full flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed border-zinc-200 bg-zinc-50 p-6 text-center transition hover:border-zinc-400 hover:bg-zinc-100 disabled:pointer-events-none disabled:opacity-60"
             >
-              <p className="text-sm text-zinc-500">{uploading ? `Subiendo… ${progress}%` : "Haz clic para agregar un video"}</p>
+              <p className="text-sm text-zinc-500">{uploading ? `Subiendo… ${progress}%` : "Toca para agregar un video"}</p>
               <p className="text-xs text-zinc-400">MP4, MOV, WebM · máx 500 MB</p>
-            </div>
+            </button>
           )}
         </div>
 

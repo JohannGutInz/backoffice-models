@@ -28,8 +28,8 @@ export function TalentsGrid({ models }: { models: PublicModel[] }) {
 
   return (
     <div>
-      <div className="mb-8 flex flex-wrap items-center gap-3">
-        <div className="flex-1 sm:max-w-xs">
+      <div className="mb-8 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
+        <div className="w-full sm:max-w-xs sm:flex-1">
           <Input
             value={query}
             onChange={(e) => setQuery(e.target.value)}
@@ -42,7 +42,7 @@ export function TalentsGrid({ models }: { models: PublicModel[] }) {
           <Select
             value={category}
             onChange={(e) => setCategory(e.target.value)}
-            className="rounded-full py-2.5 px-4 text-zinc-600"
+            className="w-full rounded-full py-2.5 px-4 text-zinc-600 sm:w-auto"
           >
             <option value="todas">Todas las categorías</option>
             {categories.map((c) => (
@@ -52,18 +52,23 @@ export function TalentsGrid({ models }: { models: PublicModel[] }) {
             ))}
           </Select>
         )}
-        <span className="ml-auto text-xs text-zinc-400">{filtered.length} talentos</span>
+        <span className="text-xs font-medium text-zinc-500 sm:ml-auto sm:shrink-0">
+          {filtered.length} {filtered.length === 1 ? "talento" : "talentos"}
+        </span>
       </div>
 
-      <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-2 sm:gap-5 lg:grid-cols-4">
         {filtered.map((model) => (
           <TalentCard key={model.id} model={model} />
         ))}
       </div>
 
       {filtered.length === 0 && (
-        <div className="rounded-xl border border-dashed border-zinc-300 py-20 text-center text-sm text-zinc-400">
-          Ningún talento coincide con tu búsqueda.
+        <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-zinc-200 py-24 text-center">
+          <p className="text-base font-medium text-zinc-600">Sin resultados</p>
+          <p className="mt-1 text-sm text-zinc-400">
+            Ningún talento coincide con tu búsqueda. Prueba con otros filtros.
+          </p>
         </div>
       )}
     </div>

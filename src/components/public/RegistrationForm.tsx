@@ -400,7 +400,11 @@ export function RegistrationForm({ maxDate, countries, states, municipalities, c
 
       {serverError && <p className="text-sm text-rose-600">{serverError}</p>}
 
-      <Button type="submit" disabled={isSubmitting || !captcha} className="rounded-full px-5">
+      <Button
+        type="submit"
+        disabled={isSubmitting || !captcha}
+        className="w-full min-h-[48px] rounded-full px-5 sm:w-auto"
+      >
         {isSubmitting ? "Enviando…" : "Enviar registro"} <Send className="h-4 w-4" />
       </Button>
     </form>
