@@ -1,38 +1,16 @@
 import { cookies } from "next/headers";
-import {
-  AGENCY_ID,
-  bookings,
-  clients,
-  siteSettings,
-  events,
-  income,
-  monthlyRevenue,
-  models,
-  packages,
-  registrationApplications,
-} from "./mock-data";
-import type {
-  Booking,
-  Client,
-  AgencyEvent,
-  Model,
-  Package,
-  RegistrationApplication,
-  UserW,
-} from "./types";
+import { siteSettings, registrationApplications } from "./mock-data";
+import type { RegistrationApplication, UserW } from "./types";
 import { SESSION_COOKIE, verifySessionToken } from "./session";
 import { prisma } from "@/db";
 import { redirect } from "next/navigation";
 import { APP_ROUTE } from "./routes";
 import { isProfileComplete } from "./utils";
 
-// Data access layer. Today it reads from the in-memory fixtures (mock-data.ts).
-// When the central API exists, these functions are the only place that changes:
-// the pages already call everything with `await`, ready to become real fetch() calls.
-
-function byId<T extends { id: string }>(items: T[], id: string): T | undefined {
-  return items.find((item) => item.id === id);
-}
+// Data access layer. Models/KYC/categories/packages/convocatorias/EventoFoto
+// read from Postgres via Prisma. The self-registration/moderation feedback
+// flow still reads in-memory fixtures (mock-data.ts) — pages already call
+// everything with `await`, ready to become real queries later.
 
 export async function getCurrentUser() {
   const cookieStore = await cookies();
@@ -104,10 +82,6 @@ export async function getOwnModel(userId: string) {
   });
 }
 
-export function modelName(id: string): string {
-  return byId(models, id)?.stageName ?? "Modelo eliminado";
-}
-
 // ---------- Moderation / KYC ----------
 
 const kycModelInclude = {
@@ -143,40 +117,6 @@ export async function getApplicationByToken(token: string): Promise<Registration
   return registrationApplications.find((s) => s.reviewToken === token);
 }
 
-// ---------- Clients ----------
-
-export async function listClients(): Promise<Client[]> {
-  return clients.filter((c) => c.agencyId === AGENCY_ID);
-}
-
-export async function getClient(id: string): Promise<Client | undefined> {
-  return byId(clients, id);
-}
-
-export function clientName(id: string): string {
-  return byId(clients, id)?.company ?? "Cliente eliminado";
-}
-
-// ---------- Events ----------
-
-export async function listEvents(): Promise<AgencyEvent[]> {
-  return events.filter((e) => e.agencyId === AGENCY_ID);
-}
-
-export async function getEvent(id: string): Promise<AgencyEvent | undefined> {
-  return byId(events, id);
-}
-
-export function eventName(id: string): string {
-  return byId(events, id)?.name ?? "Evento eliminado";
-}
-
-// ---------- Bookings ----------
-
-export async function listBookings(): Promise<Booking[]> {
-  return bookings.filter((b) => b.agencyId === AGENCY_ID);
-}
-
 // ---------- Packages (real DB) ----------
 
 export type PackageItem = Awaited<ReturnType<typeof listPackages>>[number];
@@ -205,16 +145,6 @@ export async function getPaquete(id: string) {
   });
 }
 
-// ---------- Income ----------
-
-export async function listIncome() {
-  return income.filter((i) => i.agencyId === AGENCY_ID);
-}
-
-export async function getMonthlyRevenue() {
-  return monthlyRevenue;
-}
-
 // ---------- Site settings ----------
 
 export async function getSiteSettings() {
@@ -236,53 +166,22 @@ export async function listActivities() {
 // ---------- Dashboard stats ----------
 
 export async function getDashboardStats() {
-  const [bks, ings, pkgs, cli, kycModels, mdls] = await Promise.all([
-    listBookings(),
-    listIncome(),
+  const [pkgs, kycModels, mdls] = await Promise.all([
     listPackages(),
-    listClients(),
     listModelsKyc(),
     listModels(),
   ]);
 
   const pendingKyc = kycModels.filter((m) => m.kyc.status === "PENDING" || m.kyc.status === "REQUIRES_CHANGES").length;
 
-  const activeBookings = bks.filter((b) => b.status === "pendiente" || b.status === "confirmado");
-  const pendingBookings = bks.filter((b) => b.status === "pendiente");
-  const confirmedBookings = bks.filter((b) => b.status === "confirmado");
-
-  const currentMonth = new Date().getMonth();
-  const currentMonthIncome = ings
-    .filter((i) => new Date(i.date).getMonth() === currentMonth)
-    .reduce((sum, i) => sum + i.amount, 0);
-
   const pendingPackages = pkgs.filter((p) => p.status === "DRAFT" || p.status === "SENT");
   const pendingApplications = pendingKyc;
   const activeModels = mdls;
 
-  const bookingsByStatus = [
-    { status: "pendiente", total: bks.filter((b) => b.status === "pendiente").length },
-    { status: "confirmado", total: bks.filter((b) => b.status === "confirmado").length },
-    { status: "completado", total: bks.filter((b) => b.status === "completado").length },
-    { status: "cancelado", total: bks.filter((b) => b.status === "cancelado").length },
-  ].filter((s) => s.total > 0);
-
-  const latestBookings = [...bks]
-    .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
-    .slice(0, 5);
-
   return {
-    activeBookings: activeBookings.length,
-    pendingBookings: pendingBookings.length,
-    confirmedBookings: confirmedBookings.length,
-    currentMonthIncome,
     pendingPackages: pendingPackages.length,
-    totalClients: cli.length,
     pendingApplications: pendingApplications,
     activeModels: activeModels.length,
-    bookingsByStatus,
-    totalBookings: bks.length,
-    latestBookings,
     draftPackages: pkgs.filter((p) => p.status === "DRAFT").length,
   };
 }
@@ -315,25 +214,6 @@ export async function getModelUnreadConvocatorias(userId: string): Promise<numbe
   });
 }
 
-// ---------- Portfolio (stub — tables exist but not yet in Prisma schema) ----------
-
-export type PortfolioEntryRecord = {
-  id: string;
-  marca: string;
-  fecha: string;
-  lugar: string;
-  isVisible: boolean;
-  fotos: { url: string; isPortada: boolean; orden: number }[];
-};
-
-export async function listPortfolioEntries(): Promise<PortfolioEntryRecord[]> {
-  return [];
-}
-
-export async function getPortfolioEntry(_id: string): Promise<PortfolioEntryRecord | undefined> {
-  return undefined;
-}
-
 // ---------- Convocatorias ----------
 
 export type ConvocatoriaItem = Awaited<ReturnType<typeof listConvocatorias>>[number];
@@ -346,4 +226,16 @@ export async function listConvocatorias() {
 
 export async function getConvocatoria(id: string) {
   return prisma.convocatoria.findUnique({ where: { id } });
+}
+
+// ---------- EventoFoto (marketing gallery, admin) ----------
+// All rows regardless of `published` — distinct from listEventosDestacados()
+// in public-data.ts, which only returns published: true for the landing carousel.
+
+export type EventoFotoItem = Awaited<ReturnType<typeof listEventoFotos>>[number];
+
+export async function listEventoFotos() {
+  return prisma.eventoFoto.findMany({
+    orderBy: { position: "asc" },
+  });
 }

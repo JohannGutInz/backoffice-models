@@ -1,0 +1,64 @@
+import { AccordionCard } from "@/components/public/AccordionCard";
+import { BrandBackground } from "@/components/public/BrandBackground";
+import { BrandPageHero } from "@/components/public/BrandPageHero";
+import { WhatsAppRow } from "@/components/public/WhatsAppRow";
+
+const RAZONES = [
+  {
+    title: "1 — Atención inmediata 24/7",
+    text: "Respondemos rápido, sin importar el día ni la hora. Cuando nos necesitas, ahí estamos. Sin burocracia, sin esperas eternas.",
+  },
+  {
+    title: "2 — Cotizaciones en minutos",
+    text: "En promedio te entregamos tu cotización en menos de 30 minutos. Precios claros, desglosados y ajustados exactamente a lo que requieres.",
+  },
+  {
+    title: "3 — Precios altamente competitivos",
+    text: "La mejor relación calidad-precio del mercado. Personal profesional, puntual y con excelente presencia, sin pagar de más.",
+  },
+  {
+    title: "4 — Garantía real de satisfacción",
+    text: "Cumplimos con los objetivos de tu evento o ajustamos lo necesario. No te dejamos a medias. Si algo no sale como acordamos, lo corregimos.",
+  },
+];
+
+export default function RazonesPage() {
+  return (
+    <div className="relative -mt-16 min-h-screen bg-black pt-16">
+      <BrandBackground />
+      <div className="relative z-10 mx-auto max-w-2xl px-6 py-16 sm:py-20">
+        <BrandPageHero
+          eyebrow="Est. 2016 — México & Colombia"
+          title={
+            <>
+              ¿Por qué elegir
+              <br />a Glamour Models?
+            </>
+          }
+          description="4 razones claras + garantía real. Sin letras chiquitas"
+        />
+
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          {RAZONES.map((razon, i) => (
+            <AccordionCard key={razon.title} title={razon.title} variant={i < 2 ? "dark" : "light"} defaultOpen>
+              <p>{razon.text}</p>
+            </AccordionCard>
+          ))}
+        </div>
+
+        <div className="mt-14 flex flex-col items-center gap-4 text-center">
+          <p className="text-[42px] leading-[0.9] font-light tracking-[0.14em] text-white uppercase [text-shadow:0_0_40px_rgba(186,27,93,0.5)] sm:text-6xl">
+            ¡Garantizado!
+          </p>
+          <div className="h-px w-12 bg-gold-500 shadow-[0_0_18px_rgba(186,27,93,0.5)]" />
+          <p className="max-w-md text-[11px] leading-relaxed tracking-[0.12em] text-white/60 uppercase">
+            Tu evento en manos profesionales. Respuesta rápida, perfiles verificados y coordinación real el día del
+            evento.
+          </p>
+        </div>
+
+        <WhatsAppRow />
+      </div>
+    </div>
+  );
+}

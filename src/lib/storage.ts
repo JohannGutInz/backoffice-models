@@ -26,11 +26,26 @@ function getBucket() {
   return bucket;
 }
 
-export async function uploadImage(
+function getPublicBaseUrl() {
+  const url = process.env.STORAGE_PUBLIC_URL;
+  if (!url) throw new Error("STORAGE_PUBLIC_URL is not configured");
+  return url.replace(/\/$/, "");
+}
+
+// Path-style URL, same shape as the signed GET URLs this module issues
+// (forcePathStyle: true) but without a query-string signature — only
+// resolves to something browsable once the bucket policy for this key's
+// prefix allows public s3:GetObject. keyFromObjectUrl() below also works
+// against URLs built here, since it only inspects the pathname.
+export function getPublicUrl(key: string): string {
+  return `${getPublicBaseUrl()}/${getBucket()}/${key}`;
+}
+
+async function processAndPutImage(
   buffer: Buffer,
   key: string,
   options?: { quality?: number; maxWidth?: number },
-): Promise<string> {
+): Promise<void> {
   const { quality = 80, maxWidth = 1920 } = options ?? {};
 
   const processed = await sharp(buffer)
@@ -47,8 +62,27 @@ export async function uploadImage(
       ContentType: "image/webp",
     }),
   );
+}
 
+export async function uploadImage(
+  buffer: Buffer,
+  key: string,
+  options?: { quality?: number; maxWidth?: number },
+): Promise<string> {
+  await processAndPutImage(buffer, key, options);
   return getSignedDownloadUrl(key);
+}
+
+// Same resize→webp pipeline as uploadImage, but for public marketing assets
+// (agency-owned, not model-owned) — returns a bare public URL instead of a
+// signed one. Used by eventos/* today.
+export async function uploadPublicImage(
+  buffer: Buffer,
+  key: string,
+  options?: { quality?: number; maxWidth?: number },
+): Promise<string> {
+  await processAndPutImage(buffer, key, options);
+  return getPublicUrl(key);
 }
 
 export async function getPresignedVideoUploadPost(

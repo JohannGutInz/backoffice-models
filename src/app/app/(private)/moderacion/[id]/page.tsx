@@ -24,6 +24,7 @@ import { Textarea } from "@/components/ui/Textarea";
 import { StatusBadge } from "@/components/ui/Badge";
 import {
   addDays,
+  calculateAge,
   formatDate,
   formatFullName,
   getMainPhotoUrl,
@@ -39,16 +40,6 @@ const GENRE_LABEL: Record<string, string> = {
   MALE: "Masculino",
   FEMALE: "Femenino",
 };
-
-function calculateAge(birthDate: Date): number {
-  const today = new Date();
-  let age = today.getFullYear() - birthDate.getFullYear();
-  const hasNotHadBirthdayYet =
-    today.getMonth() < birthDate.getMonth() ||
-    (today.getMonth() === birthDate.getMonth() && today.getDate() < birthDate.getDate());
-  if (hasNotHadBirthdayYet) age -= 1;
-  return age;
-}
 
 export default async function ModerationDetailPage({
   params,

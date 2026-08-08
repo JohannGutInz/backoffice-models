@@ -1,17 +1,12 @@
-import type {
-  Booking,
-  Client,
-  SiteSettings,
-  AgencyEvent,
-  Income,
-  Model,
-  Package,
-  RegistrationApplication,
-  StaffUser,
-} from "./types";
+import type { SiteSettings, Package, RegistrationApplication } from "./types";
 
-// Demo data for the backoffice. In production, all of this lives
-// behind the central API (see lib/data.ts) — nothing here touches a database.
+// Demo data for the self-registration/moderation feedback flow — this surface
+// has no backing DB table yet. Models/KYC/categories/packages/EventoFoto are
+// real (see lib/data.ts, which reads those from Postgres via Prisma).
+//
+// `packages` below is legacy/unused (real packages come from prisma.package via
+// lib/data.ts) — left as-is, not touched by the eventos/bookings/clientes/
+// calendario/ingresos/portafolio cleanup.
 
 export const AGENCY_ID = "ag_default";
 
@@ -21,196 +16,6 @@ export const DEMO_STAFF_CREDENTIAL = {
   email: "ing.johanngut@gmail.com",
   password: "musa2026",
 };
-
-export const models: Model[] = [
-  {
-    id: "mdl_01",
-    agencyId: AGENCY_ID,
-    modelNumber: "MOD-0001",
-    stageName: "Valentina Cruz",
-    legalName: "Valentina Cruz Espinoza",
-    birthDate: "1999-03-14",
-    gender: "femenino",
-    nationality: "Mexicana",
-    contact: { email: "valentina.cruz@mail.com", phone: "+52 55 1234 0001", location: "Ciudad de México" },
-    physical: { heightCm: 176, measurements: "84-61-90", sizes: "S", hairColor: "Castaño", eyeColor: "Café", skinTone: "Trigueño" },
-    category: "moda",
-    tags: ["pasarela", "editorial", "alta costura"],
-    experienceLevel: "experimentado",
-    mainPhotoUrl: "",
-    bookUrls: [],
-    status: "activo",
-    featured: true,
-    publicOnLanding: true,
-    availability: "disponible",
-    baseRate: 18000,
-    consent: { accepted: true, date: "2024-01-10", documentVersion: "v2", scope: "Foto y video, uso comercial" },
-    createdAt: "2024-01-10",
-  },
-  {
-    id: "mdl_02",
-    agencyId: AGENCY_ID,
-    modelNumber: "MOD-0002",
-    stageName: "Mateo Lombardi",
-    legalName: "Mateo Lombardi Soto",
-    birthDate: "1997-07-22",
-    gender: "masculino",
-    nationality: "Argentina",
-    contact: { email: "mateo.lombardi@mail.com", phone: "+52 55 1234 0002", location: "Guadalajara" },
-    physical: { heightCm: 188, hairColor: "Negro", eyeColor: "Café", skinTone: "Claro" },
-    category: "comercial",
-    tags: ["catálogo", "fitness"],
-    experienceLevel: "intermedio",
-    mainPhotoUrl: "",
-    bookUrls: [],
-    status: "activo",
-    featured: false,
-    publicOnLanding: true,
-    availability: "disponible",
-    baseRate: 9500,
-    consent: { accepted: true, date: "2024-02-02", documentVersion: "v2", scope: "Foto, uso comercial" },
-    createdAt: "2024-02-02",
-  },
-  {
-    id: "mdl_03",
-    agencyId: AGENCY_ID,
-    modelNumber: "MOD-0003",
-    stageName: "Sofía Reyes",
-    legalName: "Sofía Reyes Marván",
-    birthDate: "2002-11-05",
-    gender: "femenino",
-    nationality: "Mexicana",
-    contact: { email: "sofia.reyes@mail.com", phone: "+52 55 1234 0003", location: "Monterrey" },
-    physical: { heightCm: 172, measurements: "82-60-88", sizes: "XS" },
-    category: "editorial",
-    tags: ["beauty", "editorial"],
-    experienceLevel: "intermedio",
-    mainPhotoUrl: "",
-    bookUrls: [],
-    status: "activo",
-    featured: true,
-    publicOnLanding: true,
-    availability: "ocupado",
-    baseRate: 12000,
-    consent: { accepted: true, date: "2024-03-18", documentVersion: "v2", scope: "Foto y video" },
-    createdAt: "2024-03-18",
-  },
-  {
-    id: "mdl_04",
-    agencyId: AGENCY_ID,
-    modelNumber: "MOD-0004",
-    stageName: "Diego Marín",
-    legalName: "Diego Marín Ortega",
-    birthDate: "2000-05-30",
-    gender: "masculino",
-    nationality: "Colombiana",
-    contact: { email: "diego.marin@mail.com", phone: "+52 55 1234 0004", location: "Ciudad de México" },
-    category: "fitness",
-    tags: ["fitness", "deportivo"],
-    experienceLevel: "nuevo",
-    mainPhotoUrl: "",
-    bookUrls: [],
-    status: "borrador",
-    featured: false,
-    publicOnLanding: false,
-    availability: "disponible",
-    baseRate: 7000,
-    createdAt: "2025-09-01",
-  },
-  {
-    id: "mdl_05",
-    agencyId: AGENCY_ID,
-    modelNumber: "MOD-0005",
-    stageName: "Camila Duarte",
-    legalName: "Camila Duarte Pinto",
-    birthDate: "1998-09-12",
-    gender: "femenino",
-    nationality: "Brasileña",
-    contact: { email: "camila.duarte@mail.com", phone: "+52 55 1234 0005", location: "Ciudad de México" },
-    physical: { heightCm: 178, measurements: "85-62-91" },
-    category: "moda",
-    tags: ["pasarela", "lujo"],
-    experienceLevel: "experimentado",
-    mainPhotoUrl: "",
-    bookUrls: [],
-    status: "activo",
-    featured: true,
-    publicOnLanding: true,
-    availability: "disponible",
-    baseRate: 21000,
-    consent: { accepted: true, date: "2023-11-20", documentVersion: "v1", scope: "Foto y video, uso comercial" },
-    createdAt: "2023-11-20",
-  },
-  {
-    id: "mdl_06",
-    agencyId: AGENCY_ID,
-    modelNumber: "MOD-0006",
-    stageName: "Renata Solís",
-    legalName: "Renata Solís Aguirre",
-    birthDate: "2003-01-27",
-    gender: "femenino",
-    nationality: "Mexicana",
-    contact: { email: "renata.solis@mail.com", phone: "+52 55 1234 0006", location: "Puebla" },
-    category: "influencer",
-    tags: ["redes sociales", "lifestyle"],
-    experienceLevel: "nuevo",
-    mainPhotoUrl: "",
-    bookUrls: [],
-    status: "activo",
-    featured: false,
-    publicOnLanding: false,
-    availability: "disponible",
-    baseRate: 6500,
-    createdAt: "2025-06-15",
-  },
-  {
-    id: "mdl_07",
-    agencyId: AGENCY_ID,
-    modelNumber: "MOD-0007",
-    stageName: "Joaquín Vidal",
-    legalName: "Joaquín Vidal Núñez",
-    birthDate: "1995-12-08",
-    gender: "masculino",
-    nationality: "Chilena",
-    contact: { email: "joaquin.vidal@mail.com", phone: "+52 55 1234 0007", location: "Ciudad de México" },
-    category: "comercial",
-    tags: ["catálogo", "ejecutivo"],
-    experienceLevel: "experimentado",
-    mainPhotoUrl: "",
-    bookUrls: [],
-    status: "inactivo",
-    featured: false,
-    publicOnLanding: false,
-    availability: "no disponible",
-    baseRate: 8500,
-    internalNotes: "Pausa temporal por agenda personal, retoma en Q3.",
-    createdAt: "2022-04-11",
-  },
-  {
-    id: "mdl_08",
-    agencyId: AGENCY_ID,
-    modelNumber: "MOD-0008",
-    stageName: "Isabela Hoyos",
-    legalName: "Isabela Hoyos Restrepo",
-    birthDate: "2001-08-19",
-    gender: "femenino",
-    nationality: "Colombiana",
-    contact: { email: "isabela.hoyos@mail.com", phone: "+52 55 1234 0008", location: "Querétaro" },
-    physical: { heightCm: 174, measurements: "83-60-89" },
-    category: "promocional",
-    tags: ["activaciones", "stands"],
-    experienceLevel: "intermedio",
-    mainPhotoUrl: "",
-    bookUrls: [],
-    status: "activo",
-    featured: false,
-    publicOnLanding: true,
-    availability: "disponible",
-    baseRate: 5500,
-    consent: { accepted: true, date: "2024-07-02", documentVersion: "v2", scope: "Foto, uso comercial" },
-    createdAt: "2024-07-02",
-  },
-];
 
 export const registrationApplications: RegistrationApplication[] = [
   {
@@ -307,35 +112,6 @@ export const registrationApplications: RegistrationApplication[] = [
   },
 ];
 
-export const clients: Client[] = [
-  { id: "cli_01", agencyId: AGENCY_ID, company: "Vogue Studio MX", contactName: "Renata Aguilar", email: "renata@voguestudio.mx", phone: "+52 55 2000 0001", industry: "Moda", totalEvents: 6, totalRevenue: 312000, createdAt: "2023-02-10" },
-  { id: "cli_02", agencyId: AGENCY_ID, company: "Lumière Cosméticos", contactName: "Hugo Beltrán", email: "hugo@lumiere.com", phone: "+52 55 2000 0002", industry: "Belleza", totalEvents: 4, totalRevenue: 198000, createdAt: "2023-06-22" },
-  { id: "cli_03", agencyId: AGENCY_ID, company: "Aurora Retail Group", contactName: "Marcela Tovar", email: "marcela@auroraretail.com", phone: "+52 55 2000 0003", industry: "Retail", totalEvents: 3, totalRevenue: 145000, createdAt: "2024-01-15" },
-  { id: "cli_04", agencyId: AGENCY_ID, company: "Nova Sportswear", contactName: "Iván Cordero", email: "ivan@novasport.com", phone: "+52 55 2000 0004", industry: "Deportes", totalEvents: 2, totalRevenue: 86000, createdAt: "2024-08-09" },
-  { id: "cli_05", agencyId: AGENCY_ID, company: "Cantera Joyería", contactName: "Ximena Paredes", email: "ximena@canterajoyeria.com", phone: "+52 55 2000 0005", industry: "Joyería", totalEvents: 1, totalRevenue: 40000, createdAt: "2025-03-30" },
-];
-
-export const events: AgencyEvent[] = [
-  { id: "evt_01", agencyId: AGENCY_ID, name: "Campaña Primavera 2026", clientId: "cli_01", type: "Editorial", venue: "Estudio Polanco, CDMX", startDate: "2026-06-28", endDate: "2026-06-28", status: "confirmado", bookingIds: ["bkg_01", "bkg_02"] },
-  { id: "evt_02", agencyId: AGENCY_ID, name: "Lanzamiento línea Glow", clientId: "cli_02", type: "Activación", venue: "Centro Histórico, CDMX", startDate: "2026-07-03", endDate: "2026-07-03", status: "planeado", bookingIds: ["bkg_03"] },
-  { id: "evt_03", agencyId: AGENCY_ID, name: "Catálogo Otoño Aurora", clientId: "cli_03", type: "Catálogo", venue: "Foro Santa Fe, CDMX", startDate: "2026-07-10", endDate: "2026-07-11", status: "planeado", bookingIds: ["bkg_04", "bkg_05"] },
-  { id: "evt_04", agencyId: AGENCY_ID, name: "Sesión Nova Run", clientId: "cli_04", type: "Comercial", venue: "Bosque de Chapultepec, CDMX", startDate: "2026-06-15", endDate: "2026-06-15", status: "finalizado", bookingIds: ["bkg_06"] },
-  { id: "evt_05", agencyId: AGENCY_ID, name: "Pasarela Joyería Cantera", clientId: "cli_05", type: "Pasarela", venue: "Hotel St. Regis, CDMX", startDate: "2026-05-30", endDate: "2026-05-30", status: "finalizado", bookingIds: ["bkg_07", "bkg_08"] },
-  { id: "evt_06", agencyId: AGENCY_ID, name: "Backstage Vogue Studio", clientId: "cli_01", type: "Editorial", venue: "Estudio Roma Norte, CDMX", startDate: "2026-06-05", endDate: "2026-06-05", status: "cancelado", bookingIds: [] },
-];
-
-export const bookings: Booking[] = [
-  { id: "bkg_01", agencyId: AGENCY_ID, eventId: "evt_01", modelId: "mdl_01", rate: 18000, status: "confirmado", date: "2026-06-28" },
-  { id: "bkg_02", agencyId: AGENCY_ID, eventId: "evt_01", modelId: "mdl_05", rate: 21000, status: "confirmado", date: "2026-06-28" },
-  { id: "bkg_03", agencyId: AGENCY_ID, eventId: "evt_02", modelId: "mdl_03", rate: 12000, status: "pendiente", date: "2026-07-03" },
-  { id: "bkg_04", agencyId: AGENCY_ID, eventId: "evt_03", modelId: "mdl_02", rate: 9500, status: "pendiente", date: "2026-07-10" },
-  { id: "bkg_05", agencyId: AGENCY_ID, eventId: "evt_03", modelId: "mdl_08", rate: 5500, status: "pendiente", date: "2026-07-10" },
-  { id: "bkg_06", agencyId: AGENCY_ID, eventId: "evt_04", modelId: "mdl_04", rate: 7000, status: "completado", date: "2026-06-15" },
-  { id: "bkg_07", agencyId: AGENCY_ID, eventId: "evt_05", modelId: "mdl_01", rate: 18000, status: "completado", date: "2026-05-30" },
-  { id: "bkg_08", agencyId: AGENCY_ID, eventId: "evt_05", modelId: "mdl_06", rate: 6500, status: "completado", date: "2026-05-30" },
-  { id: "bkg_09", agencyId: AGENCY_ID, eventId: "evt_06", modelId: "mdl_07", rate: 8500, status: "cancelado", date: "2026-06-05" },
-];
-
 export const packages: Package[] = [
   { id: "pkg_01", agencyId: AGENCY_ID, name: "Propuesta Primavera — Vogue Studio", clientId: "cli_01", modelIds: ["mdl_01", "mdl_05", "mdl_03"], status: "aprobado", total: 51000, createdAt: "2026-06-10" },
   { id: "pkg_02", agencyId: AGENCY_ID, name: "Glow Launch — Lumière", clientId: "cli_02", modelIds: ["mdl_03", "mdl_06"], status: "enviado", total: 18500, createdAt: "2026-06-18" },
@@ -344,30 +120,13 @@ export const packages: Package[] = [
   { id: "pkg_05", agencyId: AGENCY_ID, name: "Joyería Cantera — Capsula", clientId: "cli_05", modelIds: ["mdl_01"], status: "rechazado", total: 18000, createdAt: "2026-05-12" },
 ];
 
-export const income: Income[] = [
-  { id: "ing_01", agencyId: AGENCY_ID, eventId: "evt_04", clientId: "cli_04", amount: 7000, method: "transferencia", date: "2026-06-16" },
-  { id: "ing_02", agencyId: AGENCY_ID, eventId: "evt_05", clientId: "cli_05", amount: 24500, method: "transferencia", date: "2026-05-31" },
-  { id: "ing_03", agencyId: AGENCY_ID, eventId: "evt_05", clientId: "cli_05", amount: 15500, method: "tarjeta", date: "2026-06-02" },
-  { id: "ing_04", agencyId: AGENCY_ID, eventId: "evt_01", clientId: "cli_01", amount: 39000, method: "transferencia", date: "2026-06-22" },
-];
-
-// Monthly series for the revenue chart (last 6 months).
-export const monthlyRevenue = [
-  { month: "Ene", total: 64000 },
-  { month: "Feb", total: 78500 },
-  { month: "Mar", total: 91000 },
-  { month: "Abr", total: 73200 },
-  { month: "May", total: 102500 },
-  { month: "Jun", total: 86000 },
-];
-
 export const siteSettings: SiteSettings = {
   agencyId: AGENCY_ID,
-  agencyName: "GlamourModels",
+  agencyName: "Glamour Models",
   logoUrl: "",
   primaryColor: "#BA1B5D",
-  heroTitle: "Talento que define la temporada",
-  heroSubtitle: "Representamos modelos y talento para marcas que buscan presencia, carácter y consistencia.",
+  heroTitle: "SOMOS LO QUE QUIERES VER",
+  heroSubtitle: "AGENCIA DE MODELOS Y EDECANES / PROTOCOLO",
   publicRegistrationActive: true,
   registrationLinkSlug: "registro-glamour-2026",
 };

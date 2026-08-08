@@ -6,46 +6,36 @@ const CLIENTES = [
   "Bimbo", "Coca-Cola", "Elektra", "Palacio de Hierro", "Heineken",
 ];
 
-function LogoItem({ name }: { name: string }) {
-  return (
-    <span className="inline-flex shrink-0 items-center px-8 text-sm font-semibold tracking-[0.2em] text-gold-500/80 uppercase select-none">
-      {name}
-      <span className="ml-8 h-px w-4 bg-gold-500/30" />
-    </span>
-  );
-}
+const FADE_MASK =
+  "linear-gradient(to right, transparent 0%, black 10%, black 90%, transparent 100%)";
 
 export function ClientesCarrusel() {
   const items = [...CLIENTES, ...CLIENTES];
 
   return (
-    <section className="overflow-hidden bg-zinc-950 py-16">
-      <div className="mx-auto mb-10 max-w-6xl px-6">
-        <p className="mb-2 text-[11px] font-semibold tracking-[0.3em] text-zinc-500 uppercase">
+    <section className="py-20">
+      <div className="mx-auto mb-10 max-w-6xl px-6 text-center">
+        <p className="mb-2 text-[11px] font-semibold tracking-[0.32em] text-white/50 uppercase">
           Clientes
         </p>
-        <h2 className="text-3xl font-light tracking-tight text-white">
+        <h2 className="text-2xl font-light tracking-tight text-white sm:text-3xl">
           Marcas que confían en nosotros
         </h2>
       </div>
 
-      {/* Fila 1 — izquierda a derecha */}
-      <div className="relative flex overflow-hidden">
-        <div className="flex animate-[marquee_30s_linear_infinite] whitespace-nowrap">
-          {items.map((name, i) => <LogoItem key={`a-${i}`} name={name} />)}
-        </div>
-        <div aria-hidden className="flex animate-[marquee_30s_linear_infinite] whitespace-nowrap">
-          {items.map((name, i) => <LogoItem key={`b-${i}`} name={name} />)}
-        </div>
-      </div>
-
-      {/* Fila 2 — derecha a izquierda */}
-      <div className="relative mt-4 flex overflow-hidden">
-        <div className="flex animate-[marquee-reverse_25s_linear_infinite] whitespace-nowrap">
-          {[...items].reverse().map((name, i) => <LogoItem key={`c-${i}`} name={name} />)}
-        </div>
-        <div aria-hidden className="flex animate-[marquee-reverse_25s_linear_infinite] whitespace-nowrap">
-          {[...items].reverse().map((name, i) => <LogoItem key={`d-${i}`} name={name} />)}
+      <div
+        className="relative w-full overflow-hidden py-2"
+        style={{ maskImage: FADE_MASK, WebkitMaskImage: FADE_MASK }}
+      >
+        <div className="flex w-max animate-[marquee-half_38s_linear_infinite] items-center gap-16 motion-reduce:animate-none">
+          {items.map((name, i) => (
+            <span
+              key={`${name}-${i}`}
+              className="inline-flex shrink-0 items-center text-2xl font-bold tracking-[0.08em] text-white/55 uppercase transition-colors select-none hover:text-white sm:text-4xl"
+            >
+              {name}
+            </span>
+          ))}
         </div>
       </div>
     </section>

@@ -107,43 +107,12 @@ export type ModelAttributesData = z.infer<typeof modelAttributesSchema>;
 export type OwnModelProfileData = z.infer<typeof ownModelProfileSchema>;
 export type ModelEditData = z.infer<typeof modelEditSchema>;
 
-export const eventoFormSchema = z.object({
-  nombre: z.string().min(1, "El nombre del evento es obligatorio."),
-  notas: z.string(),
-  isRecurring: z.boolean(),
-  startDate: z.string(),
-  startTime: z.string(),
-  endDate: z.string(),
-  endTime: z.string(),
-  recurringDays: z.array(z.number()),
-  dailyStartTime: z.string(),
-  dailyEndTime: z.string(),
-  rangeStart: z.string(),
-  rangeEnd: z.string(),
-});
-
-export type EventoFormData = z.infer<typeof eventoFormSchema>;
-
 export const crearPaqueteSchema = z.object({
   name: z.string().min(1, "El nombre del paquete es obligatorio."),
   description: z.string().optional(),
 });
 
 export type CrearPaqueteData = z.infer<typeof crearPaqueteSchema>;
-
-export const portfolioEntrySchema = z.object({
-  marca: z.string().min(1, "La marca es obligatoria."),
-  fecha: z.string().min(1, "La fecha es obligatoria."),
-  lugar: z.string().min(1, "El lugar es obligatorio."),
-  isVisible: z.boolean(),
-  fotos: z.array(z.object({
-    url: z.string(),
-    isPortada: z.boolean(),
-    orden: z.number().int(),
-  })),
-});
-
-export type PortfolioEntryData = z.infer<typeof portfolioEntrySchema>;
 
 export const nuevoModeloAdminFormSchema = z.object({
   firstName: z.string().min(1, "El nombre es obligatorio."),

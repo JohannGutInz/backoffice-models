@@ -39,8 +39,16 @@ const NAV_COL_1 = [
 ];
 
 const NAV_COL_2 = [
-  { href: "/contacto", label: "Contacto" },
+  { href: "/servicios", label: "Servicios" },
+  { href: "/cobertura", label: "Cobertura" },
+  { href: "/como-trabajamos", label: "¿Cómo trabajamos?" },
+  { href: "/razones", label: "¿Por qué elegirnos?" },
+  { href: "/mision-vision", label: "Misión y visión" },
   { href: "/historia", label: "Historia" },
+];
+
+const NAV_COL_3 = [
+  { href: "/contacto", label: "Contacto" },
   { href: "/privacidad", label: "Aviso de privacidad" },
 ];
 
@@ -49,7 +57,7 @@ export function PublicFooter({ agencyName }: { agencyName: string }) {
     <footer className="bg-zinc-950 text-zinc-400">
       {/* Main footer */}
       <div className="mx-auto max-w-6xl px-6 py-16">
-        <div className="grid grid-cols-1 gap-10 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="grid grid-cols-1 gap-10 sm:grid-cols-2 lg:grid-cols-5">
           {/* Brand */}
           <div className="lg:col-span-2">
             <span className="text-xl font-semibold tracking-tight text-white">
@@ -91,11 +99,28 @@ export function PublicFooter({ agencyName }: { agencyName: string }) {
             </ul>
           </div>
 
-          {/* Nav col 2 */}
+          {/* Nav col 2 — Conócenos */}
+          <div>
+            <p className="mb-4 text-xs font-semibold tracking-widest text-zinc-500 uppercase">Conócenos</p>
+            <ul className="space-y-2.5">
+              {NAV_COL_2.map((link) => (
+                <li key={link.href}>
+                  <Link
+                    href={link.href}
+                    className="text-sm transition-colors hover:text-gold-400"
+                  >
+                    {link.label}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          {/* Nav col 3 — Empresa */}
           <div>
             <p className="mb-4 text-xs font-semibold tracking-widest text-zinc-500 uppercase">Empresa</p>
             <ul className="space-y-2.5">
-              {NAV_COL_2.map((link) => (
+              {NAV_COL_3.map((link) => (
                 <li key={link.href}>
                   <Link
                     href={link.href}

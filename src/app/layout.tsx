@@ -13,8 +13,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "GlamourModels | Backoffice",
-  description: "Backoffice de gestión para agencia de talentos y modelos",
+  title: "Glamour Models ",
+  description: "Glamour Models agencia de talentos y modelos, somos lo que quieres ver",
 };
 
 export default function RootLayout({

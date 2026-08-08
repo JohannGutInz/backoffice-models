@@ -11,6 +11,7 @@ import { Field, FieldGrid } from "@/components/ui/Field";
 import { LinkButton } from "@/components/ui/Button";
 import { APP_ROUTE } from "@/lib/routes";
 import {
+  calculateAge,
   formatDate,
   formatFullName,
   getMainPhotoUrl,
@@ -42,16 +43,6 @@ const PANTS_SCALE_LABEL: Record<string, string> = {
 
 function yesNo(value: boolean): string {
   return value ? "Sí" : "No";
-}
-
-function calculateAgeFrom(date: Date): number {
-  const today = new Date();
-  let age = today.getFullYear() - date.getFullYear();
-  const hasNotHadBirthdayYet =
-    today.getMonth() < date.getMonth() ||
-    (today.getMonth() === date.getMonth() && today.getDate() < date.getDate());
-  if (hasNotHadBirthdayYet) age -= 1;
-  return age;
 }
 
 export default async function ModelDetailPage({
@@ -104,7 +95,7 @@ export default async function ModelDetailPage({
                 {GENRE_LABEL[model.genre] ?? model.genre}
               </span>
               <span>·</span>
-              <span>{calculateAgeFrom(model.birthDate)} años</span>
+              <span>{calculateAge(model.birthDate)} años</span>
             </div>
           </div>
         </div>
@@ -122,7 +113,7 @@ export default async function ModelDetailPage({
                 <Field label="Nombre completo" value={formatFullName(model)} />
                 <Field
                   label="Fecha de nacimiento"
-                  value={`${formatDate(model.birthDate)} · ${calculateAgeFrom(model.birthDate)} años`}
+                  value={`${formatDate(model.birthDate)} · ${calculateAge(model.birthDate)} años`}
                 />
                 <Field label="Género" value={GENRE_LABEL[model.genre] ?? model.genre} />
               </FieldGrid>

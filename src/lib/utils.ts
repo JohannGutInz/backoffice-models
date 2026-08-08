@@ -148,13 +148,13 @@ export function getCampaignVideoLinks(media: MediaShape[]): string[] {
   return getMediaUrls(media, "VIDEO_LINK");
 }
 
-export function calculateAge(birthDateIso: string): number {
-  const birthDate = parseDateOnly(birthDateIso);
+export function calculateAge(birthDate: string | Date): number {
+  const parsed = typeof birthDate === "string" ? parseDateOnly(birthDate) : birthDate;
   const today = new Date();
-  let age = today.getFullYear() - birthDate.getFullYear();
+  let age = today.getFullYear() - parsed.getFullYear();
   const hasNotHadBirthdayYet =
-    today.getMonth() < birthDate.getMonth() ||
-    (today.getMonth() === birthDate.getMonth() && today.getDate() < birthDate.getDate());
+    today.getMonth() < parsed.getMonth() ||
+    (today.getMonth() === parsed.getMonth() && today.getDate() < parsed.getDate());
   if (hasNotHadBirthdayYet) age -= 1;
   return age;
 }

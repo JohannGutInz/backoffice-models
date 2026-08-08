@@ -277,3 +277,19 @@ model ConvocatoriaVista {
   @@unique([modeloId, convocatoriaId])
   @@map("convocatoria_vistas")
 }
+
+// Agency marketing photos shown in the public landing carousel (EventosCarrusel).
+// Not to be confused with ModelMedia.PHOTO_EVENT, which is a model's own event
+// photos inside their personal book.
+model EventoFoto {
+  id        String   @id @default(uuid())
+  url       String
+  alt       String
+  position  Int      @default(0)
+  // Matches the app-level rule: crearEventoFotoAction (actions.ts) always
+  // creates rows unpublished — the admin publishes by hand after review.
+  published Boolean  @default(false)
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@map("evento_fotos")
+}

@@ -5,7 +5,7 @@ import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import * as bcrypt from "bcrypt";
 import { prisma } from "@/db";
-import { siteSettings, models, registrationApplications } from "./mock-data";
+import { siteSettings, registrationApplications } from "./mock-data";
 import { SESSION_COOKIE, createSessionToken, verifySessionToken } from "./session";
 import { toDateKey } from "./utils";
 import { emailClientContact, emailConvocatoriaPublicada } from "./email";
@@ -296,14 +296,6 @@ export async function regenerateRegistrationLinkAction() {
   return siteSettings.registrationLinkSlug;
 }
 
-export async function toggleLandingVisibilityAction(modelId: string, visible: boolean) {
-  const model = models.find((m) => m.id === modelId);
-  if (!model) return;
-  model.publicOnLanding = visible;
-  revalidatePath(`/modelos/${modelId}`);
-  revalidatePath("/talentos");
-}
-
 // ---------- Client contact (public landing) ----------
 
 export async function submitContactAction(data: ContactData): Promise<ActionState> {
@@ -539,16 +531,6 @@ export async function toggleModelVisibilityAction(modelId: string, hiddenFromCat
   return { status: "success", message: hiddenFromCatalog ? "Perfil ocultado del catálogo." : "Perfil visible en el catálogo." };
 }
 
-// ---------- Eventos (stub actions — pending full implementation) ----------
-
-export async function crearEventoAction(_data: unknown): Promise<ActionState & { eventoId?: string }> {
-  return { status: "error", message: "Not implemented" };
-}
-
-export async function editarEventoAction(_id: string, _data: unknown): Promise<ActionState> {
-  return { status: "error", message: "Not implemented" };
-}
-
 // ---------- Convocatorias ----------
 
 export async function crearConvocatoriaAction(data: ConvocatoriaFormData): Promise<ActionState & { id?: string }> {
@@ -667,28 +649,6 @@ export async function quitarModeloDelPaqueteAction(paqueteId: string, modeloId: 
   revalidatePath(`${APP_ROUTE.app.packages.index}/${paqueteId}`);
 }
 
-// ---------- Portafolio (stub actions) ----------
-
-export async function crearPortfolioEntryAction(_data: unknown): Promise<ActionState & { entryId?: string }> {
-  return { status: "error", message: "Not implemented" };
-}
-
-export async function editarPortfolioEntryAction(_id: string, _data: unknown): Promise<ActionState & { entryId?: string }> {
-  return { status: "error", message: "Not implemented" };
-}
-
-export async function eliminarPortfolioEntryAction(_id: string): Promise<void> {}
-
-export async function togglePortfolioVisibilidadAction(_id: string, _visible: boolean): Promise<void> {}
-
-export async function marcarEventoCubiertoAction(
-  _id: string,
-  _cubierto: boolean,
-  _modeloId: string | null,
-): Promise<void> {}
-
-export async function eliminarEventoAction(_id: string): Promise<void> {}
-
 export async function renombrarPaqueteAction(paqueteId: string, data: unknown): Promise<ActionState> {
   const parsed = z.object({
     name: z.string().min(1, "El nombre del paquete es obligatorio."),
@@ -755,4 +715,120 @@ export async function crearModeloAdminAction(
   _data: unknown,
 ): Promise<ActionState & { modelId?: string }> {
   return { status: "error", message: "Not implemented" };
+}
+
+// ---------- EventoFoto (marketing gallery, admin) ----------
+// Content-only cap, not a technical limit of the carousel — see
+// listEventosDestacados() in public-data.ts for the public-facing counterpart.
+const MAX_PUBLISHED_EVENTO_FOTOS = 12;
+
+const crearEventoFotoSchema = z.object({
+  url: z.string().min(1, "La URL es obligatoria."),
+  alt: z.string().trim().min(1, "El texto alternativo es obligatorio.").max(200),
+});
+
+// Persists the metadata row after /api/upload/evento-image has already put the
+// file in S3. Always created unpublished — the admin reviews it (alt, crop,
+// quality) and publishes it by hand via toggleEventoFotoPublishedAction, which
+// stays the single gatekeeper for the 12-photo cap. No parallel path skips it.
+export async function crearEventoFotoAction(data: unknown): Promise<ActionState> {
+  const parsed = crearEventoFotoSchema.safeParse(data);
+  if (!parsed.success) {
+    return { status: "error", message: parsed.error.issues[0]?.message ?? "Datos inválidos." };
+  }
+
+  const { _max } = await prisma.eventoFoto.aggregate({ _max: { position: true } });
+
+  await prisma.eventoFoto.create({
+    data: {
+      id: crypto.randomUUID(),
+      url: parsed.data.url,
+      alt: parsed.data.alt,
+      position: (_max.position ?? -1) + 1,
+      published: false,
+    },
+  });
+
+  revalidatePath(APP_ROUTE.app.events.index);
+  return { status: "success", message: "Foto agregada como borrador. Publícala cuando esté lista." };
+}
+
+// `orderedIds` is the full new order (top to bottom); position = array index.
+export async function reordenarEventoFotosAction(orderedIds: string[]): Promise<void> {
+  await prisma.$transaction(
+    orderedIds.map((id, position) => prisma.eventoFoto.update({ where: { id }, data: { position } })),
+  );
+  revalidatePath(APP_ROUTE.app.events.index);
+  revalidatePath("/");
+}
+
+// Marker to distinguish "cap reached, roll back on purpose" from a real DB
+// error inside the transaction below.
+class EventoFotoPublishCapError extends Error {}
+
+export async function toggleEventoFotoPublishedAction(id: string, published: boolean): Promise<ActionState> {
+  try {
+    // Count + update run inside one Serializable transaction so two admins
+    // (or two fast clicks) publishing near-simultaneously can't both read
+    // "11 published" and both push past the 12 cap — Postgres aborts one of
+    // the two conflicting transactions instead of silently overcommitting.
+    await prisma.$transaction(
+      async (tx) => {
+        if (published) {
+          const publishedCount = await tx.eventoFoto.count({ where: { published: true } });
+          if (publishedCount >= MAX_PUBLISHED_EVENTO_FOTOS) {
+            throw new EventoFotoPublishCapError();
+          }
+        }
+        await tx.eventoFoto.update({ where: { id }, data: { published } });
+      },
+      { isolationLevel: "Serializable" },
+    );
+  } catch (err) {
+    if (err instanceof EventoFotoPublishCapError) {
+      return {
+        status: "error",
+        message: `Ya hay ${MAX_PUBLISHED_EVENTO_FOTOS} fotos publicadas (el máximo). Despublica alguna antes de agregar otra.`,
+      };
+    }
+    throw err;
+  }
+
+  revalidatePath(APP_ROUTE.app.events.index);
+  revalidatePath("/");
+  return { status: "success", message: published ? "Foto publicada." : "Foto despublicada." };
+}
+
+export async function eliminarEventoFotoAction(id: string): Promise<void> {
+  const foto = await prisma.eventoFoto.findUnique({ where: { id }, select: { url: true } });
+  if (!foto) return;
+
+  await prisma.eventoFoto.delete({ where: { id } });
+
+  const key = keyFromObjectUrl(foto.url) ?? foto.url;
+  await deleteObject(key).catch((err) => {
+    console.error("[eliminarEventoFotoAction] failed to delete", key, err);
+  });
+
+  revalidatePath(APP_ROUTE.app.events.index);
+  revalidatePath("/");
+}
+
+// Not part of the original block 3 scope (listar/reordenar/toggle/eliminar) —
+// added because the admin table needs a way to fix an alt typo without
+// deleting and re-uploading the photo. The public carousel doesn't render
+// this alt today (EventosCarrusel uses a fixed "Evento realizado por {agencia}"
+// string — see public-data.ts), so this only affects the admin table for now.
+export async function actualizarEventoFotoAltAction(id: string, alt: string): Promise<ActionState> {
+  const trimmed = alt.trim();
+  if (!trimmed) {
+    return { status: "error", message: "El texto alternativo es obligatorio." };
+  }
+  if (trimmed.length > 200) {
+    return { status: "error", message: "El texto alternativo es demasiado largo." };
+  }
+
+  await prisma.eventoFoto.update({ where: { id }, data: { alt: trimmed } });
+  revalidatePath(APP_ROUTE.app.events.index);
+  return { status: "success", message: "Texto alternativo actualizado." };
 }

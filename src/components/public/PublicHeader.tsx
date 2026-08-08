@@ -1,9 +1,9 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Menu, X } from "lucide-react";
+import { ChevronDown, Menu, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const NAV_LINKS = [
@@ -11,6 +11,15 @@ const NAV_LINKS = [
   { href: "/talentos", label: "Talentos" },
   { href: "/convocatorias", label: "Convocatorias" },
   { href: "/contacto", label: "Contacto" },
+];
+
+const ABOUT_LINKS = [
+  { href: "/servicios", label: "Servicios" },
+  { href: "/cobertura", label: "Cobertura" },
+  { href: "/como-trabajamos", label: "¿Cómo trabajamos?" },
+  { href: "/razones", label: "¿Por qué elegirnos?" },
+  { href: "/mision-vision", label: "Misión y visión" },
+  { href: "/historia", label: "Historia" },
 ];
 
 function IconFacebook({ className }: { className?: string }) {
@@ -46,26 +55,44 @@ const SOCIAL = [
 ];
 
 export function PublicHeader({
-  agencyName,
   publicRegistrationActive,
 }: {
-  agencyName: string;
   publicRegistrationActive: boolean;
 }) {
   const [scrolled, setScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [aboutOpen, setAboutOpen] = useState(false);
+  const aboutRef = useRef<HTMLDivElement>(null);
   const pathname = usePathname();
+  const isAboutActive = ABOUT_LINKS.some((link) => pathname.startsWith(link.href));
 
   // Close mobile menu on route change (adjust state during render, not in an effect)
   const [prevPathname, setPrevPathname] = useState(pathname);
   if (pathname !== prevPathname) {
     setPrevPathname(pathname);
     setMobileOpen(false);
+    setAboutOpen(false);
   }
 
   useEffect(() => {
+    if (!aboutOpen) return;
+    function onClickOutside(e: MouseEvent) {
+      if (aboutRef.current && !aboutRef.current.contains(e.target as Node)) setAboutOpen(false);
+    }
+    function onEscape(e: KeyboardEvent) {
+      if (e.key === "Escape") setAboutOpen(false);
+    }
+    document.addEventListener("mousedown", onClickOutside);
+    document.addEventListener("keydown", onEscape);
+    return () => {
+      document.removeEventListener("mousedown", onClickOutside);
+      document.removeEventListener("keydown", onEscape);
+    };
+  }, [aboutOpen]);
+
+  useEffect(() => {
     function onScroll() {
-      setScrolled(window.scrollY > 80);
+      setScrolled(window.scrollY > 24);
     }
     onScroll();
     window.addEventListener("scroll", onScroll, { passive: true });
@@ -82,9 +109,6 @@ export function PublicHeader({
     return () => { document.body.style.overflow = ""; };
   }, [mobileOpen]);
 
-  const isHome = pathname === "/";
-  const transparent = isHome && !scrolled && !mobileOpen;
-
   const registrationLink = publicRegistrationActive
     ? { href: "/registro", label: "Únete" }
     : null;
@@ -93,26 +117,13 @@ export function PublicHeader({
     <>
       <header
         className={cn(
-          "fixed top-0 z-40 w-full transition-[background-color,border-color,backdrop-filter] duration-300",
-          transparent
-            ? "border-b border-transparent bg-transparent"
-            : "border-b border-zinc-200/60 bg-white/95 backdrop-blur-md",
+          "fixed top-0 z-40 w-full border-b backdrop-blur-xl transition-colors duration-300",
+          scrolled ? "border-white/10 bg-black/70" : "border-white/5 bg-black/40",
         )}
       >
         <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
-          {/* Logo */}
-          <Link
-            href="/"
-            className={cn(
-              "text-lg font-semibold tracking-tight transition-colors duration-300",
-              transparent ? "text-white" : "text-zinc-950",
-            )}
-          >
-            {agencyName}
-          </Link>
-
           {/* Desktop nav */}
-          <nav className="hidden items-center gap-8 text-sm md:flex">
+          <nav className="hidden items-center gap-7 md:flex">
             {NAV_LINKS.map((link) => {
               const isActive =
                 link.href === "/" ? pathname === "/" : pathname.startsWith(link.href);
@@ -121,29 +132,63 @@ export function PublicHeader({
                   key={link.href}
                   href={link.href}
                   className={cn(
-                    "relative pb-0.5 font-semibold transition-colors duration-200",
-                    "after:absolute after:bottom-0 after:left-0 after:h-px after:transition-[width] after:duration-200",
-                    transparent
-                      ? [
-                          isActive ? "text-white" : "text-white/80",
-                          "hover:text-gold-400",
-                          isActive ? "after:w-full after:bg-gold-400" : "after:w-0 after:bg-gold-400",
-                        ]
-                      : [
-                          isActive ? "text-zinc-950" : "text-zinc-500",
-                          "hover:text-gold-500",
-                          isActive ? "after:w-full after:bg-gold-500" : "after:w-0 after:bg-gold-500",
-                        ],
+                    "rounded-full px-3.5 py-1.5 text-[11px] font-semibold tracking-[0.2em] uppercase transition-all duration-200",
+                    isActive
+                      ? "bg-gold-500/20 text-gold-300 ring-1 ring-inset ring-gold-500/40"
+                      : "text-white/75 hover:bg-white/5 hover:text-white",
                   )}
                 >
                   {link.label}
                 </Link>
               );
             })}
+
+            {/* "Conócenos" — secondary dropdown, kept visually quiet next to the main nav */}
+            <div ref={aboutRef} className="relative">
+              <button
+                type="button"
+                onClick={() => setAboutOpen((o) => !o)}
+                aria-expanded={aboutOpen}
+                aria-haspopup="menu"
+                className={cn(
+                  "flex items-center gap-1 rounded-full px-3 py-1.5 text-[11px] font-medium tracking-[0.16em] uppercase transition-colors duration-200",
+                  isAboutActive ? "text-gold-300" : "text-white/50 hover:text-white/85",
+                )}
+              >
+                Conócenos
+                <ChevronDown className={cn("h-3 w-3 transition-transform", aboutOpen && "rotate-180")} />
+              </button>
+
+              {aboutOpen && (
+                <div
+                  role="menu"
+                  className="absolute top-[calc(100%+10px)] left-1/2 flex w-56 -translate-x-1/2 flex-col gap-0.5 rounded-2xl border border-white/10 bg-black/90 p-1.5 shadow-2xl backdrop-blur-xl"
+                >
+                  {ABOUT_LINKS.map((link) => {
+                    const isActive = pathname.startsWith(link.href);
+                    return (
+                      <Link
+                        key={link.href}
+                        href={link.href}
+                        role="menuitem"
+                        onClick={() => setAboutOpen(false)}
+                        className={cn(
+                          "rounded-lg px-3.5 py-2.5 text-[11px] font-medium tracking-[0.1em] uppercase transition-colors",
+                          isActive ? "bg-gold-500/15 text-gold-300" : "text-white/70 hover:bg-white/5 hover:text-white",
+                        )}
+                      >
+                        {link.label}
+                      </Link>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+
             {registrationLink && (
               <Link
                 href={registrationLink.href}
-                className="rounded-full border border-gold-500 px-4 py-1.5 text-sm font-semibold text-gold-600 transition-colors hover:bg-gold-500 hover:text-white"
+                className="rounded-full border border-gold-500/70 bg-gold-500/10 px-4 py-1.5 text-[11px] font-semibold tracking-[0.2em] text-gold-300 uppercase transition-colors hover:bg-gold-500 hover:text-white"
               >
                 {registrationLink.label}
               </Link>
@@ -153,7 +198,7 @@ export function PublicHeader({
           {/* Desktop social + mobile hamburger */}
           <div className="flex items-center gap-4">
             {/* Social links — desktop only */}
-            <div className="hidden items-center gap-4 md:flex">
+            <div className="hidden items-center gap-3 md:flex">
               {SOCIAL.map(({ href, label, Icon }) => (
                 <a
                   key={label}
@@ -161,12 +206,9 @@ export function PublicHeader({
                   target="_blank"
                   rel="noopener noreferrer"
                   aria-label={label}
-                  className={cn(
-                    "transition-colors duration-200",
-                    transparent ? "text-white/70 hover:text-gold-400" : "text-zinc-400 hover:text-gold-500",
-                  )}
+                  className="flex h-8 w-8 items-center justify-center rounded-full border border-white/15 text-white/70 transition-colors hover:border-gold-400 hover:text-gold-400"
                 >
-                  <Icon className="h-5 w-5" />
+                  <Icon className="h-3.5 w-3.5" />
                 </a>
               ))}
             </div>
@@ -177,14 +219,9 @@ export function PublicHeader({
               onClick={() => setMobileOpen((o) => !o)}
               aria-label={mobileOpen ? "Cerrar menú" : "Abrir menú"}
               aria-expanded={mobileOpen}
-              className={cn(
-                "flex h-9 w-9 items-center justify-center rounded-lg transition-colors md:hidden",
-                transparent
-                  ? "text-white hover:bg-white/10"
-                  : "text-zinc-700 hover:bg-zinc-100",
-              )}
+              className="flex h-9 w-9 items-center justify-center rounded-full border border-white/15 text-white transition-colors hover:bg-white/10 md:hidden"
             >
-              {mobileOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+              {mobileOpen ? <X className="h-4.5 w-4.5" /> : <Menu className="h-4.5 w-4.5" />}
             </button>
           </div>
         </div>
@@ -201,7 +238,7 @@ export function PublicHeader({
         {/* Backdrop */}
         <div
           className={cn(
-            "absolute inset-0 bg-zinc-950/50 backdrop-blur-sm transition-opacity duration-300",
+            "absolute inset-0 bg-black/70 backdrop-blur-sm transition-opacity duration-300",
             mobileOpen ? "opacity-100" : "opacity-0",
           )}
           onClick={() => setMobileOpen(false)}
@@ -210,17 +247,16 @@ export function PublicHeader({
         {/* Panel */}
         <nav
           className={cn(
-            "absolute top-0 right-0 flex h-full w-72 flex-col bg-white shadow-2xl transition-transform duration-300",
+            "absolute top-0 right-0 flex h-full w-72 flex-col border-l border-white/10 bg-zinc-950 shadow-2xl transition-transform duration-300",
             mobileOpen ? "translate-x-0" : "translate-x-full",
           )}
         >
-          <div className="flex h-16 items-center justify-between border-b border-zinc-100 px-6">
-            <span className="text-base font-semibold text-zinc-950">{agencyName}</span>
+          <div className="flex h-16 items-center justify-end border-b border-white/10 px-6">
             <button
               type="button"
               onClick={() => setMobileOpen(false)}
               aria-label="Cerrar menú"
-              className="flex h-8 w-8 items-center justify-center rounded-lg text-zinc-500 hover:bg-zinc-100"
+              className="flex h-8 w-8 items-center justify-center rounded-full text-white/70 hover:bg-white/10"
             >
               <X className="h-4 w-4" />
             </button>
@@ -235,10 +271,10 @@ export function PublicHeader({
                   key={link.href}
                   href={link.href}
                   className={cn(
-                    "flex items-center rounded-xl px-4 py-3 text-base font-medium transition-colors",
+                    "flex items-center rounded-xl px-4 py-3 text-sm font-semibold tracking-wide uppercase transition-colors",
                     isActive
-                      ? "bg-gold-50 text-gold-700"
-                      : "text-zinc-700 hover:bg-zinc-50 hover:text-zinc-950",
+                      ? "bg-gold-500/15 text-gold-300"
+                      : "text-white/75 hover:bg-white/5 hover:text-white",
                   )}
                 >
                   {link.label}
@@ -249,16 +285,36 @@ export function PublicHeader({
             {registrationLink && (
               <Link
                 href={registrationLink.href}
-                className="mt-2 flex items-center justify-center rounded-xl bg-gold-500 px-4 py-3 text-base font-semibold text-white transition-colors hover:bg-gold-600"
+                className="mt-2 flex items-center justify-center rounded-xl bg-gold-500 px-4 py-3 text-sm font-bold tracking-wide text-white uppercase transition-colors hover:bg-gold-600"
               >
                 {registrationLink.label}
               </Link>
             )}
+
+            {/* Conócenos — secondary group, quieter styling */}
+            <p className="mt-6 mb-1 px-4 text-[10px] font-semibold tracking-[0.2em] text-white/35 uppercase">
+              Conócenos
+            </p>
+            {ABOUT_LINKS.map((link) => {
+              const isActive = pathname.startsWith(link.href);
+              return (
+                <Link
+                  key={link.href}
+                  href={link.href}
+                  className={cn(
+                    "flex items-center rounded-xl px-4 py-2.5 text-[13px] font-medium tracking-wide uppercase transition-colors",
+                    isActive ? "bg-gold-500/15 text-gold-300" : "text-white/55 hover:bg-white/5 hover:text-white/85",
+                  )}
+                >
+                  {link.label}
+                </Link>
+              );
+            })}
           </div>
 
           {/* Social at bottom of drawer */}
-          <div className="border-t border-zinc-100 px-6 py-5">
-            <p className="mb-3 text-xs font-semibold tracking-wider text-zinc-400 uppercase">Síguenos</p>
+          <div className="border-t border-white/10 px-6 py-5">
+            <p className="mb-3 text-xs font-semibold tracking-[0.2em] text-white/40 uppercase">Síguenos</p>
             <div className="flex items-center gap-5">
               {SOCIAL.map(({ href, label, Icon }) => (
                 <a
@@ -267,7 +323,7 @@ export function PublicHeader({
                   target="_blank"
                   rel="noopener noreferrer"
                   aria-label={label}
-                  className="text-zinc-500 transition-colors hover:text-gold-500"
+                  className="text-white/60 transition-colors hover:text-gold-400"
                 >
                   <Icon className="h-5 w-5" />
                 </a>

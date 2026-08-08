@@ -43,3 +43,10 @@ body {
   from { transform: translateX(-100%); }
   to   { transform: translateX(0); }
 }
+
+/* For a track rendered with its content duplicated once (2x),
+   -50% scrolls exactly one copy's width, looping seamlessly. */
+@keyframes marquee-half {
+  from { transform: translateX(0); }
+  to   { transform: translateX(-50%); }
+}

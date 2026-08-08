@@ -1,4 +1,5 @@
 import {
+  Images,
   List,
   Megaphone,
   PackageOpen,
@@ -32,6 +33,7 @@ export const NAV_GROUPS: NavGroup[] = [
     items: [
       { label: "Convocatorias", href: APP_ROUTE.app.convocatorias.index, icon: Megaphone },
       { label: "Paquetes", href: APP_ROUTE.app.packages.index, icon: PackageOpen },
+      { label: "Eventos", href: APP_ROUTE.app.events.index, icon: Images },
     ],
   },
   {

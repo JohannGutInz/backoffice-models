@@ -86,58 +86,6 @@ export interface RegistrationApplication {
   rejectedAt?: string;
 }
 
-export interface Client {
-  id: string;
-  agencyId: string;
-  company: string;
-  contactName: string;
-  email: string;
-  phone: string;
-  industry: string;
-  totalEvents: number;
-  totalRevenue: number;
-  createdAt: string;
-}
-
-export type EventStatus = "planeado" | "confirmado" | "en_curso" | "finalizado" | "cancelado";
-
-export interface AgencyEvent {
-  id: string;
-  agencyId: string;
-  name: string;
-  clientId: string;
-  type: string;
-  venue: string;
-  startDate: string;
-  endDate: string;
-  status: EventStatus;
-  bookingIds: string[];
-  notas?: string | null;
-  recurringDays?: number[];
-  dailyStartTime?: string | null;
-  dailyEndTime?: string | null;
-  cubierto?: boolean;
-  modelo?: {
-    id: string;
-    firstName: string;
-    paternalLastName: string;
-    maternalLastName?: string | null;
-  } | null;
-}
-
-export type BookingStatus = "pendiente" | "confirmado" | "completado" | "cancelado";
-
-export interface Booking {
-  id: string;
-  agencyId: string;
-  eventId: string;
-  modelId: string;
-  rate: number;
-  status: BookingStatus;
-  date: string;
-  notes?: string;
-}
-
 export type PackageStatus = "borrador" | "enviado" | "aprobado" | "rechazado";
 
 export interface Package {
@@ -151,16 +99,6 @@ export interface Package {
   createdAt: string;
   description?: string | null;
   publicToken?: string | null;
-}
-
-export interface Income {
-  id: string;
-  agencyId: string;
-  eventId: string;
-  clientId: string;
-  amount: number;
-  method: "transferencia" | "tarjeta" | "efectivo";
-  date: string;
 }
 
 export type StaffRole = "admin" | "booker" | "moderador" | "finanzas";

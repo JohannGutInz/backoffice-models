@@ -68,7 +68,7 @@ export function VideoEmbed({ url, label }: { url: string; label?: string }) {
       href={url}
       target="_blank"
       rel="noopener noreferrer"
-      className="flex items-center justify-center gap-2 rounded-2xl border border-zinc-200 bg-zinc-50 px-5 py-4 text-sm font-medium text-zinc-700 transition hover:bg-zinc-100"
+      className="flex items-center justify-center gap-2 rounded-2xl border border-white/15 bg-white/5 px-5 py-4 text-sm font-medium text-white/80 transition hover:bg-white/10"
     >
       Ver video externo ↗
     </a>

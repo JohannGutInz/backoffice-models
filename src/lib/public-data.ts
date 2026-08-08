@@ -1,6 +1,13 @@
-import { clients, events, AGENCY_ID } from "./mock-data";
 import { prisma } from "@/db";
-import { getMainPhotoUrl, getGalleryVideos, getBookPhotos, getCasualPhotos, getEventPhotos, getCampaignVideoLinks } from "./utils";
+import {
+  calculateAge,
+  getMainPhotoUrl,
+  getGalleryVideos,
+  getBookPhotos,
+  getCasualPhotos,
+  getEventPhotos,
+  getCampaignVideoLinks,
+} from "./utils";
 import { signAssetUrls } from "./storage";
 
 // Public boundary. Only returns models with approved KYC. No private data.
@@ -32,7 +39,10 @@ export interface PublicModel {
   activities: string[];
   genre: string;
   location: string;
+  countryName: string;
+  cityName: string;
   nationality: string;
+  age: number;
   height: number | null;
   currentWeight: number | null;
   hasVisibleTattoos: boolean;
@@ -45,6 +55,7 @@ export interface PublicModel {
   kycStatus: string;
   featured: boolean;
   campaignVideoLinks: string[];
+  createdAt: Date;
 }
 
 async function toPublicModel(m: RawPublicModel): Promise<PublicModel> {
@@ -63,7 +74,10 @@ async function toPublicModel(m: RawPublicModel): Promise<PublicModel> {
     activities: m.activities.map((a) => a.name),
     genre: m.genre,
     location: `${m.city.name}, ${m.country.name}`,
+    countryName: m.country.name,
+    cityName: m.city.name,
     nationality: m.nationality.demonym,
+    age: calculateAge(m.birthDate),
     height: m.height,
     currentWeight: m.currentWeight,
     hasVisibleTattoos: m.hasVisibleTattoos,
@@ -76,6 +90,7 @@ async function toPublicModel(m: RawPublicModel): Promise<PublicModel> {
     kycStatus: m.kyc.status,
     featured: false,
     campaignVideoLinks: getCampaignVideoLinks(media),
+    createdAt: m.createdAt,
   };
 }
 
@@ -107,6 +122,63 @@ export async function listFeaturedModels(limit = 4): Promise<PublicModel[]> {
   return Promise.all(models.map(toPublicModel));
 }
 
+// ---------- Eventos carousel (landing) ----------
+
+export interface EventoDestacado {
+  id: string;
+  imageUrl: string;
+  alt: string;
+}
+
+// Backed by the EventoFoto table, managed from /app/eventos (backoffice).
+// Photos are stored as bare public URLs (uploadPublicImage in storage.ts),
+// not signed — no signAssetUrls() step needed here. EventosCarrusel didn't
+// change its rendering, just gained a real per-photo `alt` (previously a
+// fixed "Evento realizado por {agencia}" string).
+export async function listEventosDestacados(): Promise<EventoDestacado[]> {
+  const fotos = await prisma.eventoFoto.findMany({
+    where: { published: true },
+    orderBy: { position: "asc" },
+    // The 12-photo cap is enforced when publishing (toggleEventoFotoPublishedAction
+    // in actions.ts) — this `take` is just defense in depth, not the source of truth.
+    take: 12,
+  });
+  return fotos.map((foto) => ({ id: foto.id, imageUrl: foto.url, alt: foto.alt }));
+}
+
+// ---------- Catalog filter options (real DB, no fixtures) ----------
+
+export async function listPublicCategories() {
+  return prisma.category.findMany({
+    where: { enabled: true },
+    orderBy: { name: "asc" },
+    select: { id: true, name: true },
+  });
+}
+
+export async function listPublicActivities() {
+  return prisma.activity.findMany({
+    where: { enabled: true },
+    orderBy: { name: "asc" },
+    select: { id: true, name: true },
+  });
+}
+
+export interface PublicGeografia {
+  countries: { id: string; name: string }[];
+  states: { id: string; name: string; countryId: string }[];
+  municipalities: { id: string; name: string; stateId: string }[];
+}
+
+export async function listPublicGeografia(): Promise<PublicGeografia> {
+  const [countries, states, municipalities] = await Promise.all([
+    prisma.country.findMany({ orderBy: { name: "asc" }, select: { id: true, name: true } }),
+    prisma.state.findMany({ orderBy: { name: "asc" }, select: { id: true, name: true, countryId: true } }),
+    prisma.municipality.findMany({ orderBy: { name: "asc" }, select: { id: true, name: true, stateId: true } }),
+  ]);
+  return { countries, states, municipalities };
+}
+
 export interface PortfolioEntryPublico {
   id: string;
   marca: string;
@@ -128,18 +200,14 @@ export interface PortfolioEvent {
   clientName: string;
 }
 
+// The mock AgencyEvent/Client fixtures this used to read from were removed
+// when the admin bookings/clientes modules were deleted (their concept of
+// "evento" is now EventoFoto — a marketing photo, not a booking). This public
+// page (src/app/(public)/portafolio) still exists and is footer-linked, but
+// has no real data source yet; stubbed to empty like listPortfolioEntradas
+// above until it's redesigned around EventoFoto or removed.
 export async function listPortfolioEvents(): Promise<PortfolioEvent[]> {
-  return events
-    .filter((e) => e.agencyId === AGENCY_ID && e.status === "finalizado")
-    .sort((a, b) => new Date(b.startDate).getTime() - new Date(a.startDate).getTime())
-    .map((e) => ({
-      id: e.id,
-      name: e.name,
-      type: e.type,
-      venue: e.venue,
-      date: e.startDate,
-      clientName: clients.find((c) => c.id === e.clientId)?.company ?? "Cliente de la agencia",
-    }));
+  return [];
 }
 
 // ---------- Package proposal (real DB) ----------
